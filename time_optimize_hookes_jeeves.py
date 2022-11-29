@@ -126,7 +126,7 @@ def optimizerHookeJeeves(asteroid_start, asteroid_landing, t_start, t_opt):
         algorithm,
         termination,
         save_history = False,            # Kann später auskommentiert werden, nur für Testzwecke
-        verbose = True,                 # print des Endergebnisses (auch auskommentieren)
+        verbose = False,                 # print des Endergebnisses (auch auskommentieren)
         return_least_infeasible = True  # Bestmögliche Lösung zurückgeben, falls sonst nichts gefunden wird
     )
 

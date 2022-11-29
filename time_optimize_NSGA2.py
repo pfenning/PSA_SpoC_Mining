@@ -110,16 +110,16 @@ def optimizerNSGA2(asteroid_start, asteroid_landing, t_start, t_opt):
     problem = TimeOptimizeWithNSGA2(np.array([t_start_min, T_min]), np.array([t_start_max, T_max]))
 
     # Lösungsalgorithmus
-    algorithm = NSGA2(pop_size=15) # Anzahl der Population und der Lösungen am Ende
+    algorithm = NSGA2(pop_size=10) # Anzahl der Population und der Lösungen am Ende
 
     # Termination Criterion
     termination = DefaultSingleObjectiveTermination(
         xtol=0.025,         # Minimale Schrittweite von --* Intervall Tage (z.B. xtol=0.025: Starttag [20-60] => Grenze: 1 Tag; Flugzeit: 1-100 Tage => 2.5 Tage)
         cvtol=1e-6,         # Convergence in Constraings - wir haben keine Constraints
         ftol=0.02,          # Minimale Änderung von --%
-        period=2,           # Betrachten der letzten -- Iterationen
-        n_max_gen=20,       # Maximale Anzahl "Generationen" - bei uns (wahrscheinlich neuer Ausgangspunkte)
-        n_max_evals = 100   # Maximale Anzahl Funktionsaufrufe
+        period=4,           # Betrachten der letzten -- Iterationen
+        n_max_gen=10,       # Maximale Anzahl "Generationen" - bei uns (wahrscheinlich neuer Ausgangspunkte)
+        n_max_evals = 150   # Maximale Anzahl Funktionsaufrufe
     )
 
     # Optimize
@@ -141,7 +141,7 @@ def optimizerNSGA2(asteroid_start, asteroid_landing, t_start, t_opt):
     print(res.F)
 
     # Multi-Criteria Decision Making - make it easy
-    weights = np.array([0.2, 0.4, 0.4])
+    weights = np.array([0.2, 0.3, 0.5]) # t_start, T, DV
     rank = []
     for sol in res.F:
         rank.append(sum(weights*sol))

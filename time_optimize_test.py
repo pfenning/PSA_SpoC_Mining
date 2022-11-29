@@ -8,6 +8,7 @@ from scipy.stats import kde
 
 # Code spezifische Packages:
 import random
+import time
 
 # Konstanten und Database Laden
 from spoc_constants import data, asteroids, asteroid_masses, asteroid_materials, MU_TRAPPIST
@@ -52,15 +53,23 @@ print("Start:", asteroid1.name, ", Startzeitpunkt:", f'{t_opt:.1f}', "vollständ
 print("Anzahl Ansteroiden in der Nähe für T =", T,"   =>", len(neighb))
 print("Ziel:", asteroid2.name, "\n")
 
-# # Zeiten mit Variante 1 bestimmen (erst T, dann t)
-# t_minDV, T_minDV, DV_min = to.optimizeTimeV1(asteroid1, asteroid2, t_start=t_opt, t_opt=t_opt)
-# print("Eerst T dann t_start: ", "t_start:", f"{t_minDV:2f}", "T:", f"{T_minDV:.0f}", "DV::", f"{DV_min:.1f}")
+# Timer "starten"
+time0 = time.perf_counter()
+# Zeiten mit Variante 1 bestimmen (erst T, dann t)
+t_minDV, T_minDV, DV_min = to.optimizeTimeV1(asteroid1, asteroid2, t_start=t_opt, t_opt=t_opt)
+time1 = time.perf_counter()
+time_Variante1 = time1-time0
+print("Eerst T dann t_start: ", "t_start:", f"{t_minDV:2f}", "T:", f"{T_minDV:.0f}", "DV::", f"{DV_min:.1f}", "Berechnungsdauer:", f"{time_Variante1:.5}")
 
-# # Zeiten mit Hooke and Jeeves
-# t_minDV, T_minDV, DV_min = hooke_Jeeves.optimizerHookeJeeves(asteroid1, asteroid2, t_start=t_opt, t_opt=t_opt)
-# print("Hooke and Jeeves: ", "t_start:", f"{t_minDV:2f}", "T:", f"{T_minDV:.0f}", "DV::", f"{DV_min:.1f}")
+# Zeiten mit Hooke and Jeeves
+t_minDV, T_minDV, DV_min = hooke_Jeeves.optimizerHookeJeeves(asteroid1, asteroid2, t_start=t_opt, t_opt=t_opt)
+time2 = time.perf_counter()
+time_Hooke_Jeeves = time2 - time1
+print("Hooke and Jeeves: ", "t_start:", f"{t_minDV:2f}", "T:", f"{T_minDV:.0f}", "DV::", f"{DV_min:.1f}", "Berechnungsdauer:", f"{time_Hooke_Jeeves:.5}")
 
 # Zeiten mit NSGA2 bestimmen
 t_minDV, T_minDV, DV_min = toNSGA2.optimizerNSGA2(asteroid1, asteroid2, t_start=t_opt, t_opt=t_opt)
-print("NSGA2: ", "t_start:", f"{t_minDV:2f}", "T:", f"{T_minDV:.0f}", "DV::", f"{DV_min:.1f}")
+time3 = time.perf_counter()
+time_NSGA2 = time3-time2
+print("NSGA2: ", "t_start:", f"{t_minDV:2f}", "T:", f"{T_minDV:.0f}", "DV::", f"{DV_min:.1f}", "Berechnungsdauer:", f"{time_NSGA2:.5}")
 
