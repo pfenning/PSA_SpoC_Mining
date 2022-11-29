@@ -14,11 +14,11 @@ from spoc_constants import data, asteroids, asteroid_masses, asteroid_materials,
 # Andere Midule:
 import time_optimize as to
 import time_optimize_hookes_jeeves as hooke_Jeeves
-
+import time_optimize_NSGA2 as toNSGA2
 
 
 ########################
-# Test der Zeitoptimierung mit zufälligem Startasteroid und zufälligem Asteroid in Umgebung
+# Zufälliger Startasteroid und zufälligem Asteroid in Umgebung
 ########################
 id_1 = random.randrange(0, len(asteroids), 1)
 asteroid1 = asteroids[id_1]
@@ -52,15 +52,15 @@ print("Start:", asteroid1.name, ", Startzeitpunkt:", f'{t_opt:.1f}', "vollständ
 print("Anzahl Ansteroiden in der Nähe für T =", T,"   =>", len(neighb))
 print("Ziel:", asteroid2.name, "\n")
 
-# Zeiten mit Variante 1 bestimmen (erst T, dann t)
+# # Zeiten mit Variante 1 bestimmen (erst T, dann t)
 # t_minDV, T_minDV, DV_min = to.optimizeTimeV1(asteroid1, asteroid2, t_start=t_opt, t_opt=t_opt)
+# print("Eerst T dann t_start: ", "t_start:", f"{t_minDV:2f}", "T:", f"{T_minDV:.0f}", "DV::", f"{DV_min:.1f}")
 
-# Zeiten mit Hooke and Jeeves
-t_minDV, T_minDV, DV_min = hooke_Jeeves.optimizerHookeJeeves(asteroid1, asteroid2, t_start=t_opt, t_opt=t_opt)
+# # Zeiten mit Hooke and Jeeves
+# t_minDV, T_minDV, DV_min = hooke_Jeeves.optimizerHookeJeeves(asteroid1, asteroid2, t_start=t_opt, t_opt=t_opt)
+# print("Hooke and Jeeves: ", "t_start:", f"{t_minDV:2f}", "T:", f"{T_minDV:.0f}", "DV::", f"{DV_min:.1f}")
 
-print("Die optimalen Parameter mit Variante 1 haben sich ergeben zu:")
-print("t_start:", f"{t_minDV:2f}")
-print("T:", f"{T_minDV:.0f}")
-print("DV::", f"{DV_min:.1f}")
-
+# Zeiten mit NSGA2 bestimmen
+t_minDV, T_minDV, DV_min = toNSGA2.optimizerNSGA2(asteroid1, asteroid2, t_start=t_opt, t_opt=t_opt)
+print("NSGA2: ", "t_start:", f"{t_minDV:2f}", "T:", f"{T_minDV:.0f}", "DV::", f"{DV_min:.1f}")
 

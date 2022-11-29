@@ -1,4 +1,3 @@
-
 # Packages laden
 import numpy as np
 import pykep as pk
@@ -14,16 +13,23 @@ from time_optimize import getDV
 
 # pymoo Funktionen und Klassen
 from pymoo.core.problem import ElementwiseProblem
-from pymoo.algorithms.soo.nonconvex.pattern import PatternSearch
+# Algo
+from pymoo.algorithms.moo.nsga2 import NSGA2
+from pymoo.operators.crossover.sbx import SBX
+from pymoo.operators.mutation.pm import PM
+from pymoo.operators.sampling.rnd import FloatRandomSampling
+# Optimize
 from pymoo.optimize import minimize
+# Termination
 from pymoo.termination.default import DefaultSingleObjectiveTermination
 
-# "Globale" Objekte asteroid1 und asteroid2
-# Irgendwas zuweisen, damit Variablen von Objektklasse Asteroid sind => Schönere Idee?
+# "Globale" Objekte 
+# asteroid1 und asteroid2
 asteroid_trip = [asteroids[0], asteroids[0]]
+# Optimaler Starttag
+t_start_opt = 0
 
-
-class TimeOptimizeWithHookeAndJeeves(ElementwiseProblem):
+class TimeOptimizeWithNSGA2(ElementwiseProblem):
 
     def __init__(self, xl, xu):
         """ 
@@ -43,7 +49,7 @@ class TimeOptimizeWithHookeAndJeeves(ElementwiseProblem):
         xu : [t_start_max, T_max], np.array, float, int
             Upper bounds for Startingtime and Flighttime. if integer all upper bounds are equal.
         """
-        super().__init__(n_var = 2, n_obj = 1, n_ieq_constr = 0, xl = xl, xu = xu)
+        super().__init__(n_var = 2, n_obj = 3, n_ieq_constr = 0, xl = xl, xu = xu)
 
 
     def _evaluate(self, x, out, *args, **kwargs):
@@ -54,13 +60,13 @@ class TimeOptimizeWithHookeAndJeeves(ElementwiseProblem):
         out: Dictionary, output is written to
         """
 
-        DV = getDV(asteroid_trip[0], asteroid_trip[1], x[0], x[1])
+        DV = getDV(asteroid_trip[0], asteroid_trip[1], x[0], x[1])/1000
+        t_var = abs(x[0]-t_start_opt)/30
+        T_opt = x[1]/30
         
-        out["F"] = [DV]
+        out["F"] = [t_var,T_opt, DV]
 
-
-
-def optimizerHookeJeeves(asteroid_start, asteroid_landing, t_start, t_opt):
+def optimizerNSGA2(asteroid_start, asteroid_landing, t_start, t_opt):
     """ Zeitoptimierung von Delta V mit Hooke und Jeeves in vereinfachter Form
   
         Übergabe: 
@@ -85,7 +91,8 @@ def optimizerHookeJeeves(asteroid_start, asteroid_landing, t_start, t_opt):
     # Asteroiden festlegen
     asteroid_trip[0] = asteroid_start
     asteroid_trip[1] = asteroid_landing
-
+    # Optimale Startzeit speicher
+    t_start_opt = t_start
 
     # Gültigkeitsbereich festlegen
     t_var_min = -0.3*t_opt  # Es müssen mindestens 60% abgebaut werden
@@ -100,15 +107,10 @@ def optimizerHookeJeeves(asteroid_start, asteroid_landing, t_start, t_opt):
     T = 30                  # Sollte nochmal überlegt werden
     
     # Problem erstellen
-    problem = TimeOptimizeWithHookeAndJeeves(np.array([t_start_min, T_min]), np.array([t_start_max, T_max]))
+    problem = TimeOptimizeWithNSGA2(np.array([t_start_min, T_min]), np.array([t_start_max, T_max]))
 
     # Lösungsalgorithmus
-    algorithm = PatternSearch(
-        [t_start, T],       # Initial Values
-        delta= 0.1,         # anfägnliche & größte Schrittweite relativ zum Suchintervall (Bsp: 20< t_start < 60 => delta = 4; 1 < T < 100 => delta = 10)
-        rho = 0.5,          # Verkleinerung: neue Schrittweite: delta2 = rho*delta
-        # step_size = 1.0   # Nicht wirklich verstanden
-    )
+    algorithm = NSGA2(pop_size=15) # Anzahl der Population und der Lösungen am Ende
 
     # Termination Criterion
     termination = DefaultSingleObjectiveTermination(
@@ -130,9 +132,22 @@ def optimizerHookeJeeves(asteroid_start, asteroid_landing, t_start, t_opt):
         return_least_infeasible = True  # Bestmögliche Lösung zurückgeben, falls sonst nichts gefunden wird
     )
 
-    # Lösung auslesen
-    t_minDV, T_minDV = res.X
-    DV_min = res.F[0]
+    # Lösungsset auslesen
+    # t_minDV, T_min = res.X
+    # T_minDV = res.F[2]*30
+    # DV_min = res.F[0]*1000
 
+    print(res.X)
+    print(res.F)
+
+    # Multi-Criteria Decision Making - make it easy
+    weights = np.array([0.2, 0.4, 0.4])
+    rank = []
+    for sol in res.F:
+        rank.append(sum(weights*sol))
+
+    optInd = rank.index(min(rank))
+    t_minDV, T_minDV = res.X[optInd]
+    DV_min = res.F[optInd][2]*1000
     # print("Best solution found: \nX = %s\nF = %s" % (res.X, res.F))
     return t_minDV, T_minDV, DV_min
