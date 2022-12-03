@@ -19,7 +19,7 @@ from pymoo.optimize import minimize
 from pymoo.termination.default import DefaultSingleObjectiveTermination
 
 # "Globale" Objekte asteroid1 und asteroid2
-# Irgendwas zuweisen, damit Variablen von Objektklasse Asteroid sind => Schönere Idee?
+# irgendwas zuweisen, damit Variablen von Objektklasse Asteroid sind => Schönere Idee?
 asteroid_trip = [asteroids[0], asteroids[0]]
 
 
@@ -34,7 +34,6 @@ class TimeOptimizeWithHookeAndJeeves(ElementwiseProblem):
         Weitere mögliche Ziele:
         Minimierung der Flugzeit,
         Minimierung der Abweichung: absolut(t_start - t_start_opt)
-
 
         Parameters:
         xl : [t_start_min, T_min], np.array, float, int
@@ -53,12 +52,9 @@ class TimeOptimizeWithHookeAndJeeves(ElementwiseProblem):
             T: Flugzeit
         out: Dictionary, output is written to
         """
-
         DV = getDV(asteroid_trip[0], asteroid_trip[1], x[0], x[1])
         
         out["F"] = [DV]
-
-
 
 def optimizerHookeJeeves(asteroid_start, asteroid_landing, t_start, t_opt):
     """ Zeitoptimierung von Delta V mit Hooke und Jeeves in vereinfachter Form
@@ -74,11 +70,11 @@ def optimizerHookeJeeves(asteroid_start, asteroid_landing, t_start, t_opt):
             optimale Abbauzeit auf aktuellem Asteroiden
         
         Rückgabe:
-        t_minDV: int,float
+        t_minDV: int, float
             optimaler Startpunkt
         T_minDV: int, float
             optimale Flugzeit
-        DV_min: int,float
+        DV_min: int, float
             optimiertes DV
     """
 
@@ -86,13 +82,12 @@ def optimizerHookeJeeves(asteroid_start, asteroid_landing, t_start, t_opt):
     asteroid_trip[0] = asteroid_start
     asteroid_trip[1] = asteroid_landing
 
-
     # Gültigkeitsbereich festlegen
     t_var_min = -0.3*t_opt  # Es müssen mindestens 60% abgebaut werden
     t_var_max = 60 - t_opt  # Man darf maximal 60 Tage warten
     t_start_min = t_start-t_var_min
     t_start_max = t_start+t_var_max
-    T_min = 1               # Flugzeit soll nicht kürzer als T_min sein
+    T_min = 1              # Flugzeit soll nicht kürzer als T_min sein
     T_max = 60             # Flugzeit soll nicht länger als T_max Tage betragen
 
     # Ausgangspunkt (initial value)
@@ -104,20 +99,22 @@ def optimizerHookeJeeves(asteroid_start, asteroid_landing, t_start, t_opt):
 
     # Lösungsalgorithmus
     algorithm = PatternSearch(
-        [t_start, T],       # Initial Values
-        delta= 0.1,         # anfägnliche & größte Schrittweite relativ zum Suchintervall (Bsp: 20< t_start < 60 => delta = 4; 1 < T < 100 => delta = 10)
-        rho = 0.5,          # Verkleinerung: neue Schrittweite: delta2 = rho*delta
-        # step_size = 1.0   # Nicht wirklich verstanden
+        [t_start, T],     # Initial Values
+        delta=0.1,        # anfängliche & größte Schrittweite relativ zum Suchintervall
+        # (Bsp: 20< t_start < 60 => delta = 4; 1 < T < 100 => delta = 10)
+        rho=0.5,          # Verkleinerung: neue Schrittweite: delta2 = rho*delta
+        # step_size = 1.0 # Nicht wirklich verstanden
     )
 
     # Termination Criterion
     termination = DefaultSingleObjectiveTermination(
-        xtol=0.025,         # Minimale Schrittweite von --* Intervall Tage (z.B. xtol=0.025: Starttag [20-60] => Grenze: 1 Tag; Flugzeit: 1-100 Tage => 2.5 Tage)
-        cvtol=1e-6,         # Convergence in Constraings - wir haben keine Constraints
+        xtol=0.025,         # Minimale Schrittweite von --* Intervall Tage
+        # (z.B. xtol=0.025: Starttag [20-60] => Grenze: 1 Tag; Flugzeit: 1-100 Tage => 2.5 Tage)
+        cvtol=1e-6,         # Convergence in Constraints - wir haben keine Constraints
         ftol=0.02,          # Minimale Änderung von --%
         period=2,           # Betrachten der letzten -- Iterationen
         n_max_gen=20,       # Maximale Anzahl "Generationen" - bei uns (wahrscheinlich neuer Ausgangspunkte)
-        n_max_evals = 100   # Maximale Anzahl Funktionsaufrufe
+        n_max_evals=100     # Maximale Anzahl Funktionsaufrufe
     )
 
     # Optimize
@@ -125,9 +122,9 @@ def optimizerHookeJeeves(asteroid_start, asteroid_landing, t_start, t_opt):
         problem,
         algorithm,
         termination,
-        save_history = False,            # Kann später auskommentiert werden, nur für Testzwecke
-        verbose = False,                 # print des Endergebnisses (auch auskommentieren)
-        return_least_infeasible = True  # Bestmögliche Lösung zurückgeben, falls sonst nichts gefunden wird
+        save_history=False,            # Kann später auskommentiert werden, nur für Testzwecke
+        verbose=False,                 # print des Endergebnisses (auch auskommentieren)
+        return_least_infeasible=True   # Bestmögliche Lösung zurückgeben, falls sonst nichts gefunden wird
     )
 
     # Lösung auslesen
