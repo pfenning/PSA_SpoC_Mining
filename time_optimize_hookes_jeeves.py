@@ -81,7 +81,7 @@ def optimizer_hooke_jeeves(asteroid_start, asteroid_landing, t_start, t_opt):
     asteroid_trip[1] = asteroid_landing
 
     # Gültigkeitsbereich festlegen
-    t_var_min = -0.3 * t_opt  # Es müssen mindestens 60% abgebaut werden
+    t_var_min = -0.3 * t_opt  # Es müssen mindestens 60 % abgebaut werden
     t_var_max = 60 - t_opt  # Man darf maximal 60 Tage warten
     t_start_min = t_start - t_var_min
     t_start_max = t_start + t_var_max
@@ -101,7 +101,7 @@ def optimizer_hooke_jeeves(asteroid_start, asteroid_landing, t_start, t_opt):
         delta=0.1,  # anfängliche & größte Schrittweite relativ zum Suchintervall
         # (Bsp: 20< t_start < 60 => delta = 4; 1 < t_flug < 100 => delta = 10)
         rho=0.5,  # Verkleinerung: neue Schrittweite: delta2 = rho*delta
-        # step_size = 1.0 # Nicht wirklich verstanden
+        # step_size = 1.0 # nicht wirklich verstanden
     )
 
     # Termination Criterion
