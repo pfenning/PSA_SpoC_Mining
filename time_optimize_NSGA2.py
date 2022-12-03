@@ -1,7 +1,7 @@
 # Packages laden
 import numpy as np
 import pykep as pk
-from pykep import epoch
+# from pykep import epoch
 import matplotlib.pyplot as plt
 from scipy.stats import kde
 

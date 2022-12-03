@@ -35,23 +35,23 @@ class TimeOptimizeWithHookeAndJeeves(ElementwiseProblem):
 
         Parameters:
         xl : [t_start_min, T_min], np.array, float, int
-            Lower bounds for Startingtime and Flighttime. if integer all lower bounds are equal.
+            Lower bounds for Starting-Time and Flight-Time. if integer all lower bounds are equal.
 
         xu : [t_start_max, T_max], np.array, float, int
-            Upper bounds for Startingtime and Flighttime. if integer all upper bounds are equal.
+            Upper bounds for Starting-Time and Flight-Time. if integer all upper bounds are equal.
         """
         super().__init__(n_var=2, n_obj=1, n_ieq_constr=0, xl=xl, xu=xu)
 
     def _evaluate(self, x, out, *args, **kwargs):
         """
-        x: [t_start, T], NumPy Arry, int, float
+        x: [t_start, T], NumPy Array, int, float
             t_start: Starttag des Wechsels (mjd_2000)
             T: Flugzeit
         out: Dictionary, output is written to
         """
-        DV = get_dv(asteroid_trip[0], asteroid_trip[1], x[0], x[1])
+        dv = get_dv(asteroid_trip[0], asteroid_trip[1], x[0], x[1])
 
-        out["F"] = [DV]
+        out["F"] = [dv]
 
 
 def optimizer_hooke_jeeves(asteroid_start, asteroid_landing, t_start, t_opt):
