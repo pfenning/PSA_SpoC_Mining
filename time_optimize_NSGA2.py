@@ -9,7 +9,7 @@ from scipy.stats import kde
 from spoc_constants import data, asteroids, asteroid_masses, asteroid_materials, MU_TRAPPIST
 
 # DV berechnen
-from time_optimize import getDV
+from time_optimize import get_dv
 
 # pymoo Funktionen und Klassen
 from pymoo.core.problem import ElementwiseProblem
@@ -29,8 +29,8 @@ asteroid_trip = [asteroids[0], asteroids[0]]
 # Optimaler Starttag
 t_start_opt = 0
 
-class TimeOptimizeWithNSGA2(ElementwiseProblem):
 
+class TimeOptimizeWithNSGA2(ElementwiseProblem):
     def __init__(self, xl, xu):
         """ 
         Optimierungsproblem:
@@ -49,8 +49,7 @@ class TimeOptimizeWithNSGA2(ElementwiseProblem):
         xu : [t_start_max, T_max], np.array, float, int
             Upper bounds for Startingtime and Flighttime. if integer all upper bounds are equal.
         """
-        super().__init__(n_var = 2, n_obj = 3, n_ieq_constr = 0, xl = xl, xu = xu)
-
+        super().__init__(n_var=2, n_obj=3, n_ieq_constr=0, xl=xl, xu=xu)
 
     def _evaluate(self, x, out, *args, **kwargs):
         """
@@ -60,13 +59,14 @@ class TimeOptimizeWithNSGA2(ElementwiseProblem):
         out: Dictionary, output is written to
         """
 
-        DV = getDV(asteroid_trip[0], asteroid_trip[1], x[0], x[1])/1000
-        t_var = abs(x[0]-t_start_opt)/30
-        T_opt = x[1]/30
-        
-        out["F"] = [t_var,T_opt, DV]
+        dv = get_dv(asteroid_trip[0], asteroid_trip[1], x[0], x[1]) / 1000
+        t_var = abs(x[0] - t_start_opt) / 30
+        t_opt = x[1] / 30
 
-def optimizerNSGA2(asteroid_start, asteroid_landing, t_start, t_opt):
+        out["F"] = [t_var, t_opt, dv]
+
+
+def time_optimize_nsga2(asteroid_start, asteroid_landing, t_start, t_opt):
     """ Zeitoptimierung von Delta V mit Hooke und Jeeves in vereinfachter Form
   
         Übergabe: 
@@ -80,11 +80,11 @@ def optimizerNSGA2(asteroid_start, asteroid_landing, t_start, t_opt):
             optimale Abbauzeit auf aktuellem Asteroiden
         
         Rückgabe:
-        t_minDV: int,float
+        tstart_min_dv: int,float
             optimaler Startpunkt
-        T_minDV: int, float
+        t_flug_min_dv: int, float
             optimale Flugzeit
-        DV_min: int,float
+        dv_min: int,float
             optimiertes DV
     """
 
@@ -95,31 +95,33 @@ def optimizerNSGA2(asteroid_start, asteroid_landing, t_start, t_opt):
     t_start_opt = t_start
 
     # Gültigkeitsbereich festlegen
-    t_var_min = -0.3*t_opt  # Es müssen mindestens 60% abgebaut werden
+    t_var_min = -0.3 * t_opt  # Es müssen mindestens 60% abgebaut werden
     t_var_max = 60 - t_opt  # Man darf maximal 60 Tage warten
-    t_start_min = t_start-t_var_min
-    t_start_max = t_start+t_var_max
-    T_min = 1               # Flugzeit soll nicht kürzer als T_min sein
-    T_max = 60             # Flugzeit soll nicht länger als T_max Tage betragen
+    t_start_min = t_start - t_var_min
+    t_start_max = t_start + t_var_max
+    t_flug_min = 1  # Flugzeit soll nicht kürzer als t_flug_min sein
+    t_flug_max = 60  # Flugzeit soll nicht länger als t_flug_max Tage betragen
 
     # Ausgangspunkt (initial value)
     # t_start = t_start
-    T = 30                  # Sollte nochmal überlegt werden
-    
+    T = 30  # Sollte nochmal überlegt werden
+
     # Problem erstellen
-    problem = TimeOptimizeWithNSGA2(np.array([t_start_min, T_min]), np.array([t_start_max, T_max]))
+    problem = TimeOptimizeWithNSGA2(np.array([t_start_min, t_flug_min]), np.array([t_start_max, t_flug_max]))
 
     # Lösungsalgorithmus
-    algorithm = NSGA2(pop_size=10) # Anzahl der Population und der Lösungen am Ende
+    algorithm = NSGA2(pop_size=10)  # Anzahl der Population und der Lösungen am Ende
 
     # Termination Criterion
     termination = DefaultSingleObjectiveTermination(
-        xtol=0.025,         # Minimale Schrittweite von --* Intervall Tage (z.B. xtol=0.025: Starttag [20-60] => Grenze: 1 Tag; Flugzeit: 1-100 Tage => 2.5 Tage)
-        cvtol=1e-6,         # Convergence in Constraings - wir haben keine Constraints
-        ftol=0.02,          # Minimale Änderung von --%
-        period=4,           # Betrachten der letzten -- Iterationen
-        n_max_gen=10,       # Maximale Anzahl "Generationen" - bei uns (wahrscheinlich neuer Ausgangspunkte)
-        n_max_evals = 150   # Maximale Anzahl Funktionsaufrufe
+        xtol=0.025,
+        # Minimale Schrittweite von --* Intervall Tage
+        # (z.B. xtol=0.025: Starttag [20-60] => Grenze: 1 Tag; Flugzeit: 1-100 Tage => 2.5 Tage)
+        cvtol=1e-6,  # Convergence in Constraings - wir haben keine Constraints
+        ftol=0.02,  # Minimale Änderung von --%
+        period=4,  # Betrachten der letzten -- Iterationen
+        n_max_gen=10,  # Maximale Anzahl "Generationen" - bei uns (wahrscheinlich neuer Ausgangspunkte)
+        n_max_evals=150  # Maximale Anzahl Funktionsaufrufe
     )
 
     # Optimize
@@ -127,27 +129,27 @@ def optimizerNSGA2(asteroid_start, asteroid_landing, t_start, t_opt):
         problem,
         algorithm,
         termination,
-        save_history = False,            # Kann später auskommentiert werden, nur für Testzwecke
-        verbose = True,                 # print des Endergebnisses (auch auskommentieren)
-        return_least_infeasible = True  # Bestmögliche Lösung zurückgeben, falls sonst nichts gefunden wird
+        save_history=False,  # Kann später auskommentiert werden, nur für Testzwecke
+        verbose=True,  # print des Endergebnisses (auch auskommentieren)
+        return_least_infeasible=True  # Bestmögliche Lösung zurückgeben, falls sonst nichts gefunden wird
     )
 
     # Lösungsset auslesen
-    # t_minDV, T_min = res.X
-    # T_minDV = res.F[2]*30
-    # DV_min = res.F[0]*1000
+    # tstart_min_dv, t_flug_min = res.X
+    # t_flug_min_dv = res.F[2]*30
+    # dv_min = res.F[0]*1000
 
     print(res.X)
     print(res.F)
 
-    # Multi-Criteria Decision Making - make it easy
-    weights = np.array([0.2, 0.3, 0.5]) # t_start, T, DV
+    # Multi-Criteria Decision-Making - make it easy
+    weights = np.array([0.2, 0.3, 0.5])  # t_start, T, DV
     rank = []
     for sol in res.F:
-        rank.append(sum(weights*sol))
+        rank.append(sum(weights * sol))
 
-    optInd = rank.index(min(rank))
-    t_minDV, T_minDV = res.X[optInd]
-    DV_min = res.F[optInd][2]*1000
+    opt_ind = rank.index(min(rank))
+    tstart_min_dv, t_flug_min_dv = res.X[opt_ind]
+    dv_min = res.F[opt_ind][2] * 1000
     # print("Best solution found: \nX = %s\nF = %s" % (res.X, res.F))
-    return t_minDV, T_minDV, DV_min
+    return tstart_min_dv, t_flug_min_dv, dv_min

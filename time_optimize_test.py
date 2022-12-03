@@ -56,19 +56,19 @@ print("Ziel:", asteroid2.name, "\n")
 # Timer "starten"
 time0 = time.perf_counter()
 # Zeiten mit Variante 1 bestimmen (erst T, dann t)
-t_minDV, T_minDV, DV_min = to.optimizeTimeV1(asteroid1, asteroid2, t_start=t_opt, t_opt=t_opt)
+t_minDV, T_minDV, DV_min = to.time_optimize_time_v1(asteroid1, asteroid2, t_start=t_opt, t_opt=t_opt)
 time1 = time.perf_counter()
 time_Variante1 = time1-time0
 print("Eerst T dann t_start: ", "t_start:", f"{t_minDV:2f}", "T:", f"{T_minDV:.0f}", "DV::", f"{DV_min:.1f}", "Berechnungsdauer:", f"{time_Variante1:.5}")
 
 # Zeiten mit Hooke and Jeeves
-t_minDV, T_minDV, DV_min = hooke_Jeeves.optimizerHookeJeeves(asteroid1, asteroid2, t_start=t_opt, t_opt=t_opt)
+t_minDV, T_minDV, DV_min = hooke_Jeeves.optimizer_hooke_jeeves(asteroid1, asteroid2, t_start=t_opt, t_opt=t_opt)
 time2 = time.perf_counter()
 time_Hooke_Jeeves = time2 - time1
 print("Hooke and Jeeves: ", "t_start:", f"{t_minDV:2f}", "T:", f"{T_minDV:.0f}", "DV::", f"{DV_min:.1f}", "Berechnungsdauer:", f"{time_Hooke_Jeeves:.5}")
 
 # Zeiten mit NSGA2 bestimmen
-t_minDV, T_minDV, DV_min = toNSGA2.optimizerNSGA2(asteroid1, asteroid2, t_start=t_opt, t_opt=t_opt)
+t_minDV, T_minDV, DV_min = toNSGA2.time_optimize_nsga2(asteroid1, asteroid2, t_start=t_opt, t_opt=t_opt)
 time3 = time.perf_counter()
 time_NSGA2 = time3-time2
 print("NSGA2: ", "t_start:", f"{t_minDV:2f}", "T:", f"{T_minDV:.0f}", "DV::", f"{DV_min:.1f}", "Berechnungsdauer:", f"{time_NSGA2:.5}")
