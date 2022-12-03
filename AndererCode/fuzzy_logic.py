@@ -83,9 +83,9 @@ bes_test = [0, 0.35, 0.65, 1]
 resolution = np.arange(0, 1.1, 0.1)
 mas_test = np.arange(0, 1.1, 0.1)
 delta_test = np.arange(0, 1.1, 0.1)
-x, y = np.meshgrid(mas_test, delta_test)
+x, y = np.meshgrid(mas_test, delta_test, indexing='ij')
 
-fig = plt.figure()
+fig = plt.figure(figsize=(12, 12))
 # fig, axs = plt.subplots(nrows=2, ncols=2, sharex='all', figsize=(12, 12))
 
 for i in range(0, len(bes_test)):
@@ -105,7 +105,6 @@ for i in range(0, len(bes_test)):
         ax1 = fig.add_subplot(subplot, projection='3d') # subplot,
         surf = ax1.plot_surface(x, y, out, rstride=1, cstride=1, cmap='viridis',
                                 linewidth=0.4, antialiased=True)
-        # ax1.set_title("Bestand = ", bes_test[i])
     elif i == 1:
         subplot = 222
         ax2 = fig.add_subplot(subplot, projection='3d')
@@ -123,6 +122,8 @@ for i in range(0, len(bes_test)):
                                 linewidth=0.4, antialiased=True)
     plt.xlabel("Masse")
     plt.ylabel("Delta V")
+    bes_now = bes_test[i]
+    plt.title(f'Bestand = {bes_now}')
     # Projektion auf Wände
     # cset = ax.contourf(x, y, out, zdir='z', offset=-2.5, cmap='viridis', alpha=0.5)
     # cset = ax.contourf(x, y, out, zdir='x', offset=3, cmap='viridis', alpha=0.5)
@@ -130,11 +131,16 @@ for i in range(0, len(bes_test)):
 
 
 # Blickwinkel auf 3D-Plots
-ax1.view_init(330, 200)
-ax2.view_init(330, 200)
-ax3.view_init(330, 200)
-ax4.view_init(330, 200)
+ax1.view_init(15, 80)
+ax1.set_zlim(0, 1)
+ax2.view_init(15, 80)
+ax2.set_zlim(0, 1)
+ax3.view_init(15, 80)
+ax3.set_zlim(0, 1)
+ax4.view_init(15, 80)
+ax4.set_zlim(0, 1)
 
+plt.subplots_adjust(left=0.065, bottom=0.065, right=0.935, top=0.885, wspace=0.3, hspace=0.5)
 plt.show()
 
 
