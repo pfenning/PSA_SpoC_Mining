@@ -2,8 +2,8 @@
 import numpy as np
 import pykep as pk
 # from pykep import epoch
-import matplotlib.pyplot as plt
-from scipy.stats import kde
+# import matplotlib.pyplot as plt
+# from scipy.stats import kde
 
 
 # Code spezifische Packages:
@@ -12,9 +12,9 @@ import time
 
 # Konstanten und Database Laden
 from spoc_constants import data, asteroids, asteroid_masses, asteroid_materials, MU_TRAPPIST
-# Andere Midule:
+# Andere Module:
 import time_optimize as to
-import time_optimize_hookes_jeeves as hooke_Jeeves
+import time_optimize_hookes_jeeves as hooke_jeeves
 import time_optimize_NSGA2 as toNSGA2
 
 
@@ -59,17 +59,20 @@ time0 = time.perf_counter()
 t_minDV, T_minDV, DV_min = to.time_optimize_time_v1(asteroid1, asteroid2, t_start=t_opt, t_opt=t_opt)
 time1 = time.perf_counter()
 time_Variante1 = time1-time0
-print("Eerst T dann t_start: ", "t_start:", f"{t_minDV:2f}", "T:", f"{T_minDV:.0f}", "DV::", f"{DV_min:.1f}", "Berechnungsdauer:", f"{time_Variante1:.5}")
+print("Eerst T dann t_start: ", "t_start:", f"{t_minDV:2f}", "T:", f"{T_minDV:.0f}", "DV::",
+      f"{DV_min:.1f}", "Berechnungsdauer:", f"{time_Variante1:.5}")
 
 # Zeiten mit Hooke and Jeeves
-t_minDV, T_minDV, DV_min = hooke_Jeeves.optimizer_hooke_jeeves(asteroid1, asteroid2, t_start=t_opt, t_opt=t_opt)
+t_minDV, T_minDV, DV_min = hooke_jeeves.optimizer_hooke_jeeves(asteroid1, asteroid2, t_start=t_opt, t_opt=t_opt)
 time2 = time.perf_counter()
 time_Hooke_Jeeves = time2 - time1
-print("Hooke and Jeeves: ", "t_start:", f"{t_minDV:2f}", "T:", f"{T_minDV:.0f}", "DV::", f"{DV_min:.1f}", "Berechnungsdauer:", f"{time_Hooke_Jeeves:.5}")
+print("Hooke and Jeeves: ", "t_start:", f"{t_minDV:2f}", "T:", f"{T_minDV:.0f}", "DV::",
+      f"{DV_min:.1f}", "Berechnungsdauer:", f"{time_Hooke_Jeeves:.5}")
 
 # Zeiten mit NSGA2 bestimmen
 t_minDV, T_minDV, DV_min = toNSGA2.time_optimize_nsga2(asteroid1, asteroid2, t_start=t_opt, t_opt=t_opt)
 time3 = time.perf_counter()
 time_NSGA2 = time3-time2
-print("NSGA2: ", "t_start:", f"{t_minDV:2f}", "T:", f"{T_minDV:.0f}", "DV::", f"{DV_min:.1f}", "Berechnungsdauer:", f"{time_NSGA2:.5}")
+print("NSGA2: ", "t_start:", f"{t_minDV:2f}", "T:", f"{T_minDV:.0f}", "DV::",
+      f"{DV_min:.1f}", "Berechnungsdauer:", f"{time_NSGA2:.5}")
 

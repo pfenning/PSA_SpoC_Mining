@@ -55,8 +55,8 @@ def time_optimize_time_v1(asteroid1, asteroid2, t_start, t_opt):
     """
     dv_tflug = []
     dv_tstart = []
-    # Mit der Suche wird da begonnen, wo der Start-Asteroid vollständig abgebaut ist
-    # zunächst wird nur die Flugzeit optimiert in einem Bereich von 20-30 Tagen - Oben ist T mit 30 angegeben;
+    # Mit der Suche wird am Tag begonnen, an dem der Start-Asteroid vollständig abgebaut ist.
+    # zunächst wird nur die Flugzeit optimiert in einem Bereich von 20-30 Tagen - oben ist t_flug mit 30 angegeben;
     # könnte man auch ändern
     dt_flug_1 = range(20, 60, 4)
 
@@ -78,7 +78,7 @@ def time_optimize_time_v1(asteroid1, asteroid2, t_start, t_opt):
         t = t_start + t_var
         dv_tstart.append(get_dv(asteroid1, asteroid2, t, dt_flug_min_dv))
 
-    # Minimum raussuchen
+    # Minimum heraussuchen
     index_min = dv_tstart.index(min(dv_tstart))
     t_min_dv = t_start - t_start_var[index_min]
     dv_min = dv_tstart[index_min]
