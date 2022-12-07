@@ -44,16 +44,16 @@ class TimeOptimizeWithNSGA2(ElementwiseProblem):
 
         Parameters:
         xl : [t_start_min, T_min], np.array, float, int
-            Lower bounds for Startingtime and Flighttime. if integer all lower bounds are equal.
+            Lower bounds for Starting-Time and Flight-Time. if integer all lower bounds are equal.
 
         xu : [t_start_max, T_max], np.array, float, int
-            Upper bounds for Startingtime and Flighttime. if integer all upper bounds are equal.
+            Upper bounds for Starting-Time and Flight-Time. if integer all upper bounds are equal.
         """
         super().__init__(n_var=2, n_obj=3, n_ieq_constr=0, xl=xl, xu=xu)
 
     def _evaluate(self, x, out, *args, **kwargs):
         """
-        x: [t_start, T], NumPy Arry, int, float
+        x: [t_start, T], NumPy Array, int, float
             t_start: Starttag des Wechsels (mjd_2000)
             T: Flugzeit
         out: Dictionary, output is written to
@@ -80,7 +80,7 @@ def time_optimize_nsga2(asteroid_start, asteroid_landing, t_start, t_opt):
             optimale Abbauzeit auf aktuellem Asteroiden
         
         Rückgabe:
-        tstart_min_dv: int,float
+        t_start_min_dv: int,float
             optimaler Startpunkt
         t_flug_min_dv: int, float
             optimale Flugzeit
@@ -135,7 +135,7 @@ def time_optimize_nsga2(asteroid_start, asteroid_landing, t_start, t_opt):
     )
 
     # Lösungsset auslesen
-    # tstart_min_dv, t_flug_min = res.X
+    # t_start_min_dv, t_flug_min = res.X
     # t_flug_min_dv = res.F[2]*30
     # dv_min = res.F[0]*1000
 
@@ -149,7 +149,7 @@ def time_optimize_nsga2(asteroid_start, asteroid_landing, t_start, t_opt):
         rank.append(sum(weights * sol))
 
     opt_ind = rank.index(min(rank))
-    tstart_min_dv, t_flug_min_dv = res.X[opt_ind]
+    t_start_min_dv, t_flug_min_dv = res.X[opt_ind]
     dv_min = res.F[opt_ind][2] * 1000
     # print("Best solution found: \nX = %s\nF = %s" % (res.X, res.F))
-    return tstart_min_dv, t_flug_min_dv, dv_min
+    return t_start_min_dv, t_flug_min_dv, dv_min
