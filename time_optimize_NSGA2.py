@@ -114,14 +114,14 @@ def time_optimize_nsga2(asteroid_start, asteroid_landing, t_start, t_opt):
 
     # Termination Criterion
     termination = DefaultSingleObjectiveTermination(
-        xtol=0.025,
+        xtol=0.0025,
         # Minimale Schrittweite von --* Intervall Tage
         # (z.B. xtol=0.025: Starttag [20-60] => Grenze: 1 Tag; Flugzeit: 1-100 Tage => 2.5 Tage)
         cvtol=1e-6,  # Convergence in Constraings - wir haben keine Constraints
-        ftol=0.02,  # Minimale Änderung von --%
-        period=4,  # Betrachten der letzten -- Iterationen
-        n_max_gen=10,  # Maximale Anzahl "Generationen" - bei uns (wahrscheinlich neuer Ausgangspunkte)
-        n_max_evals=150  # Maximale Anzahl Funktionsaufrufe
+        ftol=0.002,  # Minimale Änderung von --% (0.02)
+        period=10,  # Betrachten der letzten -- Iterationen (4)
+        n_max_gen=100,  # Maximale Anzahl "Generationen" - bei uns (wahrscheinlich neuer Ausgangspunkte) (10)
+        n_max_evals=15000  # Maximale Anzahl Funktionsaufrufe (150)
     )
 
     # Optimize
@@ -143,11 +143,10 @@ def time_optimize_nsga2(asteroid_start, asteroid_landing, t_start, t_opt):
     print(res.F)
 
     # Multi-Criteria Decision-Making - make it easy
-    weights = np.array([0.2, 0.3, 0.5])  # t_start, T, DV
+    weights = np.array([0.2, 0.3, 0.5])  # t_start, t_flug, DV
     rank = []
     for sol in res.F:
-        rank.append(sum(weights * sol))
-
+        rank.append(sum(weights * sol))  # Bewertung aus gewichteter Summe
     opt_ind = rank.index(min(rank))
     t_start_min_dv, t_flug_min_dv = res.X[opt_ind]
     dv_min = res.F[opt_ind][2] * 1000

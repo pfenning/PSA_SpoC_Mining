@@ -73,8 +73,8 @@ def time_optimize_time_v1(asteroid1, asteroid2, t_start, t_opt):
     for t in t_flug_1:
         dv_t_flug.append(get_dv(asteroid1, asteroid2, t_start, t))
 
-    # Minimum heraussuchen
-    index_min = dv_t_start.index(min(dv_t_start))
+    # Minimum für Flugzeit heraussuchen
+    index_min = dv_t_flug.index(min(dv_t_flug))
     t_flug_min_dv = t_flug_1[index_min]
 
     # Variation des Startpunktes bei gegebener Flugzeit

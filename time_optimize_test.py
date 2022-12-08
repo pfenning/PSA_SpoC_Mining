@@ -16,7 +16,7 @@ from spoc_constants import data, asteroids, asteroid_masses, asteroid_materials,
 import time_optimize as to
 import time_optimize_hookes_jeeves as hooke_jeeves
 import time_optimize_NSGA2 as toNSGA2
-
+import time_optimize_final as to_final
 
 ########################
 # Zufälliger Startasteroid und zufälligem Asteroid in Umgebung
@@ -41,7 +41,7 @@ neighb.remove(asteroid1)
 neighb_ids = list(neighb_ids)
 neighb_ids.remove(id_1)
     
-""" Hier fehlt noch eine Lösung, falss es keine Elemente in der Nähe gibt 
+""" Hier fehlt noch eine Lösung, falls es keine Elemente in der Nähe gibt 
     z.B. Längere Flugdauer, größerer Radius
 """
 
@@ -56,10 +56,10 @@ print("Ziel:", asteroid2.name, "\n")
 # Timer "starten"
 time0 = time.perf_counter()
 # Zeiten mit Variante 1 bestimmen (erst T, dann t)
-t_minDV, T_minDV, DV_min = to.time_optimize_time_v1(asteroid1, asteroid2, t_start=t_opt, t_opt=t_opt)
+t_minDV, T_minDV, DV_min = to.time_optimize_time_v2(asteroid1, asteroid2, t_start=t_opt, t_opt=t_opt)
 time1 = time.perf_counter()
 time_Variante1 = time1-time0
-print("Eerst T dann t_start: ", "t_start:", f"{t_minDV:2f}", "T:", f"{T_minDV:.0f}", "DV::",
+print("Erst T dann t_start bis 60 Tage: ", "t_start:", f"{t_minDV:2f}", "T:", f"{T_minDV:.0f}", "DV::",
       f"{DV_min:.1f}", "Berechnungsdauer:", f"{time_Variante1:.5}")
 
 # Zeiten mit Hooke and Jeeves
@@ -76,3 +76,9 @@ time_NSGA2 = time3-time2
 print("NSGA2: ", "t_start:", f"{t_minDV:2f}", "T:", f"{T_minDV:.0f}", "DV::",
       f"{DV_min:.1f}", "Berechnungsdauer:", f"{time_NSGA2:.5}")
 
+# Zeiten mit einfacher Zeitoptimierung bestimmen
+t_minDV, T_minDV, DV_min = to_final.time_optimize_time_v1(asteroid1, asteroid2, t_start=t_opt, t_opt=t_opt)
+time4 = time.perf_counter()
+time_final = time4-time3
+print("Zeitoptimierung (nicht bis t_start=60): ", "t_start:", f"{t_minDV:2f}", "T:", f"{T_minDV:.0f}", "DV::",
+      f"{DV_min:.1f}", "Berechnungsdauer:", f"{time_final:.5}")

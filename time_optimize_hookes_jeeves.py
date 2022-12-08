@@ -126,8 +126,8 @@ def optimizer_hooke_jeeves(asteroid_start, asteroid_landing, t_start, t_opt):
     )
 
     # Lösung auslesen
-    tstart_min_dv, t_flug_min_dv = res.X
+    t_start_min_dv, t_flug_min_dv = res.X
     dv_min = res.F[0]
 
     # print("Best solution found: \nX = %s\nF = %s" % (res.X, res.F))
-    return tstart_min_dv, t_flug_min_dv, dv_min
+    return t_start_min_dv, t_flug_min_dv, dv_min
