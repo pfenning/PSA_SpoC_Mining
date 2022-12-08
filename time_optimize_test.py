@@ -50,7 +50,7 @@ asteroid2 = neighb[random.randrange(0, len(neighb),1)]
 
 
 print("Start:", asteroid1.name, ", Startzeitpunkt:", f'{t_opt:.1f}', "vollständige Abbauzeit: ", f'{t_opt:.1f}')
-print("Anzahl Ansteroiden in der Nähe für T =", T,"   =>", len(neighb))
+print("Anzahl Asteroiden in der Nähe für T =", T,"   =>", len(neighb))
 print("Ziel:", asteroid2.name, "\n")
 
 # Timer "starten"
@@ -62,23 +62,23 @@ time_Variante1 = time1-time0
 print("Erst T dann t_start bis 60 Tage: ", "t_start:", f"{t_minDV:2f}", "T:", f"{T_minDV:.0f}", "DV::",
       f"{DV_min:.1f}", "Berechnungsdauer:", f"{time_Variante1:.5}")
 
-# Zeiten mit Hooke and Jeeves
-t_minDV, T_minDV, DV_min = hooke_jeeves.optimizer_hooke_jeeves(asteroid1, asteroid2, t_start=t_opt, t_opt=t_opt)
-time2 = time.perf_counter()
-time_Hooke_Jeeves = time2 - time1
-print("Hooke and Jeeves: ", "t_start:", f"{t_minDV:2f}", "T:", f"{T_minDV:.0f}", "DV::",
-      f"{DV_min:.1f}", "Berechnungsdauer:", f"{time_Hooke_Jeeves:.5}")
-
-# Zeiten mit NSGA2 bestimmen
-t_minDV, T_minDV, DV_min = toNSGA2.time_optimize_nsga2(asteroid1, asteroid2, t_start=t_opt, t_opt=t_opt)
-time3 = time.perf_counter()
-time_NSGA2 = time3-time2
-print("NSGA2: ", "t_start:", f"{t_minDV:2f}", "T:", f"{T_minDV:.0f}", "DV::",
-      f"{DV_min:.1f}", "Berechnungsdauer:", f"{time_NSGA2:.5}")
+# # Zeiten mit Hooke and Jeeves
+# t_minDV, T_minDV, DV_min = hooke_jeeves.optimizer_hooke_jeeves(asteroid1, asteroid2, t_start=t_opt, t_opt=t_opt)
+# time2 = time.perf_counter()
+# time_Hooke_Jeeves = time2 - time1
+# print("Hooke and Jeeves: ", "t_start:", f"{t_minDV:2f}", "T:", f"{T_minDV:.0f}", "DV::",
+#       f"{DV_min:.1f}", "Berechnungsdauer:", f"{time_Hooke_Jeeves:.5}")
+#
+# # Zeiten mit NSGA2 bestimmen
+# t_minDV, T_minDV, DV_min = toNSGA2.time_optimize_nsga2(asteroid1, asteroid2, t_start=t_opt, t_opt=t_opt)
+# time3 = time.perf_counter()
+# time_NSGA2 = time3-time2
+# print("NSGA2: ", "t_start:", f"{t_minDV:2f}", "T:", f"{T_minDV:.0f}", "DV::",
+#       f"{DV_min:.1f}", "Berechnungsdauer:", f"{time_NSGA2:.5}")
 
 # Zeiten mit einfacher Zeitoptimierung bestimmen
 t_minDV, T_minDV, DV_min = to_final.time_optimize_time_v1(asteroid1, asteroid2, t_start=t_opt, t_opt=t_opt)
 time4 = time.perf_counter()
-time_final = time4-time3
+time_final = time4-time1
 print("Zeitoptimierung (nicht bis t_start=60): ", "t_start:", f"{t_minDV:2f}", "T:", f"{T_minDV:.0f}", "DV::",
       f"{DV_min:.1f}", "Berechnungsdauer:", f"{time_final:.5}")

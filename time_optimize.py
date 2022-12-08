@@ -48,7 +48,6 @@ def get_dv(asteroid1, asteroid2, t_start, t_flug, print_result=False):
 
 # ToDo: Zeitraum der Flugzeit neu definieren (z.B. auf 5-46 in 4er Schritten)
 #       - Reicht Auflösung? Sonst: nach gefundenem Minimum nochmal einen halben Schritt in jede Richtung machen
-#       - Gewichtung für Auswahl der Flugzeit genauer überlegen
 def time_optimize_time_v2(asteroid1, asteroid2, t_start, t_opt):
     """ Zeitoptimierung von Delta V mit 2 Levels. Erst Flugzeit, dann Startzeit
         Rechenaufwand: Anzahl Flugzeit-Elemente + Anzahl Startzeitpunkte (10+7=17)
@@ -75,7 +74,9 @@ def time_optimize_time_v2(asteroid1, asteroid2, t_start, t_opt):
     # ******** hinzugefügt
     results_t_flug = []
     for i in range(0, len(t_flug_1)):
-        results_t_flug.append([t_flug_1[i] / 30, dv_t_flug[i] / 1000])  # "Normierung" für ähnliche Skalierung
+        # "Normierung" für ähnliche Skalierung
+        # Zahlenfindung: Siehe MathTests.py
+        results_t_flug.append([t_flug_1[i] / 30, dv_t_flug[i] / 2000])
     weights = np.array([0.3, 0.7])
     rank_t_flug = []
     for sol in results_t_flug:
@@ -102,17 +103,24 @@ def time_optimize_time_v2(asteroid1, asteroid2, t_start, t_opt):
 
     # Minimum heraussuchen
     # Rang Folge bilden (da nicht unnötig lange Flugzeit gewählt werden sollte)
-    results = []
+    results_t_start = []
     for i in range(0, len(t_start_var)):
         # "Normierung" für ähnliche Skalierung - abs(t_var) da Betrag der Abweichung von t_opt relevant
         # nur t_start, DV (t_flug bereits zuvor gewählt)
-        results.append([abs(t_start_var[i]/10), dv_t_start[i]/1000])
-    weights = np.array([0.3, 0.7])
-    rank = []
-    for sol in results:
-        rank.append(sum(weights * sol))  # Bewertung aus gewichteter Summe
+        results_t_start.append([abs(t_start_var[i]/10), dv_t_start[i]/1000])
 
-    index_min = rank.index(min(rank))
+    weights_neg_var = np.array([1.5, 0.7])
+    weights_pos_var = np.array([0.3, 0.7])
+    weights = weights_pos_var
+    rank_t_start = []
+    for i in range(0, len(results_t_start)):
+        if t_start_var[i] < 0:
+            weights = weights_neg_var
+        else:
+            weights = weights_pos_var
+        rank_t_start.append(sum(weights * results_t_start[i]))  # Bewertung aus gewichteter Summe
+
+    index_min = rank_t_start.index(min(rank_t_start))
 
     # Wertepaar für Index des Minimums
     t_start_min_dv = t_start + t_start_var[index_min]
