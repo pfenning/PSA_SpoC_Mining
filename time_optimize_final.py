@@ -93,4 +93,4 @@ def time_optimize_time_v1(asteroid1, asteroid2, t_start, t_opt):
     t_start_min_dv = t_start + t_start_var[index_min]
     dv_min = dv_t_start[index_min]
 
-    return t_flug_min_dv, t_flug_min_dv, dv_min
+    return t_start_min_dv, t_flug_min_dv, dv_min
