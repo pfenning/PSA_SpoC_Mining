@@ -10,7 +10,7 @@ from spoc_constants import data, asteroids, asteroid_masses, asteroid_materials,
 
 mycluster = pk.phasing.dbscan(asteroids)
 
-t0 = pk.epoch(0)
+t0 = 0
 T = 20
 
 mycluster.cluster(
