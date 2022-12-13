@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pykep as pk
 from scipy.stats import kde
+import random
 
 ################
 ### Constants
@@ -65,18 +66,20 @@ for line in data:
 
 
 # ANGABE START-ASTEROID
-i_start = 226
+i_start = random.randrange(0, len(data),1)
 
 
 # Startwerte
 t_start = [0]
 t_aktuell = [t_start] # Seien wir 0 Tage auf dem ersten Asteroiden stehen geblieben bis 1. Abflug
+t_opt = 30
 # t_aktuell_e = pk.epoch(t_aktuell[-1])
 
 propellant = 1.0 # entspricht DV_max = 10.000
 
 asteroids = asteroids_original
 asteroid1 = asteroids[i_start]        # Der erste Asteroid der Liste wird ausgewählt
+asteroid1_id = i_start
 asteroids = np.delete(asteroids, i_start)
 
 # Laufvariablen
@@ -84,46 +87,49 @@ ERG_t_arr = [0.0]   # double, Ankunftszeit
 ERG_t_m = [0.0]        # double, Verweildauer
 ERG_a = [i_start]   # int, besuchte Asteroiden
 
-bestand = [0.0,0.0,0.0,propellant]
-bestand_rel = [0.0,0.0,0.0,0.0]
+bestand = [0.0, 0.0, 0.0, propellant]
+bestand_rel = [0.0, 0.0, 0.0, 0.0]
 
 
 # Erst mal nur durch die ersten 3 (grenze-1) durchlaufen und gucken, ob alles funktioniert
 var = i_start
-grenze = 60
+grenze = 4
 
 # while t_aktuell < T_DAUER:
 
-while var <= i_start+grenze:
+visited = [i_start]
+while len(visited) <= 30: # <= 10000
 
-    print("Ast " + str(var) + " --> Ast " + str(var+1))
-    asteroid1 = asteroids[var]
+
+# while var <= i_start+grenze:
+    #print("Ast " + str(var) + " --> Ast " + str(var+1))
     propellant = 1.0
+
+    var = visited[-1]
+    asteroid1 = asteroids[var]
     
     #################################
     ### SCHRITT 1:      Clustering
     #################################
     # Annahme:  Wir befinden uns auf einem Asteroiden
 
-    # mycluster = pk.phasing(asteroids)
-    # t0 = 0
-    # T = 20
-    # mycluster.cluster(
-    #     t= t0, 
-    #     eps= 800 ,
-    #     min_samples= 5,
-    #     metric= 'orbital', 
-    #     T= T
-    #     )
-    # asteroid1 = asteroids[mycluster.core_members[0][0]]  # Von Cluster 0 Asteroid 0 wählen
-    # # asteroid2 = asteroids[mycluster.core_members[0][1]]
-    # asteroid2 = asteroids[mycluster.members[0][-1]]
+    from pykep import phasing
 
-    ### ich hab mein Cluster mit 5 Asteroiden bspw. Daraus suche mithilfe der Zeitoptimierung einen Asteroiden mit der optimalsten 
+    knn = phasing.knn(asteroids, ERG_t_arr[-1], 'orbital', T = 30) #                                            ACHTUNG: Referenzradius & -geschw. sind Gürtelabhängig!
+    neighb, neighb_ids, neighb_dis = knn.find_neighbours(var, query_type='ball', r=800)
+    neighb = list(neighb)
+    neighb_ids = list(neighb_ids)
 
-    # Fiktives Cluster aus 5 Asteroiden, weil meins nicht funktioniert
-    cluster = asteroids[1:6] # Asteroiden 1,2,3,4 und 5 (ohne 6!)
+    asteroid2_id = neighb_ids[random.randrange(0, len(neighb),1)]
+    asteroid2 = asteroids[asteroid2_id]
 
+    # print("Nachbarn: ", len(neighb))
+    # print("Näheste Nachbarn: ", neighb_ids)
+    print("Ausgewählter Asteroid2: ", asteroid2_id)
+
+
+    visited.append(asteroid2_id)
+    # print("Besuchte Ast: ", visited)
 
 
     ###################################
@@ -143,7 +149,8 @@ while var <= i_start+grenze:
 
     # Dieser Teil existiert noch nicht  -->     dh. man wählt einen besten Asteroiden aus fürs Erste
 
-    next_best_ast = var+1 # Aktuell laufe ich einfach nur durch mein eigenes Cluster durch
+    # next_best_ast = var+1 # Aktuell laufe ich einfach nur durch mein eigenes Cluster durch
+    # visited.append(next_best_ast)
     
 
     #######################################
@@ -161,12 +168,12 @@ while var <= i_start+grenze:
     #           3.  a_besucht:      Die Indizes der besuchten Planeten, damit keine doppelten Besuche
 
     # Nächster Asteroid
-    asteroid2 = asteroids[next_best_ast]
-    material_to_be_mined = data[next_best_ast,-1].astype(int)
+    # asteroid2 = asteroids[next_best_ast]
+    material_to_be_mined = data[asteroid2_id,-1].astype(int)
     print("Produkt: ", material_to_be_mined)
 
     # Zeitoptimierung       ?       optimale Abbauzeit wird gefordert..woher kommt diese?
-    t_abflug_opt, t_flug_min_dv, dv_min = psa.zeitoptimierung(asteroid1, asteroid2, ERG_t_arr[-1], 20) # Erst mal die optimale Abbauzeit = 20 Tage
+    t_abflug_opt, t_flug_min_dv, dv_min = psa.zeitoptimierung(asteroid1, asteroid2, ERG_t_arr[-1] + t_opt, t_opt) # Erst mal die optimale Abbauzeit = 20 Tage
     
     print("Zeitoptimierung: ", t_abflug_opt, t_flug_min_dv, dv_min)
     
@@ -177,7 +184,7 @@ while var <= i_start+grenze:
     else: 
         ERG_t_m.append(t_abflug_opt - ERG_t_arr[-1])
         ERG_t_arr.append(ERG_t_arr[-1] + ERG_t_m[-1] + t_flug_min_dv)
-    ERG_a.append(next_best_ast)
+    ERG_a.append(asteroid2_id)
 
     # print("t_m: ", ERG_t_m)
     # print("t_arr: ", ERG_t_arr)
@@ -200,21 +207,24 @@ while var <= i_start+grenze:
     #   - Nicht alle Rohstoffe wurden schon vollständig abgebaut. Wenn nicht, dann nächste Suche
 
     # Gütewert J:
-    J = np.min(bestand[0:2])
+    J = - np.min(bestand[0:2])
     print("Gütemaß ohne Tank: ", J)
-    # print("Bestand nach Abbau, Abflugzeitpunkt: ", psa.abbau(bestand, material_to_be_mined, ERG_t_m[-1]))
+    print("Bestand nach Abbau, Abflugzeitpunkt: ", psa.abbau(bestand, material_to_be_mined, ERG_t_m[-1]))
 
     # Verbrauch des Flugs vom Tank abziehen!
     bestand[-1] = propellant - dv_min/10000
     print("Tankfüllung nach Flug: ", bestand[-1])
+    print("Verbrauchter Tank: ", dv_min)
     
     # Asteroiden aus Liste streichen
-    asteroids = np.delete(asteroids, next_best_ast)
+    asteroids = np.delete(asteroids, asteroid2_id)
     print("--------------------------------------------")
-    var += 1
+    
+    # var += 1
 
 print("=====================================================================")
 
+print("Anzahl der besuchten Asteroiden: ", len(visited))
 
 #################################################
 # SCHRITT 6:        Lösungs-Zeitplan erstellen

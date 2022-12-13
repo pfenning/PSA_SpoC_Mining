@@ -1,3 +1,0 @@
-#!c:\users\ingap\onedrive\desktop\uni\wise_22-23\psa\psa_spoc_mining\.venv\scripts\python.exe
-from numba.pycc import main
-main()

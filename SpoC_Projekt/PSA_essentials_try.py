@@ -25,39 +25,39 @@ TIME_TO_MINE_FULLY = 30                         # Maximum time to fully mine an 
 # t_current_e = pk.epoch(0)
 # t_left = 1827 - t_current[-1]
 
-propellant = 1.0
-asteroids = []
-visited = []
-sugg = []                   # hier nicht addieren, immer neu löschen...dann nicht als self, sonder in Schleifen verarbeiten?
-asteroid1 = 0
-asteroid2 = 1
-storage_abs = []
-storage_rel = []
+# propellant = 1.0
+# asteroids = []
+# visited = []
+# sugg = []                   # hier nicht addieren, immer neu löschen...dann nicht als self, sonder in Schleifen verarbeiten?
+# asteroid1 = 0
+# asteroid2 = 1
+# storage_abs = []
+# storage_rel = []
 
 
 ###################
 ### Before start
 ###################
-#   Loading data
+# #   Loading data
 data = np.loadtxt("C:/Users/ingap/OneDrive/Desktop/Uni/WiSe_22-23/PSA/PSA_SpoC_Mining/SpoC_Projekt/data/SpoC_Datensatz.txt")
-for line in data:
-    p = pk.planet.keplerian(
-        T_START,
-        (
-            line[1],
-            line[2],
-            line[3],
-            line[4],
-            line[5],
-            line[6],
-        ),
-        MU_TRAPPIST,
-        G * line[7],  # mass in planet is not used in UDP, instead separate array below
-        1,  # these variable are not relevant for this problem
-        1.1,  # these variable are not relevant for this problem
-        "Asteroid " + str(int(line[0])),
-    )
-    asteroids.append(p)                                                       # ACHTUNG, wirklich p schon anhängen?!?!?!
+# for line in data:
+#     p = pk.planet.keplerian(
+#         T_START,
+#         (
+#             line[1],
+#             line[2],
+#             line[3],
+#             line[4],
+#             line[5],
+#             line[6],
+#         ),
+#         MU_TRAPPIST,
+#         G * line[7],  # mass in planet is not used in UDP, instead separate array below
+#         1,  # these variable are not relevant for this problem
+#         1.1,  # these variable are not relevant for this problem
+#         "Asteroid " + str(int(line[0])),
+#     )
+#     asteroids.append(p)                                                       # ACHTUNG, wirklich p schon anhängen?!?!?!
 # asteroid_masses = data[:, -2]
 # asteroid_materials = data[:, -1].astype(int)
 
@@ -84,43 +84,43 @@ def asteroid_material(i):
     """
     return data[i, -1].astype(int)
 
-def relative_material_stock():
-    """ Bestand der bisher gesammelten Materialien (absolut und relativ) 
-        Aufbau:
-            Material 0-2:   storage_abs[0:2]
-            Material 3:     storage_abs[3]      # = PROPELLANT
-        Rückgabe:
-            storage_rel:
-                Vektor mit dem aktuellen, relativen(!) Bestand aller Materialien
-    """
-    storage_ges = np.sum(storage_abs)
-    for i in range(0,storage_abs.index(storage_abs[-1])+1):
-        storage_rel.append(np.round(storage_abs[i]/storage_ges,3))
-    return storage_rel
+# def relative_material_stock():
+#     """ Bestand der bisher gesammelten Materialien (absolut und relativ) 
+#         Aufbau:
+#             Material 0-2:   storage_abs[0:2]
+#             Material 3:     storage_abs[3]      # = PROPELLANT
+#         Rückgabe:
+#             storage_rel:
+#                 Vektor mit dem aktuellen, relativen(!) Bestand aller Materialien
+#     """
+#     storage_ges = np.sum(storage_abs)
+#     for i in range(0,storage_abs.index(storage_abs[-1])+1):
+#         storage_rel.append(np.round(storage_abs[i]/storage_ges,3))
+#     return storage_rel
 
-def minimal_material():
-    """ Gibt einem das Material wieder, welches bisher am wenigsten abgebaut wurde
-        Rückgabe:
-            STORAGE_min:
-                Menge von Material mit absolutem Minimum
-            storage_min:
-                Menge von Material mit relativem Minimum
-    """
-    min_storage_abs = np.min(storage_abs)
-    min_storage_rel = np.min(storage_rel)
-    return min_storage_abs, min_storage_rel
+# def minimal_material():
+#     """ Gibt einem das Material wieder, welches bisher am wenigsten abgebaut wurde
+#         Rückgabe:
+#             STORAGE_min:
+#                 Menge von Material mit absolutem Minimum
+#             storage_min:
+#                 Menge von Material mit relativem Minimum
+#     """
+#     min_storage_abs = np.min(storage_abs)
+#     min_storage_rel = np.min(storage_rel)
+#     return min_storage_abs, min_storage_rel
 
-def index_minimal_material():
-    """ Gibt einem den Index des Materials, welches bisher am wenigsten abgebaut wurde
-        Rückgabe:
-            STORAGE_min:
-                Index von Material mit absolutem Minimum
-            storage_min:
-                Index von Material mit relativem Minimum
-    """
-    min_storage_abs_ind = storage_abs.index(np.min(storage_abs))
-    min_storage_rel_ind = storage_rel.index(np.min(storage_rel))
-    return min_storage_abs_ind, min_storage_rel_ind
+# def index_minimal_material():
+#     """ Gibt einem den Index des Materials, welches bisher am wenigsten abgebaut wurde
+#         Rückgabe:
+#             STORAGE_min:
+#                 Index von Material mit absolutem Minimum
+#             storage_min:
+#                 Index von Material mit relativem Minimum
+#     """
+#     min_storage_abs_ind = storage_abs.index(np.min(storage_abs))
+#     min_storage_rel_ind = storage_rel.index(np.min(storage_rel))
+#     return min_storage_abs_ind, min_storage_rel_ind
 
 def tof(t_arrival, t_spent):
     """ Berechnet die Flugzeit von Asteroid 1 zu Asteroid 2
@@ -213,26 +213,26 @@ def DV_norm(DV,norm_goal=4000):
 
 # ACHTUNG: CLUSTERING, FUZZY UND ZEITOPTIMIERUNG HÄNGEN ALLE VONEINANDER AB!!!
 
-def fuzzy(cluster, beta=20):
-    """
-    Erwartung:  Most valuable Asteroid (tank, rohstoff, masse)
-    ==> Vorher Abfrage: Wenn Tank kleiner als Grenze (<3000), nur Ast mit Treibstoff betrachten
-            wie viele Ast. mit Kraftstoff sind noch im Cluster? Wenn weniger als beta, dann direkt in Tree-search 
-            (beta hoch, tank nach wechsel wird berücksichtigt)
+# def fuzzy(cluster, beta=20):
+#     """
+#     Erwartung:  Most valuable Asteroid (tank, rohstoff, masse)
+#     ==> Vorher Abfrage: Wenn Tank kleiner als Grenze (<3000), nur Ast mit Treibstoff betrachten
+#             wie viele Ast. mit Kraftstoff sind noch im Cluster? Wenn weniger als beta, dann direkt in Tree-search 
+#             (beta hoch, tank nach wechsel wird berücksichtigt)
 
-    Übergabe:
-        -   cluster:
-                Das bereits minimierte Cluster
-        -   beta:       default = 20
-                Das sind die beta-Besten Asteroiden ausgewählt aus dem übergebenem Cluster
-    """
+#     Übergabe:
+#         -   cluster:
+#                 Das bereits minimierte Cluster
+#         -   beta:       default = 20
+#                 Das sind die beta-Besten Asteroiden ausgewählt aus dem übergebenem Cluster
+#     """
 
-    j = 0
-    if j not in visited:        # j ist der vorgeschlagene Ziel-Asteroid
-        visited.append(j)
-    else: 
-        sugg.pop(j)          # diesen Index aus den Vorschlägen löschen und fuzzy neu auswerten ohne j
-        fuzzy()
+#     j = 0
+#     if j not in visited:        # j ist der vorgeschlagene Ziel-Asteroid
+#         visited.append(j)
+#     else: 
+#         sugg.pop(j)          # diesen Index aus den Vorschlägen löschen und fuzzy neu auswerten ohne j
+#         fuzzy()
 
 
 def zeitoptimierung(asteroid1, asteroid2, t_start, t_opt, print_result=False):
@@ -266,7 +266,7 @@ def zeitoptimierung(asteroid1, asteroid2, t_start, t_opt, print_result=False):
 
     # Variation des Startpunktes bei gegebener Flugzeit
     # vor optimalem Starttag
-    t_start_relativ_var = [0, 0.05, 0.1, 0.2, 0.3] # An Start:  -0.3, -0.2, -0.1, -0.05, 
+    t_start_relativ_var = [-0.3, -0.2, -0.1, -0.05, 0, 0.05, 0.1, 0.2, 0.3] # An Start:  -0.3, -0.2, -0.1, -0.05, 
     t_start_var = []
     for rel in t_start_relativ_var:
         t_start_var.append(rel * t_opt)
