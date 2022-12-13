@@ -82,3 +82,4 @@ time4 = time.perf_counter()
 time_final = time4-time1
 print("Zeitoptimierung (nicht bis t_start=60): ", "t_start:", f"{t_minDV:2f}", "T:", f"{T_minDV:.0f}", "DV::",
       f"{DV_min:.1f}", "Berechnungsdauer:", f"{time_final:.5}")
+

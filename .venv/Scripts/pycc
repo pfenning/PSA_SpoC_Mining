@@ -1,3 +1,0 @@
-#!e:\uni\master\22ws23\psa\python\.venv\scripts\python.exe
-from numba.pycc import main
-main()
