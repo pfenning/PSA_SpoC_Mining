@@ -1,12 +1,14 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import pykep as pk
+from scipy.stats import kde
 
 ################
 ### Constants
 ################
 T_START = pk.epoch_from_iso_string("30190302T000000")   # Start and end epochs
 T_END = pk.epoch_from_iso_string("30240302T000000")
+T_DAUER = 1827
 G = 6.67430e-11                                 # Cavendish constant (m^3/s^2/kg)
 SM = 1.989e30                                   # Sun_mass (kg)
 MS = 8.98266512e-2 * SM                         # Mass of the Trappist-1 star
@@ -15,59 +17,11 @@ DV_per_propellant = 10000                       # DV per propellant [m/s]
 TIME_TO_MINE_FULLY = 30                         # Maximum time to fully mine an asteroid
 
 
-####################
-### Laufvariablen       ==> sollten in self gespeichert werden
-####################
-t_spent = [0] # prepping material
-t_start = [0]
-t_arrival = [0]
-t_current = [0]
-t_current_e = pk.epoch(0)
-t_left = 1827 - t_current
-
-propellant = 1.0
-asteroids = []
-visited = []
-sugg = []                   # hier nicht addieren, immer neu löschen...dann nicht als self, sonder in Schleifen verarbeiten?
-asteroid1 = 0
-asteroid2 = 1
-storage_abs = []
-storage_rel = []
-
-
-###################
-### Before start
-###################
-#   Loading data
-data = np.loadtxt("C:/Users/ingap/OneDrive/Desktop/Uni/WiSe_22-23/PSA/PSA_SpoC_Mining/SpoC_Projekt/data/SpoC_Datensatz.txt")
-for line in data:
-    p = pk.planet.keplerian(
-        T_START,
-        (
-            line[1],
-            line[2],
-            line[3],
-            line[4],
-            line[5],
-            line[6],
-        ),
-        MU_TRAPPIST,
-        G * line[7],  # mass in planet is not used in UDP, instead separate array below
-        1,  # these variable are not relevant for this problem
-        1.1,  # these variable are not relevant for this problem
-        "Asteroid " + str(int(line[0])),
-    )
-    asteroids.append(p)                                                       # ACHTUNG, wirklich p schon anhängen?!?!?!
-# asteroid_masses = data[:, -2]
-# asteroid_materials = data[:, -1].astype(int)
-
-
-
-
 ##############
 ### LETS GO
 ##############
-import PSA_essentials_try
+import PSA_essentials_try as psa
+import time_optimize_final as zeitopti
 
 """ Ablauf der Reise in einer Schleife:
         1.  Clustering, dh. Datenbegrenzung
@@ -85,3 +39,199 @@ import PSA_essentials_try
 
 """
 
+# Loading data as keplerian elements (planets) in an "array"
+data = np.loadtxt("C:/Users/ingap/OneDrive/Desktop/Uni/WiSe_22-23/PSA/PSA_SpoC_Mining/SpoC_Projekt/data/SpoC_Datensatz.txt")
+asteroids_original = []
+for line in data:
+    p = pk.planet.keplerian(
+        T_START,
+        (
+            line[1],
+            line[2],
+            line[3],
+            line[4],
+            line[5],
+            line[6],
+        ),
+        MU_TRAPPIST,
+        G * line[7],  # mass in planet is not used in UDP, instead separate array below
+        1,  # these variable are not relevant for this problem
+        1.1,  # these variable are not relevant for this problem
+        "Asteroid " + str(int(line[0])),
+    )
+    asteroids_original.append(p)
+# asteroid_masses = data[:, -2]
+# asteroid_materials = data[:, -1].astype(int)
+
+
+# ANGABE START-ASTEROID
+i_start = 226
+
+
+# Startwerte
+t_start = [0]
+t_aktuell = [t_start] # Seien wir 0 Tage auf dem ersten Asteroiden stehen geblieben bis 1. Abflug
+# t_aktuell_e = pk.epoch(t_aktuell[-1])
+
+propellant = 1.0 # entspricht DV_max = 10.000
+
+asteroids = asteroids_original
+asteroid1 = asteroids[i_start]        # Der erste Asteroid der Liste wird ausgewählt
+asteroids = np.delete(asteroids, i_start)
+
+# Laufvariablen
+ERG_t_arr = [0.0]   # double, Ankunftszeit
+ERG_t_m = [0.0]        # double, Verweildauer
+ERG_a = [i_start]   # int, besuchte Asteroiden
+
+bestand = [0.0,0.0,0.0,propellant]
+bestand_rel = [0.0,0.0,0.0,0.0]
+
+
+# Erst mal nur durch die ersten 3 (grenze-1) durchlaufen und gucken, ob alles funktioniert
+var = i_start
+grenze = 60
+
+# while t_aktuell < T_DAUER:
+
+while var <= i_start+grenze:
+
+    print("Ast " + str(var) + " --> Ast " + str(var+1))
+    asteroid1 = asteroids[var]
+    propellant = 1.0
+    
+    #################################
+    ### SCHRITT 1:      Clustering
+    #################################
+    # Annahme:  Wir befinden uns auf einem Asteroiden
+
+    # mycluster = pk.phasing(asteroids)
+    # t0 = 0
+    # T = 20
+    # mycluster.cluster(
+    #     t= t0, 
+    #     eps= 800 ,
+    #     min_samples= 5,
+    #     metric= 'orbital', 
+    #     T= T
+    #     )
+    # asteroid1 = asteroids[mycluster.core_members[0][0]]  # Von Cluster 0 Asteroid 0 wählen
+    # # asteroid2 = asteroids[mycluster.core_members[0][1]]
+    # asteroid2 = asteroids[mycluster.members[0][-1]]
+
+    ### ich hab mein Cluster mit 5 Asteroiden bspw. Daraus suche mithilfe der Zeitoptimierung einen Asteroiden mit der optimalsten 
+
+    # Fiktives Cluster aus 5 Asteroiden, weil meins nicht funktioniert
+    cluster = asteroids[1:6] # Asteroiden 1,2,3,4 und 5 (ohne 6!)
+
+
+
+    ###################################
+    # SCHRITT 2:        Fuzzy-Logic
+    ###################################
+    # Annahme:  Cluster wurde gebildet und man hat aus 10.000 nur noch 300 (=beta) mögliche/sinnvolle Asteroiden zur Auswahl
+    # Cluster nicht abhängig von DV, deswegen wird Fuzzy zustätzlich dafür benutzt
+    # ERGEBNIS: beta-Beste Asteroiden werden durch Fuzzy vorgeschlagen
+
+    # Hier muss Mathias' Code eingebaut werden, so gut es geht
+
+    ###################################
+    # SCHRITT 3:        Tree-Search
+    ###################################
+    # Annahmen: Fuzzy hat beta-Beste Asteroiden vorgeschlagen
+    # ERGEBNIS: TS liefert den BESTEN Asteroiden!!
+
+    # Dieser Teil existiert noch nicht  -->     dh. man wählt einen besten Asteroiden aus fürs Erste
+
+    next_best_ast = var+1 # Aktuell laufe ich einfach nur durch mein eigenes Cluster durch
+    
+
+    #######################################
+    # SCHRITT 4:        Zeitoptimierung
+    #######################################
+    # Annahme:  Aus dem Cluster wurden beta-Beste und daraus dann der beste Asteroid ausgewählt
+    # ERGEBNIS: 
+    #   -   Zeitoptimierung:
+    #           -   Optimaler Abflugzeitpunkt bzgl. Abbau, 
+    #           - optimale Flugzeit
+    #           - optimiertes DV werden vorgeschlagen
+    #   -   Lösungsvektoren aktualisieren
+    #           1.  ERG_t_arr:      Ankunftszeitpunkte auf neuem Planeten
+    #           2.  t_aufenthalt:   Dauer auf dem aktuellen Planeten (Abflug minus letzte Ankunft)
+    #           3.  a_besucht:      Die Indizes der besuchten Planeten, damit keine doppelten Besuche
+
+    # Nächster Asteroid
+    asteroid2 = asteroids[next_best_ast]
+    material_to_be_mined = data[next_best_ast,-1].astype(int)
+    print("Produkt: ", material_to_be_mined)
+
+    # Zeitoptimierung       ?       optimale Abbauzeit wird gefordert..woher kommt diese?
+    t_abflug_opt, t_flug_min_dv, dv_min = psa.zeitoptimierung(asteroid1, asteroid2, ERG_t_arr[-1], 20) # Erst mal die optimale Abbauzeit = 20 Tage
+    
+    print("Zeitoptimierung: ", t_abflug_opt, t_flug_min_dv, dv_min)
+    
+    # Lösungsvektoren:
+    if ERG_t_arr[-1] == t_start: 
+        ERG_t_m.append(t_abflug_opt)
+        ERG_t_arr.append(t_abflug_opt + t_flug_min_dv)
+    else: 
+        ERG_t_m.append(t_abflug_opt - ERG_t_arr[-1])
+        ERG_t_arr.append(ERG_t_arr[-1] + ERG_t_m[-1] + t_flug_min_dv)
+    ERG_a.append(next_best_ast)
+
+    # print("t_m: ", ERG_t_m)
+    # print("t_arr: ", ERG_t_arr)
+    # print("a: ", ERG_a)
+
+
+    #######################################
+    # SCHRITT 5:        Abbau und Flug
+    #######################################
+    # Annahme:  Abbau ist fertig oder wird abgebrochen. Dh man befindet sich an Abflugzeit "t_abflug_opt"
+    # ERGEBNIS:
+    #   -   Bestands-Vektoren aktualisieren
+    #   -   Gütemaß berechnen
+    #   -   Tank aktualisieren
+    #
+    # Weitere Bedingungen:
+    #   - Wenn t_opt > 60 :  t_opt = 60
+    #   - Rohstoff max. 30 Tage lang abbauen
+    #   - Es sind noch Rohstoff-Ast. vorhanden. Nur wenn noch vorhanden, dann nächste Suche
+    #   - Nicht alle Rohstoffe wurden schon vollständig abgebaut. Wenn nicht, dann nächste Suche
+
+    # Gütewert J:
+    J = np.min(bestand[0:2])
+    print("Gütemaß ohne Tank: ", J)
+    # print("Bestand nach Abbau, Abflugzeitpunkt: ", psa.abbau(bestand, material_to_be_mined, ERG_t_m[-1]))
+
+    # Verbrauch des Flugs vom Tank abziehen!
+    bestand[-1] = propellant - dv_min/10000
+    print("Tankfüllung nach Flug: ", bestand[-1])
+    
+    # Asteroiden aus Liste streichen
+    asteroids = np.delete(asteroids, next_best_ast)
+    print("--------------------------------------------")
+    var += 1
+
+print("=====================================================================")
+
+
+#################################################
+# SCHRITT 6:        Lösungs-Zeitplan erstellen
+#################################################
+
+import SpoC_Kontrolle as spoc
+
+x = ERG_t_arr + ERG_t_m + ERG_a
+print(spoc.udp.pretty(x))
+
+
+
+###########################################
+# SCHRITT 6:        json-File-Erstellung
+###########################################
+# Annahme:  Flug beendet und Ergebnisvektoren aufgestellt
+# ERGEBNIS: json-File aus den Vektoren wird gebildet
+
+from submisson_helper import create_submission
+create_submission("spoc-mining","mine-the-belt",x,"TUDa_GoldRush_submission_file.json","TUDa_GoldRush","submission_description")

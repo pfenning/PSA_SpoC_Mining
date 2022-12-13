@@ -18,12 +18,12 @@ TIME_TO_MINE_FULLY = 30                         # Maximum time to fully mine an 
 ####################
 ### Laufvariablen       ==> sollten in self gespeichert werden
 ####################
-t_spent = [0] # prepping material
-t_start = [0]
-t_arrival = [0]
-t_current = [0]
-t_current_e = pk.epoch(0)
-t_left = 1827 - t_current
+# t_spent = [0] # prepping material
+# t_start = [0]
+# t_arrival = [0]
+# t_current = [0]
+# t_current_e = pk.epoch(0)
+# t_left = 1827 - t_current[-1]
 
 propellant = 1.0
 asteroids = []
@@ -65,26 +65,26 @@ for line in data:
 ##########################
 ### Essential functions
 ##########################
-def asteroid_masse(self,i):
+def asteroid_masse(i):
     """ Masse vom potentiellen Asteroiden abrufen
         Parameter:
             i:
-                kann evtl. "self.asteroids[asteroid2]" sein!!        ACHTUNG: ASTEROID2 WIRD DURCH LAUFVARIABLE "DURCHGEREICHT"
+                kann evtl. "asteroids[asteroid2]" sein!!        ACHTUNG: ASTEROID2 WIRD DURCH LAUFVARIABLE "DURCHGEREICHT"
         Rückgabe:   
             Masse von Asteroid i zwischen 0 und 1
     """
-    return self.data[i, -2]
+    return data[i, -2]
 
-def asteroid_material(self,i):
+def asteroid_material(i):
     """ Material vom potentiellen Asteroiden abrufen (ist identisch zum Index, den wir benutzen wollen)
         Parameter:
             i:
-                kann evtl. "self.asteroids[asteroid2]" sein!!       ACHTUNG: ASTEROID2 WIRD DURCH LAUFVARIABLE "DURCHGEREICHT"
+                kann evtl. "asteroids[asteroid2]" sein!!       ACHTUNG: ASTEROID2 WIRD DURCH LAUFVARIABLE "DURCHGEREICHT"
         Rückgabe vom Material auf Asteroid i
     """
-    return self.data[i, -1].astype(int)
+    return data[i, -1].astype(int)
 
-def relative_material_stock(self):
+def relative_material_stock():
     """ Bestand der bisher gesammelten Materialien (absolut und relativ) 
         Aufbau:
             Material 0-2:   storage_abs[0:2]
@@ -98,7 +98,7 @@ def relative_material_stock(self):
         storage_rel.append(np.round(storage_abs[i]/storage_ges,3))
     return storage_rel
 
-def minimal_material(self):
+def minimal_material():
     """ Gibt einem das Material wieder, welches bisher am wenigsten abgebaut wurde
         Rückgabe:
             STORAGE_min:
@@ -122,7 +122,7 @@ def index_minimal_material():
     min_storage_rel_ind = storage_rel.index(np.min(storage_rel))
     return min_storage_abs_ind, min_storage_rel_ind
 
-def tof(self):
+def tof(t_arrival, t_spent):
     """ Berechnet die Flugzeit von Asteroid 1 zu Asteroid 2
 
         ACHTUNG: Sicherheit einbauen, dass t_arrival[-1] > t_spent[-2]!! Sonst ist tof negativ!
@@ -130,7 +130,7 @@ def tof(self):
     return (t_arrival[-1] - (t_arrival[-2] + t_spent[-2]))
 
 
-def DV(self,variante,asteroid1,asteroid2,tof,t_spent):
+def get_DV(asteroid1, asteroid2, t_start, t_flug, print_result=False):  #variante="lambert", 
     """ Berechnung von DV mit verschiedenen Varianten
         Args:
             Orbital
@@ -143,151 +143,161 @@ def DV(self,variante,asteroid1,asteroid2,tof,t_spent):
             nächster Asteroid
     """
 
+    # Wenn tof < 0.1, dann ist Flug zu kurz --> singular lambert solution
+
+    # DIE ZEITVEKTOREN BRAUCHEN SCHON 2 EINTRÄGE !!! ANKUNFT & VORBEREITUNG muss bekannt sein
+    #       ==> TOF & t_spent geben wir vor durch Zeitoptimierung!! 
+
+    # r1, v1 = asteroids[asteroid1].eph(T_START.mjd2000 + t_arrival[-2] + t_spent[-2])
+    #t_start_rv1 = T_START.mjd2000 + t_start
+    r1, v1 = asteroid1.eph(T_START.mjd2000 + t_start)
+    
+    # r2, v2 = asteroids[asteroid2].eph(T_START.mjd2000 + t_arrival[-1])
+    r2, v2 = asteroid2.eph(T_START.mjd2000 + t_start + t_flug)
+            
+    l = pk.lambert_problem(r1=r1,r2=r2,tof=t_flug*pk.DAY2SEC, mu=MU_TRAPPIST, cw=False, max_revs=0)
+
+    DV1 = [a - b for a, b in zip(v1, l.get_v1()[0])]
+    DV2 = [a - b for a, b in zip(v2, l.get_v2()[0])]
+    DV = np.linalg.norm(DV1) + np.linalg.norm(DV2)    
+    return DV   
+
     if variante == "orbital":
-        def DV_orbital(self):
+        def DV_orbital():
             pass
     if variante == "direct":
-        def DV_direct(self):
+        def DV_direct():
             pass
     if variante == "indirect":
-        def DV_indirect(self):
+        def DV_indirect():
             pass
     if variante == "lambert":
-        def DV_lambert(self):
+        def DV_lambert():
             
             # Wenn tof < 0.1, dann ist Flug zu kurz --> singular lambert solution
 
             # DIE ZEITVEKTOREN BRAUCHEN SCHON 2 EINTRÄGE !!! ANKUNFT & VORBEREITUNG muss bekannt sein
             #       ==> TOF & t_spent geben wir vor durch Zeitoptimierung!! 
 
-            r1, v1 = self.asteroids[asteroid1].eph(T_START.mjd2000 + t_arrival[-2] + t_spent[-2])
-            r2, v2 = self.asteroids[asteroid2].eph(T_START.mjd2000 + t_arrival[-1])
+            # r1, v1 = asteroids[asteroid1].eph(T_START.mjd2000 + t_arrival[-2] + t_spent[-2])
+            r1, v1 = asteroids[asteroid1].eph(T_START.mjd2000 + t_start)
+            # r2, v2 = asteroids[asteroid2].eph(T_START.mjd2000 + t_arrival[-1])
+            r2, v2 = asteroids[asteroid2].eph(T_START.mjd2000 + t_start + t_flug)
             
-            l = pk.lambert_problem(r1=r1,r2=r2,tof=tof*pk.DAY2SEC, mu=self.MU, cw=False, max_revs=0)
+            l = pk.lambert_problem(r1=r1,r2=r2,tof=tof*pk.DAY2SEC, mu=MU_TRAPPIST, cw=False, max_revs=0)
 
             DV1 = [a - b for a, b in zip(v1, l.get_v1()[0])]
             DV2 = [a - b for a, b in zip(v2, l.get_v2()[0])]
             DV = np.linalg.norm(DV1) + np.linalg.norm(DV2)    
             return DV                                        # ACHTUNG: Hier kommen Werte wie "622902.82..." raus !!
 
-    else: DV_lambert()
+    # else: DV_lambert()
 
-    def propellant_used(self):
-        self.propellant = self.propellant - DV / DV_per_propellant  # Und hier dann prop. -8..von 1 aus gerechnet
+    # def propellant_used():
+    #     propellant = propellant - get_DV / DV_per_propellant  # Und hier dann prop. -8..von 1 aus gerechnet
         
+# print(T_START.mjd2000)
 
-def DV_norm(self):
-    """ Skalierung des DV """                                                                       # AUF WELCHEN BEREICH DENN SKALIERT???
-    pass
+
+def DV_norm(DV,norm_goal=4000):
+    """ Skalierung des DV auf den Wertebereich von      0 bis 4.000   
+    Übergabe:
+        -   DV_norm: 
+                der Wert, der skaliert werden soll!
+        -   norm_goal:
+                Max Skalierungsgrenze (default = 4000)  
+    """
+    return DV/norm_goal
 
 
 
 # ACHTUNG: CLUSTERING, FUZZY UND ZEITOPTIMIERUNG HÄNGEN ALLE VONEINANDER AB!!!
 
-def clustering_fuzzy(self):
-    
-    def clustering(self, i, eps, min_samples, metric, T):   #   Nach welchen Kriterien wird das Cluster gebildet? Ist man da flexibel?
-        """ Festlegung des Clusters
-            WICHTIG: Erstes Cluster ist ganz stark durch den verfügbaren propellant begrenzt
-        """
-        pass
-        # cluster = pk.dbscan(asteroids)
-        # return cluster.cluster(t_arrival[i], eps, min_samples, metric, T)
+def fuzzy(cluster, beta=20):
+    """
+    Erwartung:  Most valuable Asteroid (tank, rohstoff, masse)
+    ==> Vorher Abfrage: Wenn Tank kleiner als Grenze (<3000), nur Ast mit Treibstoff betrachten
+            wie viele Ast. mit Kraftstoff sind noch im Cluster? Wenn weniger als beta, dann direkt in Tree-search 
+            (beta hoch, tank nach wechsel wird berücksichtigt)
 
-    def fuzzy(self): # Mathias
-        """
-            Erwartung:  Most valuable Asteroid (tank, rohstoff, masse)
+    Übergabe:
+        -   cluster:
+                Das bereits minimierte Cluster
+        -   beta:       default = 20
+                Das sind die beta-Besten Asteroiden ausgewählt aus dem übergebenem Cluster
+    """
 
-            ==> Vorher Abfrage: Wenn Tank kleiner als Grenze (<3000), nur Ast mit Treibstoff betrachten
-                    wie viele Ast. mit Kraftstoff sind noch im Cluster? Wenn weniger als beta, dann direkt in Tree-search 
-                    (beta hoch, tank nach wechsel wird berücksichtigt)
-        """
-        f = 0                       # Das ist der Vorschlag von Fuzzy!
-        return f
-
-    j = fuzzy
+    j = 0
     if j not in visited:        # j ist der vorgeschlagene Ziel-Asteroid
         visited.append(j)
     else: 
-        self.sugg.pop(j)          # diesen Index aus den Vorschlägen löschen und fuzzy neu auswerten ohne j
+        sugg.pop(j)          # diesen Index aus den Vorschlägen löschen und fuzzy neu auswerten ohne j
         fuzzy()
 
-def zeitoptimierung(self,asteroid1, asteroid2, t_start, t_opt): # Sebastian
+
+def zeitoptimierung(asteroid1, asteroid2, t_start, t_opt, print_result=False):
     """ Zeitoptimierung von Delta V mit 2 Levels. Erst Flugzeit, dann Startzeit
         Rechenaufwand: Anzahl Flugzeit-Elemente + Anzahl Startzeitpunkte (10+7=17)
-
-        Meine Gedanken:
-            1. Zeitpunkt Abflug (früher aufbrechen?) --> davon ist Clustering enorm abhängig ==> ROHSTOFF GIBT DAS NICHT VOR (noch warten, wenn schon vollst. abgebaut)
-            2. Flugdauer --> beeinflusst DV
 
         Übergabe: Asteroid 1 und 2, optimaler Startpunkt, optimale Abbauzeit auf aktuellem Asteroiden
         Rückgabe: optimaler Startpunkt, optimale Flugzeit, optimiertes DV
         t_start_min_DV_ float
             Startpunkt der optimalen Konstellation
-        tof_min_DV float
+        t_flug_min_DV float
             Flugzeit der optimalen Konstellation
         dv_min float
             Minimales DV
     """
-    # DVs für variable Flugzeiten tof_1, bzw. Variable Startpunkte t_start
-    dv_tof = [] # Flugzeitoptimierung
-    dv_t_start = [] # Startzeitoptimierung
+    # DVs für variable Flugzeiten t_flug_1, bzw. Variable Startpunkte t_start
+    dv_t_flug = []
+    dv_t_start = []
     # Mit der Suche wird am Tag begonnen, an dem der Start-Asteroid vollständig abgebaut ist.
     # zunächst wird nur die Flugzeit optimiert in einem Bereich von 20-30 Tagen
-    # oben ist tof mit 30 angegeben, könnte man auch ändern
-    tof_1 = range(5, 46, 4)
+    # oben ist t_flug mit 30 angegeben, könnte man auch ändern
+    t_flug_1 = range(5, 46, 4)
 
     # Variation der Flugzeit, Startpunkt fest
-    for t in tof_1:
-        dv_tof.append(DV("lambert",asteroid1, asteroid2,t,t_start))
+    for t in t_flug_1:
+        dv_t_flug.append(get_DV(asteroid1, asteroid2, t_start, t))
 
     # Minimum heraussuchen
-    index_min = dv_tof.index(min(dv_tof))
-    tof_min_dv = tof_1[index_min]
+    index_min = dv_t_flug.index(min(dv_t_flug))
+    t_flug_min_dv = t_flug_1[index_min]
 
     # Variation des Startpunktes bei gegebener Flugzeit
     # vor optimalem Starttag
-    t_start_relativ_var = [-0.3, -0.2, -0.1, -0.05, 0, 0.05, 0.1, 0.2, 0.3]
+    t_start_relativ_var = [0, 0.05, 0.1, 0.2, 0.3] # An Start:  -0.3, -0.2, -0.1, -0.05, 
     t_start_var = []
     for rel in t_start_relativ_var:
         t_start_var.append(rel * t_opt)
     # Berechnung für alle Variationen t_var
     for t_var in t_start_var:
         t = t_start + t_var
-        dv_t_start.append(DV("lambert",asteroid1, asteroid2,tof_min_dv,t))   
+        dv_t_start.append(get_DV(asteroid1, asteroid2, t, t_flug_min_dv))
 
     # Minimum heraussuchen
     index_min = dv_t_start.index(min(dv_t_start))
     t_start_min_dv = t_start + t_start_var[index_min]
     dv_min = dv_t_start[index_min]
 
-    return t_start_min_dv, tof_min_dv, dv_min
+    if print_result == True:
+        print({"Opt Start: " + str(t_start_min_dv) + ", Opt. Flugdauer: " + str(t_flug_min_dv) + ", Minimales DV: " + str(dv_min)})
+
+    return t_start_min_dv, t_flug_min_dv, dv_min
 
 
-
-def abbau(self,i):
-    """ Aktualisierung der vorhandenen Vektoren
+def abbau(bestand, material, t_aufenthalt):
+    """ Berechnung des abgebauten Materials
+    Übergabe:
+        -   Material-Index
+        -   Aufenthaltsdauer auf Planet
     """
-    def storage_update():
-        """ Aktualisierung der Rohstoff-Vektoren, Unterschied zwischen Rohstoffen & propellant für den neuen Asteroiden aktualisiert!!!
-        """
-        mat_ind = self.asteroid_material(asteroid2) # Index vom Material
-        # propellant
-        if mat_ind == 3:
-            propellant_found = np.minimum(asteroid_masse(mat_ind), (t_spent[-1]/TIME_TO_MINE_FULLY))
-            propellant = np.minimum(1.0, propellant + propellant_found)
-        # Restliche Rohstoffe
-        self.storage_abs[mat_ind] += np.minimum(asteroid_masse(mat_ind), (t_spent[-1]/TIME_TO_MINE_FULLY))
-        # propellant
-
-
-    def time_update():
-        """ Aktualisierung der Zeiten:
-                1. Ankunft, days (!!)
-                2. Abflug, days --> t_current (t_current = np.append(t_arrival[-1] + t_spent[-1]))
-                3. Abbau-Dauer, days --> (muss alles unter 60 liegen)
-        """
-        pass
+    if material == 3:
+        propellant_found = np.minimum(asteroid_masse(material), (t_aufenthalt/TIME_TO_MINE_FULLY))
+        bestand[material] = np.minimum(1.0, bestand[material] + propellant_found)
+    else:
+        bestand[material] += np.minimum(asteroid_masse(material), (t_aufenthalt/TIME_TO_MINE_FULLY))
+    return bestand
 
 
 
@@ -304,54 +314,54 @@ def gütemaß():
 ### AUF GEHTS INS UNIVERSUM
 ###############################
 
-class PSA_experiment():
-    """ Ablauf der Reise in einer Schleife:
-            1.  Clustering, dh. Datenbegrenzung
-            2.  Flugoptimierung --> gibt tof und t_spent !!!
-            3.  Vorschlag für einen optimalen nächsten Asteroiden mittels Fuzzy-Logik
-            4.  Auswahl des 2. Asteroiden --> gibt den Index 
-        Schleifenabbruchkriterien:
-            1.  Keine Zeit mehr
-            2.  Tank nicht mehr ausreichend für alle möglichen Asteroiden
-            3.  Kein Tank mehr abbaubar
-            4.  Alle Asteroiden besucht
-            5.  Ein Rohstoff ausgeschöpft --> maximale Güte erreicht
-        WICHTIG:
-                Immer abfragen, ob das vorgegebene Zeitfenster noch eingehalten wird (Ankunftszeit - Abflugzeit <=! Zeitfenster)
+# class PSA_experiment():
+#     """ Ablauf der Reise in einer Schleife:
+#             1.  Clustering, dh. Datenbegrenzung
+#             2.  Flugoptimierung --> gibt tof und t_spent !!!
+#             3.  Vorschlag für einen optimalen nächsten Asteroiden mittels Fuzzy-Logik
+#             4.  Auswahl des 2. Asteroiden --> gibt den Index 
+#         Schleifenabbruchkriterien:
+#             1.  Keine Zeit mehr
+#             2.  Tank nicht mehr ausreichend für alle möglichen Asteroiden
+#             3.  Kein Tank mehr abbaubar
+#             4.  Alle Asteroiden besucht
+#             5.  Ein Rohstoff ausgeschöpft --> maximale Güte erreicht
+#         WICHTIG:
+#                 Immer abfragen, ob das vorgegebene Zeitfenster noch eingehalten wird (Ankunftszeit - Abflugzeit <=! Zeitfenster)
 
-    """
+#     """
 
-    def __init__(self, data) :
-        self.data       =   data
-        self.t_current  =   t_current
-        self.t_current_e =  t_current_e
-        self.t_left     =   t_left
-        self.t_spent    =   t_spent 
-        self.t_arrival  =   t_arrival
-        self.propellant =   propellant
-        self.asteroids  =   asteroids
-        self.visited    =   visited
-        self.sugg       =   sugg
-        self.asteroid1  =   asteroid1
-        self.asteroid2  =   asteroid2
-        self.storage_abs =  storage_abs
-        self.storage_rel =  storage_rel
+#     def __init__(self, data) :
+#         self.data       =   data
+#         self.t_current  =   t_current
+#         self.t_current_e =  t_current_e
+#         self.t_left     =   t_left
+#         self.t_spent    =   t_spent 
+#         self.t_arrival  =   t_arrival
+#         self.propellant =   propellant
+#         self.asteroids  =   asteroids
+#         self.visited    =   visited
+#         self.sugg       =   sugg
+#         self.asteroid1  =   asteroid1
+#         self.asteroid2  =   asteroid2
+#         self.storage_abs =  storage_abs
+#         self.storage_rel =  storage_rel
 
-    def journey(self):
-        # asteroid1/2 mit "id" versehen. Dafür richtige Asteroiden-Objekte erstellen
+#     def journey(self):
+#         # asteroid1/2 mit "id" versehen. Dafür richtige Asteroiden-Objekte erstellen
 
-        DV = []
-        i = 0 # Start
-        while i <= 5: #int(data[-1,0]+1): 
-            self.asteroid1 = int(data[i,0])
-            visited.append(self.asteroid1)
+#         DV = []
+#         i = 0 # Start
+#         while i <= 5: #int(data[-1,0]+1): 
+#             self.asteroid1 = int(data[i,0])
+#             visited.append(self.asteroid1)
 
-            # clustering_fuzzy.clustering(i, t_arrival[i], 800, 5,'orbital', 20)      # T wirklich auch 20? warum?
-            i += 1
+#             # clustering_fuzzy.clustering(i, t_arrival[i], 800, 5,'orbital', 20)      # T wirklich auch 20? warum?
+#             i += 1
         
-        return DV('lambert',1,2)
-        print(visited)
-        return visited
+#         return DV('lambert',1,2)
+#         print(visited)
+#         return visited
 
 
             # evtl. Flugoptimierung
@@ -383,4 +393,4 @@ class PSA_experiment():
 
 
 
-experiment = PSA_experiment(data)
+# experiment = PSA_experiment(data)

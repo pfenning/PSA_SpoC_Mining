@@ -116,4 +116,4 @@ asteroid_materials = data[:, -1].astype(int)
 # mat_ind = asteroid_material(asteroid2)
 # print(asteroid_masse(mat_ind), np.minimum(asteroid_masse(mat_ind), (t_spent[-1]/TIME_TO_MINE_FULLY)))
 
-print(data[0])
+

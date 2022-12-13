@@ -1,5 +1,5 @@
 import numpy as np
-from PSA_essentials import PSA_experiment
+# from PSA_essentials import PSA_experiment
 
 
 # Bitte übergeben sie den Pfad zum Datensatz in folgender, beispielhafter Form:
@@ -17,4 +17,7 @@ Datensatz = np.loadtxt("C:/Users/ingap/OneDrive/Desktop/Uni/WiSe_22-23/PSA/PSA_S
 
 # print(Datensatz[int(100.0),0])
 
-print()
+import PSA_essentials_try as psa
+# print(psa.DV_norm(3500))
+
+print(Datensatz[0:5])
