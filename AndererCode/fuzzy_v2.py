@@ -1,5 +1,6 @@
 # ToDo
-#     - sprit ist wichtig -> spritasteroid?
+#   - sprit ist wichtig -> spritasteroid?
+#   - get_fct für Verfügbarkeit der Materialien => unteres und oberes Limit
 
 import numpy as np
 import skfuzzy as fuzz
@@ -150,7 +151,7 @@ plt.title("Subsystem Sprit")
 
 # Subsystem 2 - Material
 bes_test = np.arange(0, 1.1, 0.1)
-verf_test = np.arange(0, 1.1, 0.1)
+verf_test = np.linspace(lower, upper, 11)
 x_sub2, y_sub2 = np.meshgrid(bes_test, verf_test, indexing='ij')
 out_sub2_test = np.zeros_like(x_sub2)
 # Auswerten
@@ -226,7 +227,7 @@ for i in range(0, len(mas_test)):
 
 # Einstellung Plot Darstellung
 # Blickwinkel auf 3D-Plots
-ax1.view_init(20, 110)
+ax1.view_init(20, 120)
 ax1.set_zlim(0, 1)
 ax2.view_init(20, 70)
 ax2.set_zlim(0, 1)
