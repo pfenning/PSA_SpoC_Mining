@@ -61,6 +61,28 @@ for line in data:
 asteroid_masses = data[:, -2]
 asteroid_materials = data[:, -1].astype(int)
 
+data_fuel = []
+asteroids_fuel = []
+i = 0
+while i < len(data):
+    if data[i,-1].astype(int) == 3:
+        data_fuel.append(data[i])
+        i += 1
+    else: i += 1
+for line in data_fuel:
+    p = pk.planet.keplerian(T_START,(line[1],line[2],line[3],line[4],line[5],line[6],),
+        MU_TRAPPIST,
+        G * line[7],  # mass in planet is not used in UDP, instead separate array below
+        1,  # these variable are not relevant for this problem
+        1.1,  # these variable are not relevant for this problem
+        "Asteroid " + str(int(line[0])),
+    )
+    asteroids_fuel.append(p)                                                       # ACHTUNG, wirklich p schon anhängen?!?!?!
+asteroid_masses = data[:, -2]
+asteroid_materials = data[:, -1].astype(int)
+
+
+
 
 
 # class rumspielen:
