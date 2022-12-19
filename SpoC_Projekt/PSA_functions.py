@@ -401,6 +401,7 @@ def clustering_fuel(knn_fuel, var, radius):
     neighb_fuel, neighb_fuel_ids, neighb_fuel_dis = knn_fuel.find_neighbours(var, query_type='ball', r=radius)
     neighb_fuel = list(neighb_fuel)
     neighb_fuel_ids = list(neighb_fuel_ids)
+    neighb_fuel_ids.remove(var)
     return neighb_fuel, neighb_fuel_ids
 
 
@@ -408,12 +409,13 @@ def clustering_fuel(knn_fuel, var, radius):
 
 
 
-def abbau(bestand,ast_id, material, t_aufenthalt):
+def abbau(bestand,ast_id, t_aufenthalt):
     """ Berechnung des abgebauten Materials
     Übergabe:
         -   Material-Index
         -   Aufenthaltsdauer auf Planet
     """
+    material = data[ast_id,-1].astype(int)
     if material == 3:
         propellant_found = np.minimum(asteroid_masse(ast_id), (t_aufenthalt/TIME_TO_MINE_FULLY))
         bestand[material] = np.minimum(1.0, bestand[material] + propellant_found)

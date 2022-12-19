@@ -109,7 +109,7 @@ while i <= len(asteroids):
 
 # Laufvariablen
 ERG_t_arr = [0.0]   # double, Ankunftszeit
-ERG_t_m = [0.0]        # double, Verweildauer
+ERG_t_m = []        # double, Verweildauer
 ERG_a = [i_start]   # int, besuchte Asteroiden
 
 bestand = [0.0, 0.0, 0.0, propellant]
@@ -183,62 +183,44 @@ while len(visited_ind) <= 5: # <= 10000
     i = 0
     dv_min_2 = []
 
+    if ERG_a[-1] == i_start: t_opt = 0
+    else: t_opt = psa.asteroid_masse(asteroid1_id)*30
+
     if bestand[-1] < 0.6:
-        knn_fuel = phasing.knn(asteroids_fuel, ERG_t_arr[-1], 'orbital', T = 30) #                                            ACHTUNG: Referenzradius & -geschw. sind Gürtelabhängig!
+        knn_fuel = phasing.knn(asteroids_fuel, ERG_t_arr[-1]+t_opt, 'orbital', T = 30) #                                            ACHTUNG: Referenzradius & -geschw. sind Gürtelabhängig!
         radius = 4000
         neighb_fuel, neighb_fuel_ids = psa.clustering_fuel(knn_fuel, var, radius)
         print("Nachbarn: ", neighb_fuel_ids)
-
         while i < len(neighb_fuel_ids):
-            if neighb_ids[i] not in visited_ind:
-                asteroid2_fuel_id = neighb_fuel_ids[i]
-                asteroid2 = asteroids[asteroid2_fuel_id]
-                t_abflug_opt_, t_flug_min_dv_, dv_min_ = psa.time_optimize_time_v2(asteroid1, asteroid2, ERG_t_arr[-1] + t_opt, t_opt)        
-                dv_min_2.append(dv_min_)
-                i += 1
-            else:
-                i += 1
-
-# HIER NOCH DEUTLICH FEHLER, WENN INDEX VON AST NICHT ZU GRÖßE VON AST_FUEL PASST
-
+            asteroid2_fuel_id = neighb_fuel_ids[i]
+            asteroid2 = asteroids[asteroid2_fuel_id]
+            t_abflug_opt_, t_flug_min_dv_, dv_min_ = psa.time_optimize_time_v2(asteroid1, asteroid2, ERG_t_arr[-1] + t_opt, t_opt)        
+            dv_min_2.append(dv_min_)
+            i += 1
         dv_min_2_intermediate_INDEX = dv_min_2.index(min(dv_min_2))
         asteroid2_id = neighb_fuel_ids[dv_min_2_intermediate_INDEX]
         asteroid2 = asteroids[asteroid2_id]
-        np.delete(asteroids_fuel, asteroid2_id)
 
     else:
-        knn = phasing.knn(asteroids, ERG_t_arr[-1], 'orbital', T = 30) #                                            ACHTUNG: Referenzradius & -geschw. sind Gürtelabhängig!
+        knn = phasing.knn(asteroids, ERG_t_arr[-1]+t_opt, 'orbital', T = 30) #                                            ACHTUNG: Referenzradius & -geschw. sind Gürtelabhängig!
         radius = 4000
         neighb, neighb_ids = psa.clustering(knn, var, radius)
         while i < len(neighb_ids):
-            if neighb_ids[i] not in visited_ind:
                 asteroid2_id = neighb_ids[i]
                 asteroid2 = asteroids[asteroid2_id]
                 t_abflug_opt_, t_flug_min_dv_, dv_min_ = psa.time_optimize_time_v2(asteroid1, asteroid2, ERG_t_arr[-1] + t_opt, t_opt)        
                 dv_min_2.append(dv_min_)
                 i += 1
-            else:
-                i += 1
         dv_min_2_intermediate_INDEX = dv_min_2.index(min(dv_min_2))
         asteroid2_id = neighb_ids[dv_min_2_intermediate_INDEX]
         asteroid2 = asteroids[asteroid2_id]
 
-    consumption = dv_min_2[dv_min_2_intermediate_INDEX]
-    DV = consumption/10000
-    # print("Verbrauch Min: ", consumption)
-    print("DV: ", DV)
 
-    # Asteroiden aus Liste streichen
-    np.delete(asteroids, asteroid2_id)
-    visited_ind.append(asteroid2_id)  
-    print("Besuchte Asteroiden: ", visited_ind)
 
 # ACHTUNG: WENN CLUSTER DURCH BEDINGUNG LEER, DANN IST "dv_min_2" LEER !!! 
 # DAS IST ZU VERMEIDEN!!!!!! => Was dann ?!?!?!
 
-    # Verbrauch des Flugs vom Tank abziehen!
-    bestand[-1] = bestand[-1]- DV
-    # print("Tank nach Flug, vor Abbau: ", bestand[-1])
+
 
 
     ###################################
@@ -278,24 +260,20 @@ while len(visited_ind) <= 5: # <= 10000
     #           2.  t_aufenthalt:   Dauer auf dem aktuellen Planeten (Abflug minus letzte Ankunft)
     #           3.  a_besucht:      Die Indizes der besuchten Planeten, damit keine doppelten Besuche
 
-    # Nächster Asteroid
-    # asteroid2 = asteroids[next_best_ast]
-    material_to_be_mined = data[asteroid2_id,-1].astype(int)
-    print("Produkt: ", material_to_be_mined)
 
-    # # Zeitoptimierung       ?       optimale Abbauzeit wird gefordert..woher kommt diese?
-    # t_abflug_opt, t_flug_min_dv, dv_min = psa.time_optimize_time_v2(asteroid1, asteroid2, ERG_t_arr[-1] + t_opt, t_opt) # Erst mal die optimale Abbauzeit = 20 Tage
-    
-    # print("Zeitoptimierung: ", t_abflug_opt, t_flug_min_dv, dv_min)
     
     # Lösungsvektoren:
-    if ERG_t_arr[-1] == t_start: 
-        ERG_t_m.append(t_abflug_opt_)
-        ERG_t_arr.append(t_abflug_opt_ + t_flug_min_dv_)
-    else: 
-        ERG_t_m.append(t_abflug_opt_ - ERG_t_arr[-1])
-        ERG_t_arr.append(ERG_t_arr[-1] + ERG_t_m[-1] + t_flug_min_dv_)
+    ERG_t_m.append(t_abflug_opt_ - ERG_t_arr[-1])
+    ERG_t_arr.append(t_abflug_opt_ + t_flug_min_dv_)
     ERG_a.append(asteroid2_id)
+
+    # if ERG_a[-1] == i_start: 
+    #     ERG_t_m.append(t_abflug_opt_)
+    #     ERG_t_arr.append(t_abflug_opt_ + t_flug_min_dv_)
+    # else: 
+    #     ERG_t_m.append(t_abflug_opt_ - ERG_t_arr[-1])
+    #     ERG_t_arr.append(ERG_t_arr[-1] + ERG_t_m[-1] + t_flug_min_dv_)
+    # ERG_a.append(asteroid2_id)
 
     # print("t_m: ", ERG_t_m)
     # print("t_arr: ", ERG_t_arr)
@@ -316,13 +294,35 @@ while len(visited_ind) <= 5: # <= 10000
     #   - Es sind noch Rohstoff-Ast. vorhanden. Nur wenn noch vorhanden, dann nächste Suche
     #   - Nicht alle Rohstoffe wurden schon vollständig abgebaut. Wenn nicht, dann nächste Suche
 
-    # Gütewert J:
-    
-    abbau = psa.abbau(bestand, asteroid2_id, material_to_be_mined, ERG_t_m[-1])
-    
-    print("Bestand nach Abbau, Abflugzeitpunkt: ", abbau)
+
+    print("Produkt: ", data[asteroid1_id,-1].astype(int))
+
+    # Neuer Bestand
+    psa.abbau(bestand, asteroid1_id, ERG_t_m[-1])
+    print("Bestand nach Abbau, vor Abflug: ", bestand)
+
+    # Gütemaß
     J = - np.min(bestand[0:2])
     print("Gütemaß ohne Tank: ", J)
+
+
+    # Abbau abgeschlossen, jetzt Flug zum nächsten Asteroiden
+    consumption = dv_min_2[dv_min_2_intermediate_INDEX]
+    DV = consumption/10000
+    # Tank NACH dem Landen auf Ast 2
+    bestand[-1] = bestand[-1] - DV
+
+
+
+    # Asteroiden aus Liste streichen
+    if asteroid_materials(asteroid2_id) == 3:
+        np.delete(asteroids_fuel, asteroid2_id)
+        np.delete(asteroids, asteroid2_id)
+    else: np.delete(asteroids, asteroid2_id)
+    visited_ind.append(asteroid2_id)  
+    print("Besuchte Asteroiden: ", visited_ind)
+
+
 
 
     
@@ -342,10 +342,10 @@ print("Anzahl der besuchten Asteroiden: ", len(visited_ind))
 
 import from_website.SpoC_Kontrolle as spoc
 
-x = ERG_t_arr + ERG_t_m + ERG_a
+x = ERG_t_arr[0:-2] + ERG_t_m + ERG_a[0:-2]
 print(spoc.udp.pretty(x))
 
-
+### Beschränkung von t_m : Wenn t_arr + t_m > max_Zeit, usw...
 
 ###########################################
 # SCHRITT 6:        json-File-Erstellung
