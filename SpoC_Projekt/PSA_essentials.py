@@ -42,7 +42,7 @@ import time_optimize_final as zeitopti
 
 # Loading data as keplerian elements (planets) in an "array"
 data = np.loadtxt("C:/Users/ingap/OneDrive/Desktop/Uni/WiSe_22-23/PSA/PSA_SpoC_Mining/SpoC_Projekt/data/SpoC_Datensatz.txt")
-asteroids_original = []
+asteroids = []
 for line in data:
     p = pk.planet.keplerian(
         T_START,
@@ -60,7 +60,7 @@ for line in data:
         1.1,  # these variable are not relevant for this problem
         "Asteroid " + str(int(line[0])),
     )
-    asteroids_original.append(p)
+    asteroids.append(p)
 # asteroid_masses = data[:, -2]
 # asteroid_materials = data[:, -1].astype(int)
 
@@ -77,10 +77,17 @@ t_opt = 30
 
 propellant = 1.0 # entspricht DV_max = 10.000
 
-asteroids = asteroids_original
 asteroid1 = asteroids[i_start]        # Der erste Asteroid der Liste wird ausgewählt
 asteroid1_id = i_start
 asteroids = np.delete(asteroids, i_start)
+
+# Tank-Asteroiden
+asteroids_fuel_ind = []
+i = 0
+while i <= len(asteroids):
+    if data[i,-1].astype(int) == 3:
+        asteroids_fuel_ind.append(i)
+    i += 1
 
 # Laufvariablen
 ERG_t_arr = [0.0]   # double, Ankunftszeit
@@ -91,22 +98,24 @@ bestand = [0.0, 0.0, 0.0, propellant]
 bestand_rel = [0.0, 0.0, 0.0, 0.0]
 
 
-# Erst mal nur durch die ersten 3 (grenze-1) durchlaufen und gucken, ob alles funktioniert
-var = i_start
-grenze = 4
+# # Erst mal nur durch die ersten 3 (grenze-1) durchlaufen und gucken, ob alles funktioniert
+# var = i_start
+# grenze = 4
 
 # while t_aktuell < T_DAUER:
 
-visited = [i_start]
-while len(visited) <= 30: # <= 10000
 
 
 # while var <= i_start+grenze:
+print("Start-Asteroid: ", i_start)
+visited_ind = [i_start]
+while len(visited_ind) <= 5: # <= 10000
     #print("Ast " + str(var) + " --> Ast " + str(var+1))
-    propellant = 1.0
+    # propellant = 1.0
 
-    var = visited[-1]
+    var = visited_ind[-1]
     asteroid1 = asteroids[var]
+    # print("Asteroid1: ", asteroid1)
     
     #################################
     ### SCHRITT 1:      Clustering
@@ -116,20 +125,41 @@ while len(visited) <= 30: # <= 10000
     from pykep import phasing
 
     knn = phasing.knn(asteroids, ERG_t_arr[-1], 'orbital', T = 30) #                                            ACHTUNG: Referenzradius & -geschw. sind Gürtelabhängig!
-    neighb, neighb_ids, neighb_dis = knn.find_neighbours(var, query_type='ball', r=800)
+    neighb, neighb_ids, neighb_dis = knn.find_neighbours(var, query_type='ball', r=1500)
     neighb = list(neighb)
     neighb_ids = list(neighb_ids)
 
-    asteroid2_id = neighb_ids[random.randrange(0, len(neighb),1)]
+    # print(len(neighb_ids))
+    print("Nachbarn: ", neighb_ids)
+
+    i = 0
+    dv_min_2 = []
+
+#################################################################################################################################################
+    if bestand[-1] <= 0.3:
+        asteroids_fuel_ind
+
+
+    while i < len(neighb_ids):
+        asteroid2_id = neighb_ids[i]
+        asteroid2 = asteroids[asteroid2_id]
+        t_abflug_opt_, t_flug_min_dv_, dv_min_ = psa.zeitoptimierung(asteroid1, asteroid2, ERG_t_arr[-1] + t_opt, t_opt)
+        dv_min_2.append(dv_min_)
+        i += 1
+
+    #print("dv_min_2: ", dv_min_2)
+    dv_min_2_intermediate_INDEX = dv_min_2.index(min(dv_min_2))
+    #print("dv_min_2_ind: ", dv_min_2_intermediate_INDEX)
+    #print("Ast 2 index: ", neighb_ids[dv_min_2.index(min(dv_min_2))])
     asteroid2 = asteroids[asteroid2_id]
 
-    # print("Nachbarn: ", len(neighb))
-    # print("Näheste Nachbarn: ", neighb_ids)
-    print("Ausgewählter Asteroid2: ", asteroid2_id)
+    # Asteroiden aus Liste streichen
+    asteroids = np.delete(asteroids, asteroid2_id)
+    visited_ind.append(asteroid2_id)
+    
+        
+    print("Besuchte Asteroiden: ", visited_ind)
 
-
-    visited.append(asteroid2_id)
-    # print("Besuchte Ast: ", visited)
 
 
     ###################################
@@ -150,8 +180,10 @@ while len(visited) <= 30: # <= 10000
     # Dieser Teil existiert noch nicht  -->     dh. man wählt einen besten Asteroiden aus fürs Erste
 
     # next_best_ast = var+1 # Aktuell laufe ich einfach nur durch mein eigenes Cluster durch
-    # visited.append(next_best_ast)
+    # visited_ind.append(next_best_ast)
     
+
+
 
     #######################################
     # SCHRITT 4:        Zeitoptimierung
@@ -188,7 +220,7 @@ while len(visited) <= 30: # <= 10000
 
     # print("t_m: ", ERG_t_m)
     # print("t_arr: ", ERG_t_arr)
-    # print("a: ", ERG_a)
+    print("a: ", ERG_a)
 
 
     #######################################
@@ -216,15 +248,15 @@ while len(visited) <= 30: # <= 10000
     print("Tankfüllung nach Flug: ", bestand[-1])
     print("Verbrauchter Tank: ", dv_min)
     
-    # Asteroiden aus Liste streichen
-    asteroids = np.delete(asteroids, asteroid2_id)
+    
     print("--------------------------------------------")
     
     # var += 1
+    
 
 print("=====================================================================")
 
-print("Anzahl der besuchten Asteroiden: ", len(visited))
+print("Anzahl der besuchten Asteroiden: ", len(visited_ind))
 
 #################################################
 # SCHRITT 6:        Lösungs-Zeitplan erstellen
