@@ -39,19 +39,22 @@ import PSA_functions as psa
             Immer abfragen, ob das vorgegebene Zeitfenster noch eingehalten wird (Ankunftszeit - Abflugzeit <=! Zeitfenster)
 
 """
-
 #################
-### ASTEROIDS:  Creating lists with indices of asteroids
+# ASTEROIDS:  Creating lists with indices of asteroids
 #################
 
 # Lists to be created
 asteroids_kp = []
 asteroids_idx = []
+asteroids_fuel_kp = []
 asteroids_fuel_idx = []
 
 
 # Loading data as keplerian elements (planets) in an "array"
-data = np.loadtxt("C:/Users/ingap/OneDrive/Desktop/Uni/WiSe_22-23/PSA/PSA_SpoC_Mining/SpoC_Projekt/data/SpoC_Datensatz.txt")
+# data = np.loadtxt("C:/Users/ingap/OneDrive/Desktop/Uni/WiSe_22-23/PSA/PSA_SpoC_Mining/SpoC_Projekt/data/SpoC_Datensatz.txt")
+# data = open('SpoC_Datensatz.txt', 'r')
+data = np.loadtxt("SpoC_Datensatz.txt")
+
 for line in data:
     p = pk.planet.keplerian(
         T_START,
@@ -69,16 +72,11 @@ for line in data:
         1.1,  # these variable are not relevant for this problem
         "Asteroid " + str(int(line[0])),
     )
+    if line[-1] == 3:
+        asteroids_fuel_idx.append(int(line[0]))
+        asteroids_fuel_kp.append(p)
+    asteroids_idx.append(int(line[0]))
     asteroids_kp.append(p)
-asteroids_idx = werte = list(range(int(len(asteroids_kp))))
-
-# hier Liste erstellen mit Asteroiden des Material 3
-i = 0
-while i < len(data):
-    if data[i,-1].astype(int) == 3:
-        asteroids_fuel_idx.append(asteroids_idx[i])
-        i += 1
-    else: i += 1
 
 
 # SONSTIGES, NOCH SORTIEREN
@@ -90,7 +88,9 @@ asteroid_1_idx = i_start
 if data[i_start,1].astype(int) == 3: 
     asteroids_idx.remove(i_start)
     asteroids_fuel_idx.remove(i_start)
-else: asteroids_fuel_idx.remove(i_start)
+else:
+    asteroids_idx.remove(i_start)
+
 
 
 
@@ -119,14 +119,16 @@ propellant = 1.0 # entspricht DV_max = 10.000
 bestand = [0.0, 0.0, 0.0, propellant]
 bestand_rel = [0.0, 0.0, 0.0, 0.0]
 
+verf = np.array([0.03, 0.4, 0.42, 0.15])  # ToDo: Verfügbarkeit berechnen
 
-
+from _Extra._Mathias.fuzzy_system import FuzzySystem
+my_system = FuzzySystem(verf.min(), verf.max(), resolution=0.05)
 
 
 # while var <= i_start+grenze:
 print("Start-Asteroid: ", i_start)
 
-while len(ERG_a) <= 1: # <= 10000
+while len(ERG_a) <= 30:     # <= 10000
     asteroid_1_idx = ERG_a[-1]                  # aktueller Asteroid
     asteroid_1_kp = asteroids_kp[asteroid_1_idx]   # aktueller Asteroid inkl Kepler-Inofs
 
@@ -135,7 +137,9 @@ while len(ERG_a) <= 1: # <= 10000
     #################################
     # Annahme:  Wir befinden uns auf einem Asteroiden
     i = 0
-    dv_min_2 = []
+    # dv_min_2 = []
+    score_2 = []
+    flight_opt = []
 
     # Optimale Zeit für die Zeitoptimierung anpassen
     if ERG_a[-1] == i_start: t_opt = 0
@@ -145,13 +149,10 @@ while len(ERG_a) <= 1: # <= 10000
     if bestand[-1] < 0.6:
 
         # Lister mit Asteroiden in Keppler-Form!! 
-        asteroids_fuel_kp = []
-        k = 0
-        while k < len(asteroids_fuel_idx):
-            asteroids_fuel_kp.append(asteroids_kp[asteroids_fuel_idx[k]])
-            k += 1
+        asteroids_fuel_kp_copy = [asteroids_kp[id] for id in asteroids_fuel_idx]
+        asteroids_fuel_kp_copy.append(asteroids_kp[asteroid_1_idx])
 
-        knn_fuel = phasing.knn(asteroids_fuel_kp, ERG_t_arr[-1]+t_opt, 'orbital', T = 30) #                                            ACHTUNG: Referenzradius & -geschw. sind Gürtelabhängig!
+        knn_fuel = phasing.knn(asteroids_fuel_kp_copy, ERG_t_arr[-1]+t_opt, 'orbital', T=30) #    ACHTUNG: Referenzradius & -geschw. sind Gürtelabhängig!
         radius = 4000
         neighb_fuel_idx = psa.clustering_fuel(knn_fuel, asteroids_kp, asteroid_1_idx, radius) # neighb_fuel, neighb_fuel_idx
         print("Nachbarn: ", neighb_fuel_idx)
@@ -159,35 +160,61 @@ while len(ERG_a) <= 1: # <= 10000
         while i < len(neighb_fuel_idx):
             asteroid_2_idx = neighb_fuel_idx[i]
             asteroid_2_kp = asteroids_kp[neighb_fuel_idx[i]]
-            t_abflug_opt_, t_flug_min_dv_, dv_min_ = psa.time_optimize_time_v2(asteroid_1_kp, asteroid_2_kp, ERG_t_arr[-1] + t_opt, t_opt)        
-            dv_min_2.append(dv_min_)
+            t_abflug_opt_, t_flug_min_dv_, dv_min_ = psa.time_optimize_time_v2(asteroid_1_kp, asteroid_2_kp, ERG_t_arr[-1] + t_opt, t_opt)
+            score = my_system.calculate_score(
+                t_n= bestand[-1]-dv_min_,
+                delta_v=dv_min_,
+                bes=bestand[psa.asteroid_material(asteroid_2_idx)],
+                verf=verf[psa.asteroid_material(asteroid_2_idx)],
+                mas=psa.asteroid_masse(asteroid_2_idx))
+            # dv_min_2.append(dv_min_)
+            score_2.append(score)
+            flight_opt.append([t_abflug_opt_, t_flug_min_dv_, dv_min_])
             i += 1
 
-        dv_min_2_intermediate_INDEX = dv_min_2.index(min(dv_min_2))
-        asteroid_2_idx = neighb_fuel_idx[dv_min_2_intermediate_INDEX]
+        # dv_min_2_intermediate_INDEX = dv_min_2.index(min(dv_min_2))
+        # asteroid_2_idx = neighb_fuel_idx[dv_min_2_intermediate_INDEX]
+        score_2_idx = score_2.index(max(score_2))
+        t_abflug_opt_, t_flug_min_dv_, dv_min_ = flight_opt[score_2_idx]
+        asteroid_2_idx = neighb_fuel_idx[score_2_idx]
         asteroid_2_kp = asteroids_kp[asteroid_2_idx]
-        print("Verbrauchtes DV: ", min(dv_min_2))
+        print("Verbrauchtes DV: ", dv_min_)
 
     else:
-        knn = phasing.knn(asteroids_kp, ERG_t_arr[-1]+t_opt, 'orbital', T = 30) #                                            ACHTUNG: Referenzradius & -geschw. sind Gürtelabhängig!
+        asteroids_kp_copy = [asteroids_kp[id] for id in asteroids_fuel_idx]
+        asteroids_kp_copy.append(asteroids_kp[asteroid_1_idx])
+
+        knn = phasing.knn(asteroids_kp_copy, ERG_t_arr[-1]+t_opt, 'orbital', T = 30) #                                            ACHTUNG: Referenzradius & -geschw. sind Gürtelabhängig!
         radius = 4000
         neighb_idx = psa.clustering(knn, asteroids_kp, asteroid_1_idx, radius) # neighb, neighb_idx
 
         while i < len(neighb_idx):
             asteroid_2_idx = neighb_idx[i]
             asteroid_2_kp = asteroids_kp[neighb_idx[i]]
-            t_abflug_opt_, t_flug_min_dv_, dv_min_ = psa.time_optimize_time_v2(asteroid_1_kp, asteroid_2_kp, ERG_t_arr[-1] + t_opt, t_opt)        
-            dv_min_2.append(dv_min_)
+            t_abflug_opt_, t_flug_min_dv_, dv_min_ = psa.time_optimize_time_v2(asteroid_1_kp, asteroid_2_kp, ERG_t_arr[-1] + t_opt, t_opt)
+            score = my_system.calculate_score(
+                t_n=bestand[-1] - dv_min_,
+                delta_v=dv_min_,
+                bes=bestand[psa.asteroid_material(asteroid_2_idx)],
+                verf=verf[psa.asteroid_material(asteroid_2_idx)],
+                mas=psa.asteroid_masse(asteroid_2_idx))
+            # dv_min_2.append(dv_min_)
+            score_2.append(score)
+            flight_opt.append([t_abflug_opt_, t_flug_min_dv_, dv_min_])
             i += 1
 
-        dv_min_2_intermediate_INDEX = dv_min_2.index(min(dv_min_2))
-        asteroid_2_id = neighb_idx[dv_min_2_intermediate_INDEX]
+        # dv_min_2_intermediate_INDEX = dv_min_2.index(min(dv_min_2))
+        # asteroid_2_idx = neighb_fuel_idx[dv_min_2_intermediate_INDEX]
+        score_2_idx = score_2.index(max(score_2))
+        t_abflug_opt_, t_flug_min_dv_, dv_min_ = flight_opt[score_2_idx]
+        asteroid_2_idx = neighb_idx[score_2_idx]
         asteroid_2_kp = asteroids_kp[asteroid_2_idx]
+        print("Verbrauchtes DV: ", dv_min_)
 
         # PRÜFUNG von DV
-        print("get_DV: ", psa.get_dv(asteroid_1_kp, asteroid_2_kp, t_abflug_opt_, t_flug_min_dv_))
+        # print("get_DV: ", psa.get_dv(asteroid_1_kp, asteroid_2_kp, t_abflug_opt_, t_flug_min_dv_))
         # print("Alle möglichen DV: ", dv_min_2)
-        print("Notw DV: ", min(dv_min_2))
+        # print("Notw DV: ", min(dv_min_2))
 
 
 
@@ -203,8 +230,9 @@ while len(ERG_a) <= 1: # <= 10000
     # Annahme:  Cluster wurde gebildet und man hat aus 10.000 nur noch 300 (=beta) mögliche/sinnvolle Asteroiden zur Auswahl
     # Cluster nicht abhängig von DV, deswegen wird Fuzzy zustätzlich dafür benutzt
     # ERGEBNIS: beta-Beste Asteroiden werden durch Fuzzy vorgeschlagen
-    import Copy_Mathias as mt
-    
+
+
+
 
     # calculate score
 
@@ -285,7 +313,7 @@ while len(ERG_a) <= 1: # <= 10000
 
 
     # Abbau abgeschlossen, jetzt Flug zum nächsten Asteroiden
-    DV = min(dv_min_2)/10000
+    DV = dv_min_/10000
     # Tank NACH dem Landen auf Ast 2
     bestand[-1] = bestand[-1] - DV
 
@@ -315,8 +343,7 @@ print("Anzahl der besuchten Asteroiden: ", len(ERG_a))
 #################################################
 # SCHRITT 6:        Lösungs-Zeitplan erstellen
 #################################################
-
-import from_website.SpoC_Kontrolle as spoc
+from from_website import SpoC_Kontrolle as spoc
 
 x = ERG_t_arr[0:-2] + ERG_t_m + ERG_a[0:-2]
 print(spoc.udp.pretty(x))

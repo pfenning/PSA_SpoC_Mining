@@ -41,7 +41,7 @@ TIME_TO_MINE_FULLY = 30                         # Maximum time to fully mine an 
 ### Before start
 ###################
 # #   Loading data
-data = np.loadtxt("C:/Users/ingap/OneDrive/Desktop/Uni/WiSe_22-23/PSA/PSA_SpoC_Mining/SpoC_Projekt/data/SpoC_Datensatz.txt")
+data = np.loadtxt("SpoC_Datensatz.txt")
 # for line in data:
 #     p = pk.planet.keplerian(
 #         T_START,
@@ -191,7 +191,10 @@ def clustering(knn, asteroids_kp, asteroid_1_idx, radius):
     # neighb = list(neighb)
     neighb_ids = list(neighb_ids)
     # neighb.remove(asteroid_1_idx)
-    neighb_ids.remove(asteroid_1_idx)
+    try:
+        neighb_ids.remove(asteroid_1_idx)
+    except ValueError:
+        pass
     return neighb_ids
 
 def clustering_fuel(knn_fuel, asteroids_kp, asteroid_1_idx, radius):
@@ -201,11 +204,15 @@ def clustering_fuel(knn_fuel, asteroids_kp, asteroid_1_idx, radius):
         3) asteroid_1_idx:      Index vom aktuellen Asteroiden
         4) rdius:               Begrenzung des Clusters auf max. Radius   
     '''
+    # ToDO: Variablen müssten nicht zugewiesen werden
     neighb_fuel, neighb_fuel_ids, neighb_fuel_dis = knn_fuel.find_neighbours(asteroids_kp[asteroid_1_idx], query_type='ball', r=radius)
     # neighb_fuel = list(neighb_fuel)
     neighb_fuel_ids = list(neighb_fuel_ids)
     # neighb_fuel.remove(asteroid_1_idx) #remove(asteroids_idx[asteroid_1_idx])
-    neighb_fuel_ids.remove(asteroid_1_idx)
+    try:
+        neighb_fuel_ids.remove(asteroid_1_idx)
+    except ValueError:
+        pass
     return neighb_fuel_ids
 
 # ToDo: Zeitraum der Flugzeit neu definieren (z.B. auf 5-46 in 4er Schritten)

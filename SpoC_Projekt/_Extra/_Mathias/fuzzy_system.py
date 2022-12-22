@@ -18,7 +18,7 @@ def _fit_to_resolution(num, resolution, fit_type='true'):
     """
     if fit_type == 'lower':
         return resolution * int(num / resolution)
-    #lif fit_type == 'upper':
+    elif fit_type == 'upper':
         return resolution * (int(num / resolution)+1)
     else:
         return resolution * int(round(num/resolution))
@@ -36,7 +36,7 @@ def _item_count(resolution, lower=0, upper=1):
 
 
 def _transform(x, x_min=0, x_max=1):
-    return (x-x_min)/(x_min-x_max)
+    return (x-x_min)/(x_max-x_min)
 
 
 class FuzzySystem:
@@ -174,17 +174,16 @@ class FuzzySystem:
 
         # Fields
         self.resolution = resolution
-        self.map_resolution = self.resolution
-        self.mas_map = None
-        self.sprit_map = None
-        self.rele_map = None
-        self.t_n_map = None
-        self.delt_map = None
-        self.verf_map = None
-        self.bes_map = None
-        self.out_sub_1_map = None
-        self.out_sub_2_map = None
-        self.score_map = None
+        self.t_n_map = np.linspace(0, 1, _item_count(self.resolution))
+        self.delt_map = np.linspace(0, 1, _item_count(self.resolution))
+        self.verf_map = np.linspace(0, 1, _item_count(self.resolution))
+        self.bes_map = np.linspace(0, 1, _item_count(self.resolution))
+        self.mas_map = np.linspace(0, 1, _item_count(self.resolution))
+        self.sprit_map = np.linspace(0, 1, _item_count(self.resolution))
+        self.rele_map = np.linspace(0, 1, _item_count(self.resolution))
+        self.out_sub_1_map = np.zeros((len(self.t_n_map), len(self.delt_map)))
+        self.out_sub_2_map = np.zeros((len(self.verf_map), len(self.bes_map)))
+        self.score_map = np.zeros((len(self.mas_map), len(self.sprit_map), len(self.rele_map)))
 
     def calculate_score(self, t_n, delta_v, bes, verf, mas):
         """
@@ -196,14 +195,15 @@ class FuzzySystem:
         :param mas: Masse des Zielasteroiden
         :return: Bewertung des Asteroidenwechsels
         """
+        # Skalierung der Verfügbarkeit
+        verf = _transform(verf, self.verf_min, self.verf_max)
+
         # Subsystem 1 - Sprit
         self.sub_sys.input['Tank nach Wechsel'] = t_n
         self.sub_sys.input['Spritverbrauch'] = delta_v
         self.sub_sys.compute()
         sprit = self.sub_sys.output['Ausgang Subsystem 1']
-        return sprit    # ToDo: Nur zum Testen eingefügt
-        # Skalierung der Verfügbarkeit
-        verf = _transform(verf, self.verf_min, self.verf_max)
+        # return sprit    # ToDo: Nur zum Testen eingefügt
         # Subsystem 2 - Material
         self.sub_sys_2.input['Bestand des Materials'] = bes
         self.sub_sys_2.input['Verfügbarkeit des Materials'] = verf
@@ -216,7 +216,7 @@ class FuzzySystem:
         self.score.compute()
         return self.score.output['Güte des Asteroids']
 
-    def creat_score_map(self, resolution=None):
+    def creat_score_map(self):
         """
         Bestimmt das zum Fuzzy-System gehörige Kennfeld
         :param: resolution: 0.01 (1m Elemente für Main), 0.02 (125k Elemente), 0.025 (64k Elemente), 0.05 (8k Elemente);
@@ -224,15 +224,9 @@ class FuzzySystem:
             Auflösung des Kennfelds, wenn nichts übergeben = Auflösung des Systems
         :return:
         """
-        if resolution is not None:
-            self.map_resolution = resolution
         #####################
         # Subsystem 1 - Sprit
         #####################
-        # Vektoren und Kennfeld definieren
-        self.t_n_map = np.linspace(0, 1, _item_count(self.map_resolution))
-        self.delt_map = np.linspace(0, 1, _item_count(self.map_resolution))
-        self.out_sub_1_map = np.zeros((len(self.t_n_map), len(self.delt_map)))
         # Map füllen
         for m in range(len(self.t_n_map)):
             for n in range(len(self.delt_map)):
@@ -241,16 +235,9 @@ class FuzzySystem:
                 self.sub_sys.input['Spritverbrauch'] = self.delt_map[n]
                 self.sub_sys.compute()
                 self.out_sub_1_map[m, n] = self.sub_sys.output['Ausgang Subsystem 1']
-
         ########################
         # Subsystem 2 - Material
         ########################
-        # Vektoren und Kennfeld definieren
-        self.bes_map = np.linspace(0, 1, _item_count(self.map_resolution))
-        verf_min = _fit_to_resolution(self.verf_min, self.map_resolution, fit_type='lower')
-        verf_max = _fit_to_resolution(self.verf_max, self.map_resolution, fit_type='upper')
-        self.verf_map = np.linspace(verf_min, verf_max, _item_count(self.map_resolution, verf_min, verf_max))
-        self.out_sub_2_map = np.zeros((len(self.bes_map), len(self.verf_map)))
         # Map füllen
         for m in range(len(self.bes_map)):
             for n in range(len(self.verf_map)):
@@ -259,22 +246,9 @@ class FuzzySystem:
                 self.sub_sys_2.input['Verfügbarkeit des Materials'] = self.verf_map[n]
                 self.sub_sys_2.compute()
                 self.out_sub_2_map[m, n] = self.sub_sys_2.output['Ausgang Subsystem 2']
-
         #############
         # Hauptsystem
         #############
-        # Vektoren und Kennfeld definieren
-        self.mas_map = np.linspace(0, 1, _item_count(self.map_resolution))
-        self.sprit_map = np.linspace(0, 1, _item_count(self.map_resolution))
-        self.rele_map = np.linspace(0, 1, _item_count(self.map_resolution))
-        # ToDo: Iwo ein Fehler in den folgenden Zeilen, aber sowieso kaum ein Gewinn (Zahlen werden unschön)
-        # sprit_min = _fit_to_resolution(self.out_sub_1_map.min(), self.map_resolution, fit_type='lower')
-        # sprit_max = _fit_to_resolution(self.out_sub_1_map.max(), self.map_resolution, fit_type='upper')
-        # self.sprit_map = np.linspace(sprit_min, sprit_max, _item_count(self.map_resolution, sprit_min, sprit_max))
-        # rele_min = _fit_to_resolution(self.out_sub_2_map.min(), self.map_resolution, fit_type='lower')
-        # rele_max = _fit_to_resolution(self.out_sub_2_map.max(), self.map_resolution, fit_type='upper')
-        # self.rele_map = np.linspace(rele_min, rele_max, _item_count(self.map_resolution, rele_min, rele_max))
-        self.score_map = np.zeros((len(self.mas_map), len(self.sprit_map), len(self.rele_map)))
         # Map füllen
         for m in range(len(self.mas_map)):
             for n in range(len(self.sprit_map)):
@@ -295,30 +269,33 @@ class FuzzySystem:
         :param mas: Masse des Zielasteroiden
         :return: Bewertung des Asteroidenwechsels
         """
-        interp = LinearNDInterpolator(list(zip(self.t_n_map, self.delt_map)), self.out_sub_1_map)
-
-        return interp(t_n, delta_v)
-
-        # # Inputs an Auflösung anpassen
-        # t_n = _fit_to_resolution(t_n, self.map_resolution)
-        # delta_v = _fit_to_resolution(delta_v, self.map_resolution)
-        # bes = _fit_to_resolution(bes, self.map_resolution)
-        # verf = _fit_to_resolution(verf, self.map_resolution)
-        # mas = _fit_to_resolution(mas, self.map_resolution)
+        # interp = LinearNDInterpolator(list(zip(self.t_n_map, self.delt_map)), self.out_sub_1_map)
         #
-        # # Subystem 1 - Sprit
-        # ind_t_n = np.argwhere(self.t_n_map == t_n)[0][0]
-        # ind_delt = np.argwhere(self.delt_map == delta_v)[0][0]
-        # sprit = _fit_to_resolution(self.out_sub_1_map[ind_t_n, ind_delt], self.map_resolution)
-        # # Subsystem 2 - Material
-        # ind_bes = np.argwhere(self.bes_map == bes)[0][0]
-        # ind_verf = np.argwhere(self.verf_map == verf)[0][0]
-        # rele = _fit_to_resolution(self.out_sub_1_map[ind_bes, ind_verf], self.map_resolution)
-        # # Hauptsystem
-        # ind_mas = np.argwhere(self.mas_map == mas)[0][0]
-        # ind_sprit = np.argwhere(self.sprit_map == sprit)[0][0]
-        # ind_rele = np.argwhere(self.rele_map == rele)[0][0]
-        # return self.score_map[ind_mas, ind_sprit, ind_rele]
+        # return interp(t_n, delta_v)
+
+        # Skalierung der Verfügbarkeit
+        verf = _transform(verf, self.verf_min, self.verf_max)
+
+        # Inputs an Auflösung anpassen
+        t_n = _fit_to_resolution(t_n, self.resolution)
+        delta_v = _fit_to_resolution(delta_v, self.resolution)
+        bes = _fit_to_resolution(bes, self.resolution)
+        verf = _fit_to_resolution(verf, self.resolution)
+        mas = _fit_to_resolution(mas, self.resolution)
+
+        # Subystem 1 - Sprit
+        ind_t_n = np.argwhere(self.t_n_map == t_n)[0][0]
+        ind_delt = np.argwhere(self.delt_map == delta_v)[0][0]
+        sprit = _fit_to_resolution(self.out_sub_1_map[ind_t_n, ind_delt], self.resolution)
+        # Subsystem 2 - Material
+        ind_bes = np.argwhere(self.bes_map == bes)[0][0]
+        ind_verf = np.argwhere(self.verf_map == verf)[0][0]
+        rele = _fit_to_resolution(self.out_sub_1_map[ind_bes, ind_verf], self.resolution)
+        # Hauptsystem
+        ind_mas = np.argwhere(self.mas_map == mas)[0][0]
+        ind_sprit = np.argwhere(self.sprit_map == sprit)[0][0]
+        ind_rele = np.argwhere(self.rele_map == rele)[0][0]
+        return self.score_map[ind_mas, ind_sprit, ind_rele]
 
     def save_maps_to_npy(self):
         """

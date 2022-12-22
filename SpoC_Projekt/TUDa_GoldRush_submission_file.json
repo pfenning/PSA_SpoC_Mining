@@ -1,0 +1,11 @@
+[
+      {
+            "decisionVector": [
+                  0.0
+            ],
+            "problem": "mine-the-belt",
+            "challenge": "spoc-mining",
+            "name": "TUDa_GoldRush",
+            "description": "submission_description"
+      }
+]
