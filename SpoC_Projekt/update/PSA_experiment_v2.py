@@ -1,7 +1,7 @@
 import numpy as np
 import pykep as pk
 from pykep import phasing
-from scipy.stats import kde
+import random
 
 import PSA_functions_v2 as psa
 from _Extra._Mathias.fuzzy_system import FuzzySystem
@@ -64,7 +64,7 @@ t_aktuell = [t_start]   # Seien wir 0 Tage auf dem ersten Asteroiden stehen gebl
 # GÜTE
 #########
 
-propellant = 1.0 # entspricht DV_max = 10.000
+propellant = 1.0        # entspricht DV_max = 10.000
 bestand = [0.0, 0.0, 0.0, propellant]
 verf = np.array([0.03, 0.4, 0.42, 0.15])  # ToDo: Verfügbarkeit berechnen
 
@@ -76,7 +76,8 @@ my_system = FuzzySystem(verf.min(), verf.max(), resolution=0.02)
 ###########
 
 # Startpunkt festlegen ToDo: Später müssen es mehrere sein, Funktion die gute Kandidaten findet fehlt noch!
-i_start = 9953
+# i_start = 9953
+i_start = random.randrange(0, len(asteroids_kp), 1)
 # Speicher für die beta Pfade:
 # ToDo: Für Beam-Search gibt es wiederum ein Dictionary mit brachnN als Inhalte
 #  durch dieses wird dann später iteriert
@@ -158,14 +159,15 @@ for i in range(30):     # ToDo: Für Tests auf Anzahl Schritte beschränkt. Spä
     # Abbau des Rohstoffs von Asteroid 1:
     psa.abbau(bestand, asteroid_1_mas, asteroid_1_mat, branch[i]['t_m'])
     # Bewertung:
-    print("Gütemaß ohne Tank: ", - np.min(bestand[0:2]))
-
+    print("Gütemaß ohne Tank: ", - np.min(bestand[0:3]))
+    print("Bestand: ", bestand[0:3])
     # Flug zum anderen Asteroiden
     bestand[-1] -= dv_min_/DV_per_propellant
     print(f"Tank nach Abbau und Flug zum nächsten: {bestand[-1]:.3}")
 
     # Besuchten Asteroiden aus Dictionary streichen
-    del dict_asteroids[asteroid_1_id]
+    # del dict_asteroids[asteroid_1_id]
+    dict_asteroids.pop(asteroid_1_id)
 
 
 ######################################
