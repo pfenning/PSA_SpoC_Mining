@@ -79,7 +79,7 @@ def clustering(knn, asteroids_kp, asteroid_1_idx, radius=4000):
     return neighb_ids
 
 
-def time_optimize_time_v1(asteroid1, asteroid2, t_start, t_opt):
+def time_optimize_time_v1(asteroid1, asteroid2, t_start, t_opt, limit):
     """ Zeitoptimierung von Delta V mit 2 Levels. Erst Flugzeit, dann Startzeit
         Rechenaufwand: Anzahl Flugzeit-Elemente + Anzahl Startzeitpunkte (10+7=17)
 
@@ -129,7 +129,7 @@ def time_optimize_time_v1(asteroid1, asteroid2, t_start, t_opt):
 
 # ToDo: Zeitraum der Flugzeit neu definieren (z.B. auf 5-46 in 4er Schritten)
 #       - Reicht Auflösung? Sonst: nach gefundenem Minimum nochmal einen halben Schritt in jede Richtung machen
-def time_optimize_time_v2(asteroid1, asteroid2, t_start, t_opt, print_result=False):
+def time_optimize_time_v2(asteroid1, asteroid2, t_start, t_opt, limit=10000, print_result=False):
     """
     Zeitoptimierung von Delta V mit 2 Levels. Erst Flugzeit, dann Startzeit
 
@@ -139,6 +139,7 @@ def time_optimize_time_v2(asteroid1, asteroid2, t_start, t_opt, print_result=Fal
 
     Übergabe: Asteroid 1 und 2, optimaler Startpunkt, optimale Abbauzeit auf aktuellem Asteroiden
     Rückgabe: optimaler Startpunkt, optimale Flugzeit, optimiertes DV
+    :param limit: Maximal erlaubter Tank
     :param asteroid1: Startasteroid
     :param asteroid2: Landeasteroid
     :param t_start: Starttag, wenn aktueller Asteroid vollständig abgebaut
@@ -159,20 +160,22 @@ def time_optimize_time_v2(asteroid1, asteroid2, t_start, t_opt, print_result=Fal
         dv_t_flug.append(get_dv(asteroid1, asteroid2, t_start, t))
 
     # Minimum für Flugzeit heraussuchen (Gewichtung Flugzeit vs. DV)
-    # ******** hinzugefügt
-    results_t_flug = []
-    for i in range(0, len(t_flug_1)):
-        # "Normierung" für ähnliche Skalierung
-        # Zahlenfindung: Siehe MathTests.py
-        results_t_flug.append([t_flug_1[i] / 30, dv_t_flug[i] / 2000])
-    weights = np.array([0.3, 0.7])
-    rank_t_flug = []
-    for sol in results_t_flug:
-        rank_t_flug.append(sum(weights * sol))  # Bewertung aus gewichteter Summe
+    if min(dv_t_flug) > limit:  # Wenn bereits am Limit: Minimum nehmen
+        t_flug_min_dv = t_flug_1[dv_t_flug.index(min(dv_t_flug))]
+    else:                       # Ansonsten Gewichtung
+        results_t_flug = []
+        for i in range(0, len(t_flug_1)):
+            # "Normierung" für ähnliche Skalierung
+            # Zahlenfindung: Siehe MathTests.py
+            results_t_flug.append([t_flug_1[i] / 30, dv_t_flug[i] / 2000])
+        weights = np.array([0.3, 0.7])
+        rank_t_flug = []
+        for sol in results_t_flug:
+            rank_t_flug.append(sum(weights * sol))  # Bewertung aus gewichteter Summe
 
-    index_min = rank_t_flug.index(min(rank_t_flug))
-    # index_min = dv_t_flug.index(min(dv_t_flug))
-    t_flug_min_dv = t_flug_1[index_min]
+        index_min = rank_t_flug.index(min(rank_t_flug))
+        # index_min = dv_t_flug.index(min(dv_t_flug))
+        t_flug_min_dv = t_flug_1[index_min]
 
     ###################################################
     # Variation des Startpunktes bei gegebener Flugzeit
@@ -192,25 +195,28 @@ def time_optimize_time_v2(asteroid1, asteroid2, t_start, t_opt, print_result=Fal
         dv_t_start.append(get_dv(asteroid1, asteroid2, t, t_flug_min_dv, print_result))
 
     # Minimum heraussuchen
-    # Rang Folge bilden (da nicht unnötig lange Flugzeit gewählt werden sollte)
-    results_t_start = []
-    for i in range(0, len(t_start_var)):
-        # "Normierung" für ähnliche Skalierung - abs(t_var) da Betrag der Abweichung von t_opt relevant
-        # nur t_start, DV (t_flug bereits zuvor gewählt)
-        results_t_start.append([abs(t_start_var[i] / 10), dv_t_start[i] / 1000])
+    if limit < min(dv_t_start):     # Wenn am Limit: Einfaches Minimum
+        index_min = dv_t_start.index(min(dv_t_start))
+    else:                           # Ansonsten Gewichtung
+        # Rang Folge bilden (da nicht unnötig lange Flugzeit gewählt werden sollte)
+        results_t_start = []
+        for i in range(0, len(t_start_var)):
+            # "Normierung" für ähnliche Skalierung - abs(t_var) da Betrag der Abweichung von t_opt relevant
+            # nur t_start, DV (t_flug bereits zuvor gewählt)
+            results_t_start.append([abs(t_start_var[i] / 10), dv_t_start[i] / 1000])
 
-    weights_neg_var = np.array([1.5, 0.7])
-    weights_pos_var = np.array([0.3, 0.7])
-    weights = weights_pos_var
-    rank_t_start = []
-    for i in range(0, len(results_t_start)):
-        if t_start_var[i] < 0:
-            weights = weights_neg_var
-        else:
-            weights = weights_pos_var
-        rank_t_start.append(sum(weights * results_t_start[i]))  # Bewertung aus gewichteter Summe
+        weights_neg_var = np.array([1.5, 0.7])
+        weights_pos_var = np.array([0.3, 0.7])
+        weights = weights_pos_var
+        rank_t_start = []
+        for i in range(0, len(results_t_start)):
+            if t_start_var[i] < 0:
+                weights = weights_neg_var
+            else:
+                weights = weights_pos_var
+            rank_t_start.append(sum(weights * results_t_start[i]))  # Bewertung aus gewichteter Summe
 
-    index_min = rank_t_start.index(min(rank_t_start))
+        index_min = rank_t_start.index(min(rank_t_start))
 
     # Wertepaar für Index des Minimums
     t_start_min_dv = t_start + t_start_var[index_min]

@@ -105,7 +105,7 @@ for i in range(30):     # ToDo: Für Tests auf Anzahl Schritte beschränkt. Spä
         print("Als nächstes Tank-Asteroiden aussuchen")
     else:
         candidates = [asteroid for asteroid, mas, mat in dict_asteroids.values()]
-
+    # ===================
     # Clustering itself
     # ToDo: T & radius können auch anders gewählt werden
     radius = 4000
@@ -118,24 +118,31 @@ for i in range(30):     # ToDo: Für Tests auf Anzahl Schritte beschränkt. Spä
     for asteroid_2_id in neighb_ids:
         asteroid_2_kp, asteroid_2_mas, asteroid_2_mat = dict_asteroids[asteroid_2_id]
         # Zeitoptimierung für Überflug
-        t_abflug_opt_, t_flug_min_dv_, dv_min_ = psa.time_optimize_time_v1(
+        t_abflug_opt_, t_flug_min_dv_, dv_min_ = psa.time_optimize_time_v2(
             asteroid_1_kp,
             asteroid_2_kp,
             t_start=branch[i]['t_arr']+t_opt,
             t_opt=t_opt,
+            limit=bestand[-1]
             # print_result=True
         )
-        # Bewertung des Asteroids und des Wechsels
-        score = my_system.calculate_score(  # ToDo: Über Normierung des delta_v sprechen
-            t_n=(bestand[-1] - (dv_min_/DV_per_propellant)),    # Tank nach Flug → dv muss normiert werden
-            delta_v=(dv_min_/radius),                           # Diese Normierung in Ordnung? - Dachte ganz sinnvoll
-            bes=psa.norm_bestand(bestand, asteroid_2_mat),
-            verf=verf[asteroid_2_mat],
-            mas=asteroid_2_mas)
-        # Score und Daten für Flug merken
-        score_2.append(score)
-        flight_opt.append([asteroid_2_id, t_abflug_opt_, t_flug_min_dv_, dv_min_])
+        # Bewertung nur durchführen, wenn Asteroid auch erreichbar!
+        if (dv_min_/DV_per_propellant) < bestand[-1]:
+            # Bewertung des Asteroids und des Wechsels
+            score = my_system.calculate_score(  # ToDo: Über Normierung des delta_v sprechen
+                t_n=(bestand[-1] - (dv_min_/DV_per_propellant)),    # Tank nach Flug → dv muss normiert werden
+                delta_v=(dv_min_/radius),                           # Diese Normierung in Ordnung? - Dachte ganz sinnvoll
+                bes=psa.norm_bestand(bestand, asteroid_2_mat),
+                verf=verf[asteroid_2_mat],
+                mas=asteroid_2_mas)
+            # Score und Daten für Flug merken
+            score_2.append(score)
+            flight_opt.append([asteroid_2_id, t_abflug_opt_, t_flug_min_dv_, dv_min_])
+            # print(f"Kandidat:{asteroid_2_id} Material:{dict_asteroids[asteroid_2_id][2]} "
+            #       f"Masse:{dict_asteroids[asteroid_2_id][1]:.3} Güte: {score:.3}")
+            # print(f"Starttag:{t_abflug_opt_:.0f}  Flugzeit:{t_flug_min_dv_:.0f}   => Delta V ={dv_min_:.0f}")
 
+    print("========== Clustering abgeschlossen, Optimum wählen ==========")
     # Optimum wählen:
     asteroid_2_id, t_abflug_opt_, t_flug_min_dv_, dv_min_ = flight_opt[score_2.index(max(score_2))]
     print(f"Starttag:{t_abflug_opt_:.0f}  Flugzeit:{t_flug_min_dv_:.0f}   => Delta V ={dv_min_:.0f}")
