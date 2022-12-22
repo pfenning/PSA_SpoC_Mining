@@ -1,6 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import pykep as pk
+import pykep as pk
+from pykep import phasing
 
 ################
 ### Constants
@@ -384,25 +386,40 @@ def time_optimize_time_v2(asteroid1, asteroid2, t_start, t_opt):
 
     # Wertepaar für Index des Minimums
     t_start_min_dv = t_start + t_start_var[index_min]
-    t_flug_min_dv = t_flug_1[index_min]
+    # t_flug_min_dv = t_flug_1[index_min]
     dv_min = dv_t_start[index_min]
 
     return t_start_min_dv, t_flug_min_dv, dv_min
 
 
 
-def clustering(knn, var, radius):
-    neighb, neighb_ids, neighb_dis = knn.find_neighbours(var, query_type='ball', r=radius)
-    neighb = list(neighb)
+def clustering(knn, asteroids_kp, asteroid_1_idx, radius): 
+    ''' 
+        1) knn_fuel:            Cluster for "asteroids_kp"
+        2) asteroids_idx:       Index-Liste von allen Asteroiden
+        3) asteroid_1_idx:      Index vom aktuellen Asteroiden
+        4) rdius:               Begrenzung des Clusters auf max. Radius
+    '''
+    neighb, neighb_ids, neighb_dis = knn.find_neighbours(asteroids_kp[asteroid_1_idx], query_type='ball', r=radius)
+    # neighb = list(neighb)
     neighb_ids = list(neighb_ids)
-    return neighb, neighb_ids
+    # neighb.remove(asteroid_1_idx)
+    neighb_ids.remove(asteroid_1_idx)
+    return neighb_ids
 
-def clustering_fuel(knn_fuel, var, radius):
-    neighb_fuel, neighb_fuel_ids, neighb_fuel_dis = knn_fuel.find_neighbours(var, query_type='ball', r=radius)
-    neighb_fuel = list(neighb_fuel)
+def clustering_fuel(knn_fuel, asteroids_kp, asteroid_1_idx, radius):
+    '''
+        1) knn_fuel:            Cluster for "asteroids_fuel_kp"
+        2) asteroids_idx:       Index-Liste von allen Asteroiden
+        3) asteroid_1_idx:      Index vom aktuellen Asteroiden
+        4) rdius:               Begrenzung des Clusters auf max. Radius   
+    '''
+    neighb_fuel, neighb_fuel_ids, neighb_fuel_dis = knn_fuel.find_neighbours(asteroids_kp[asteroid_1_idx], query_type='ball', r=radius)
+    # neighb_fuel = list(neighb_fuel)
     neighb_fuel_ids = list(neighb_fuel_ids)
-    neighb_fuel_ids.remove(var)
-    return neighb_fuel, neighb_fuel_ids
+    # neighb_fuel.remove(asteroid_1_idx) #remove(asteroids_idx[asteroid_1_idx])
+    neighb_fuel_ids.remove(asteroid_1_idx)
+    return neighb_fuel_ids
 
 
 

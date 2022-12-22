@@ -139,3 +139,39 @@ asteroid_materials = data[:, -1].astype(int)
 # print(asteroid_masse(mat_ind), np.minimum(asteroid_masse(mat_ind), (t_spent[-1]/TIME_TO_MINE_FULLY)))
 
 
+
+
+
+    #################################
+    ### SCHRITT 1:      Clustering      UNEINGESCHRÄNKT
+    #################################
+    # # Annahme:  Wir befinden uns auf einem Asteroiden
+    # from pykep import phasing
+    # knn = phasing.knn(asteroids, ERG_t_arr[-1], 'orbital', T = 30) #                                            ACHTUNG: Referenzradius & -geschw. sind Gürtelabhängig!
+    # radius = 1500
+    # neighb, neighb_ids = psa.clustering(knn, var, radius)
+    # # print(len(neighb_ids))
+    # # print("Nachbarn: ", neighb_ids)
+    # i = 0
+    # dv_min_2 = []
+    # while i < len(neighb_ids):
+    #     if neighb_ids[i] not in visited_ind:
+    #         asteroid2_id = neighb_ids[i]
+    #         asteroid2 = asteroids[asteroid2_id]
+    #         t_abflug_opt_, t_flug_min_dv_, dv_min_ = psa.time_optimize_time_v2(asteroid1, asteroid2, ERG_t_arr[-1] + t_opt, t_opt)        
+    #         dv_min_2.append(dv_min_)
+    #         i += 1
+    #     else:
+    #         i += 1
+
+    # dv_min_2_intermediate_INDEX = dv_min_2.index(min(dv_min_2))
+    # asteroid2_id = neighb_ids[dv_min_2_intermediate_INDEX]
+    # asteroid2 = asteroids[asteroid2_id]
+
+    # # Asteroiden aus Liste streichen
+    # asteroids = np.delete(asteroids, asteroid2_id)
+    # visited_ind.append(asteroid2_id)  
+    # print("Besuchte Asteroiden: ", visited_ind)
+
+    # # ACHTUNG: WENN CLUSTER DURCH BEDINGUNG LEER, DANN IST "dv_min_2" LEER UND ER BESUCHT DEN GLEICHEN ASTEROIDEN NOCHMAL!!! 
+    # # DAS IST ZU VERMEIDEN!!!!!!

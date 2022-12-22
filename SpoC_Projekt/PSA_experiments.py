@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import pykep as pk
+from pykep import phasing
 from scipy.stats import kde
 import random
 
@@ -39,9 +40,18 @@ import PSA_functions as psa
 
 """
 
+#################
+### ASTEROIDS:  Creating lists with indices of asteroids
+#################
+
+# Lists to be created
+asteroids_kp = []
+asteroids_idx = []
+asteroids_fuel_idx = []
+
+
 # Loading data as keplerian elements (planets) in an "array"
 data = np.loadtxt("C:/Users/ingap/OneDrive/Desktop/Uni/WiSe_22-23/PSA/PSA_SpoC_Mining/SpoC_Projekt/data/SpoC_Datensatz.txt")
-asteroids = []
 for line in data:
     p = pk.planet.keplerian(
         T_START,
@@ -59,33 +69,34 @@ for line in data:
         1.1,  # these variable are not relevant for this problem
         "Asteroid " + str(int(line[0])),
     )
-    asteroids.append(p)
-# asteroid_masses = data[:, -2]
-# asteroid_materials = data[:, -1].astype(int)
-data_fuel = []
-asteroids_fuel = []
+    asteroids_kp.append(p)
+asteroids_idx = werte = list(range(int(len(asteroids_kp))))
+
+# hier Liste erstellen mit Asteroiden des Material 3
 i = 0
 while i < len(data):
     if data[i,-1].astype(int) == 3:
-        data_fuel.append(data[i])
+        asteroids_fuel_idx.append(asteroids_idx[i])
         i += 1
     else: i += 1
-for line in data_fuel:
-    p = pk.planet.keplerian(T_START,(line[1],line[2],line[3],line[4],line[5],line[6],),
-        MU_TRAPPIST,
-        G * line[7],  # mass in planet is not used in UDP, instead separate array below
-        1,  # these variable are not relevant for this problem
-        1.1,  # these variable are not relevant for this problem
-        "Asteroid " + str(int(line[0])),
-    )
-    asteroids_fuel.append(p)                                                       # ACHTUNG, wirklich p schon anhängen?!?!?!
-asteroid_masses = data[:, -2]
-asteroid_materials = data[:, -1].astype(int)
 
 
-# ANGABE START-ASTEROID
-i_start = random.randrange(0, len(data),1)
+# SONSTIGES, NOCH SORTIEREN
+i_start = random.randrange(0, len(asteroids_idx),1)
+i_start = 9953
 
+asteroid_1 = asteroids_idx[i_start]        # Der erste Asteroid der Liste wird ausgewählt
+asteroid_1_idx = i_start
+if data[i_start,1].astype(int) == 3: 
+    asteroids_idx.remove(i_start)
+    asteroids_fuel_idx.remove(i_start)
+else: asteroids_fuel_idx.remove(i_start)
+
+
+
+###########
+### TIME
+###########
 
 # Startwerte
 t_start = [0]
@@ -93,127 +104,90 @@ t_aktuell = [t_start] # Seien wir 0 Tage auf dem ersten Asteroiden stehen geblie
 t_opt = 30
 # t_aktuell_e = pk.epoch(t_aktuell[-1])
 
-propellant = 1.0 # entspricht DV_max = 10.000
-
-asteroid1 = asteroids[i_start]        # Der erste Asteroid der Liste wird ausgewählt
-asteroid1_id = i_start
-asteroids = np.delete(asteroids, i_start)
-
-# Tank-Asteroiden
-asteroids_fuel_ind = []
-i = 0
-while i <= len(asteroids):
-    if data[i,-1].astype(int) == 3:
-        asteroids_fuel_ind.append(i)
-    i += 1
-
 # Laufvariablen
 ERG_t_arr = [0.0]   # double, Ankunftszeit
 ERG_t_m = []        # double, Verweildauer
 ERG_a = [i_start]   # int, besuchte Asteroiden
 
+
+###########
+### GÜTE
+###########
+
+propellant = 1.0 # entspricht DV_max = 10.000
+
 bestand = [0.0, 0.0, 0.0, propellant]
 bestand_rel = [0.0, 0.0, 0.0, 0.0]
 
 
-# # Erst mal nur durch die ersten 3 (grenze-1) durchlaufen und gucken, ob alles funktioniert
-# var = i_start
-# grenze = 4
-
-# while t_aktuell < T_DAUER:
 
 
 
 # while var <= i_start+grenze:
 print("Start-Asteroid: ", i_start)
-propellant=1.0
-visited_ind = [i_start]
-while len(visited_ind) <= 5: # <= 10000
-    #print("Ast " + str(var) + " --> Ast " + str(var+1))
-    # propellant = 1.0
 
-    var = visited_ind[-1] # aktueller Asteroid!!
-    asteroid1 = asteroids[var]
-    # print("Asteroid1: ", asteroid1)
-    
-
-    #################################
-    ### SCHRITT 1:      Clustering      UNEINGESCHRÄNKT
-    #################################
-    # # Annahme:  Wir befinden uns auf einem Asteroiden
-    # from pykep import phasing
-    # knn = phasing.knn(asteroids, ERG_t_arr[-1], 'orbital', T = 30) #                                            ACHTUNG: Referenzradius & -geschw. sind Gürtelabhängig!
-    # radius = 1500
-    # neighb, neighb_ids = psa.clustering(knn, var, radius)
-    # # print(len(neighb_ids))
-    # # print("Nachbarn: ", neighb_ids)
-    # i = 0
-    # dv_min_2 = []
-    # while i < len(neighb_ids):
-    #     if neighb_ids[i] not in visited_ind:
-    #         asteroid2_id = neighb_ids[i]
-    #         asteroid2 = asteroids[asteroid2_id]
-    #         t_abflug_opt_, t_flug_min_dv_, dv_min_ = psa.time_optimize_time_v2(asteroid1, asteroid2, ERG_t_arr[-1] + t_opt, t_opt)        
-    #         dv_min_2.append(dv_min_)
-    #         i += 1
-    #     else:
-    #         i += 1
-
-    # dv_min_2_intermediate_INDEX = dv_min_2.index(min(dv_min_2))
-    # asteroid2_id = neighb_ids[dv_min_2_intermediate_INDEX]
-    # asteroid2 = asteroids[asteroid2_id]
-
-    # # Asteroiden aus Liste streichen
-    # asteroids = np.delete(asteroids, asteroid2_id)
-    # visited_ind.append(asteroid2_id)  
-    # print("Besuchte Asteroiden: ", visited_ind)
-
-    # # ACHTUNG: WENN CLUSTER DURCH BEDINGUNG LEER, DANN IST "dv_min_2" LEER UND ER BESUCHT DEN GLEICHEN ASTEROIDEN NOCHMAL!!! 
-    # # DAS IST ZU VERMEIDEN!!!!!!
-
+while len(ERG_a) <= 1: # <= 10000
+    asteroid_1_idx = ERG_a[-1]                  # aktueller Asteroid
+    asteroid_1_kp = asteroids_kp[asteroid_1_idx]   # aktueller Asteroid inkl Kepler-Inofs
 
     #################################
     ### SCHRITT 1:      Clustering      JEDER 2. TANKFÜLLUNG
     #################################
     # Annahme:  Wir befinden uns auf einem Asteroiden
-    from pykep import phasing
-
-    # print(len(neighb_ids))
-    # print("Nachbarn: ", neighb_ids)
     i = 0
     dv_min_2 = []
 
+    # Optimale Zeit für die Zeitoptimierung anpassen
     if ERG_a[-1] == i_start: t_opt = 0
-    else: t_opt = psa.asteroid_masse(asteroid1_id)*30
+    else: t_opt = psa.asteroid_masse(asteroid_1_idx)*30
 
+    # Clustering abhängig vom vorhandenen Tank
     if bestand[-1] < 0.6:
-        knn_fuel = phasing.knn(asteroids_fuel, ERG_t_arr[-1]+t_opt, 'orbital', T = 30) #                                            ACHTUNG: Referenzradius & -geschw. sind Gürtelabhängig!
+
+        # Lister mit Asteroiden in Keppler-Form!! 
+        asteroids_fuel_kp = []
+        k = 0
+        while k < len(asteroids_fuel_idx):
+            asteroids_fuel_kp.append(asteroids_kp[asteroids_fuel_idx[k]])
+            k += 1
+
+        knn_fuel = phasing.knn(asteroids_fuel_kp, ERG_t_arr[-1]+t_opt, 'orbital', T = 30) #                                            ACHTUNG: Referenzradius & -geschw. sind Gürtelabhängig!
         radius = 4000
-        neighb_fuel, neighb_fuel_ids = psa.clustering_fuel(knn_fuel, var, radius)
-        print("Nachbarn: ", neighb_fuel_ids)
-        while i < len(neighb_fuel_ids):
-            asteroid2_fuel_id = neighb_fuel_ids[i]
-            asteroid2 = asteroids[asteroid2_fuel_id]
-            t_abflug_opt_, t_flug_min_dv_, dv_min_ = psa.time_optimize_time_v2(asteroid1, asteroid2, ERG_t_arr[-1] + t_opt, t_opt)        
+        neighb_fuel_idx = psa.clustering_fuel(knn_fuel, asteroids_kp, asteroid_1_idx, radius) # neighb_fuel, neighb_fuel_idx
+        print("Nachbarn: ", neighb_fuel_idx)
+
+        while i < len(neighb_fuel_idx):
+            asteroid_2_idx = neighb_fuel_idx[i]
+            asteroid_2_kp = asteroids_kp[neighb_fuel_idx[i]]
+            t_abflug_opt_, t_flug_min_dv_, dv_min_ = psa.time_optimize_time_v2(asteroid_1_kp, asteroid_2_kp, ERG_t_arr[-1] + t_opt, t_opt)        
             dv_min_2.append(dv_min_)
             i += 1
+
         dv_min_2_intermediate_INDEX = dv_min_2.index(min(dv_min_2))
-        asteroid2_id = neighb_fuel_ids[dv_min_2_intermediate_INDEX]
-        asteroid2 = asteroids[asteroid2_id]
+        asteroid_2_idx = neighb_fuel_idx[dv_min_2_intermediate_INDEX]
+        asteroid_2_kp = asteroids_kp[asteroid_2_idx]
+        print("Verbrauchtes DV: ", min(dv_min_2))
 
     else:
-        knn = phasing.knn(asteroids, ERG_t_arr[-1]+t_opt, 'orbital', T = 30) #                                            ACHTUNG: Referenzradius & -geschw. sind Gürtelabhängig!
+        knn = phasing.knn(asteroids_kp, ERG_t_arr[-1]+t_opt, 'orbital', T = 30) #                                            ACHTUNG: Referenzradius & -geschw. sind Gürtelabhängig!
         radius = 4000
-        neighb, neighb_ids = psa.clustering(knn, var, radius)
-        while i < len(neighb_ids):
-                asteroid2_id = neighb_ids[i]
-                asteroid2 = asteroids[asteroid2_id]
-                t_abflug_opt_, t_flug_min_dv_, dv_min_ = psa.time_optimize_time_v2(asteroid1, asteroid2, ERG_t_arr[-1] + t_opt, t_opt)        
-                dv_min_2.append(dv_min_)
-                i += 1
+        neighb_idx = psa.clustering(knn, asteroids_kp, asteroid_1_idx, radius) # neighb, neighb_idx
+
+        while i < len(neighb_idx):
+            asteroid_2_idx = neighb_idx[i]
+            asteroid_2_kp = asteroids_kp[neighb_idx[i]]
+            t_abflug_opt_, t_flug_min_dv_, dv_min_ = psa.time_optimize_time_v2(asteroid_1_kp, asteroid_2_kp, ERG_t_arr[-1] + t_opt, t_opt)        
+            dv_min_2.append(dv_min_)
+            i += 1
+
         dv_min_2_intermediate_INDEX = dv_min_2.index(min(dv_min_2))
-        asteroid2_id = neighb_ids[dv_min_2_intermediate_INDEX]
-        asteroid2 = asteroids[asteroid2_id]
+        asteroid_2_id = neighb_idx[dv_min_2_intermediate_INDEX]
+        asteroid_2_kp = asteroids_kp[asteroid_2_idx]
+
+        # PRÜFUNG von DV
+        print("get_DV: ", psa.get_dv(asteroid_1_kp, asteroid_2_kp, t_abflug_opt_, t_flug_min_dv_))
+        # print("Alle möglichen DV: ", dv_min_2)
+        print("Notw DV: ", min(dv_min_2))
 
 
 
@@ -265,7 +239,7 @@ while len(visited_ind) <= 5: # <= 10000
     # Lösungsvektoren:
     ERG_t_m.append(t_abflug_opt_ - ERG_t_arr[-1])
     ERG_t_arr.append(t_abflug_opt_ + t_flug_min_dv_)
-    ERG_a.append(asteroid2_id)
+    ERG_a.append(asteroid_2_idx)
 
     # if ERG_a[-1] == i_start: 
     #     ERG_t_m.append(t_abflug_opt_)
@@ -295,10 +269,12 @@ while len(visited_ind) <= 5: # <= 10000
     #   - Nicht alle Rohstoffe wurden schon vollständig abgebaut. Wenn nicht, dann nächste Suche
 
 
-    print("Produkt: ", data[asteroid1_id,-1].astype(int))
+    print("Produkt: ", data[asteroid_1_idx,-1].astype(int))
+
+    print("Aufenthaltsdauer: ", ERG_t_m[-1])
 
     # Neuer Bestand
-    psa.abbau(bestand, asteroid1_id, ERG_t_m[-1])
+    psa.abbau(bestand, asteroid_1_idx, ERG_t_m[-1])
     print("Bestand nach Abbau, vor Abflug: ", bestand)
 
     # Gütemaß
@@ -307,20 +283,18 @@ while len(visited_ind) <= 5: # <= 10000
 
 
     # Abbau abgeschlossen, jetzt Flug zum nächsten Asteroiden
-    consumption = dv_min_2[dv_min_2_intermediate_INDEX]
-    DV = consumption/10000
+    DV = min(dv_min_2)/10000
     # Tank NACH dem Landen auf Ast 2
     bestand[-1] = bestand[-1] - DV
 
 
 
     # Asteroiden aus Liste streichen
-    if asteroid_materials(asteroid2_id) == 3:
-        np.delete(asteroids_fuel, asteroid2_id)
-        np.delete(asteroids, asteroid2_id)
-    else: np.delete(asteroids, asteroid2_id)
-    visited_ind.append(asteroid2_id)  
-    print("Besuchte Asteroiden: ", visited_ind)
+    if psa.asteroid_material(asteroid_2_idx) == 3:
+        asteroids_fuel_idx.remove(asteroid_2_idx)
+        asteroids_idx.remove(asteroid_2_idx)
+    else: asteroids_idx.remove(asteroid_2_idx)
+    print("Besuchte Asteroiden: ", ERG_a)
 
 
 
@@ -334,7 +308,7 @@ while len(visited_ind) <= 5: # <= 10000
 
 print("=====================================================================")
 
-print("Anzahl der besuchten Asteroiden: ", len(visited_ind))
+print("Anzahl der besuchten Asteroiden: ", len(ERG_a))
 
 #################################################
 # SCHRITT 6:        Lösungs-Zeitplan erstellen
