@@ -80,7 +80,7 @@ for line in data:
 
 
 # SONSTIGES, NOCH SORTIEREN
-i_start = random.randrange(0, len(asteroids_idx),1)
+i_start = random.randrange(0, len(asteroids_idx), 1)
 i_start = 9953
 
 asteroid_1 = asteroids_idx[i_start]        # Der erste Asteroid der Liste wird ausgewählt
