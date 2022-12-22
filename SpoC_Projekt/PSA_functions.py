@@ -139,70 +139,6 @@ def tof(t_arrival, t_spent):
     return (t_arrival[-1] - (t_arrival[-2] + t_spent[-2]))
 
 
-
-
-
-
-
-
-# def get_DV(asteroid1, asteroid2, t_start, t_flug, print_result=False):  #variante="lambert", 
-#     """ Berechnung von DV mit verschiedenen Varianten
-#         Args:
-#             Orbital
-#             Direct
-#             Indirect
-#             Lambert (default)
-#         i:  int
-#             aktueller Asteroid
-#         j:  int
-#             nächster Asteroid
-#     """
-#     # Wenn tof < 0.1, dann ist Flug zu kurz --> singular lambert solution
-#     # DIE ZEITVEKTOREN BRAUCHEN SCHON 2 EINTRÄGE !!! ANKUNFT & VORBEREITUNG muss bekannt sein
-#     #       ==> TOF & t_spent geben wir vor durch Zeitoptimierung!! 
-#     # r1, v1 = asteroids[asteroid1].eph(T_START.mjd2000 + t_arrival[-2] + t_spent[-2])
-#     #t_start_rv1 = T_START.mjd2000 + t_start
-#     r1, v1 = asteroid1.eph(T_START.mjd2000 + t_start)    
-#     # r2, v2 = asteroids[asteroid2].eph(T_START.mjd2000 + t_arrival[-1])
-#     r2, v2 = asteroid2.eph(T_START.mjd2000 + t_start + t_flug)            
-#     l = pk.lambert_problem(r1=r1,r2=r2,tof=t_flug*pk.DAY2SEC, mu=MU_TRAPPIST, cw=False, max_revs=0
-#     DV1 = [a - b for a, b in zip(v1, l.get_v1()[0])]
-#     DV2 = [a - b for a, b in zip(v2, l.get_v2()[0])]
-#     DV = np.linalg.norm(DV1) + np.linalg.norm(DV2)    
-#     return DV   
-
-#     if variante == "orbital":
-#         def DV_orbital():
-#             pass
-#     if variante == "direct":
-#         def DV_direct():
-#             pass
-#     if variante == "indirect":
-#         def DV_indirect():
-#             pass
-#     if variante == "lambert":
-#         def DV_lambert():            
-#             # Wenn tof < 0.1, dann ist Flug zu kurz --> singular lambert solution
-#             # DIE ZEITVEKTOREN BRAUCHEN SCHON 2 EINTRÄGE !!! ANKUNFT & VORBEREITUNG muss bekannt sein
-#             #       ==> TOF & t_spent geben wir vor durch Zeitoptimierung!! 
-#             # r1, v1 = asteroids[asteroid1].eph(T_START.mjd2000 + t_arrival[-2] + t_spent[-2])
-#             r1, v1 = asteroids[asteroid1].eph(T_START.mjd2000 + t_start)
-#             # r2, v2 = asteroids[asteroid2].eph(T_START.mjd2000 + t_arrival[-1])
-#             r2, v2 = asteroids[asteroid2].eph(T_START.mjd2000 + t_start + t_flug)            
-#             l = pk.lambert_problem(r1=r1,r2=r2,tof=tof*pk.DAY2SEC, mu=MU_TRAPPIST, cw=False, max_revs=0)
-#             DV1 = [a - b for a, b in zip(v1, l.get_v1()[0])]
-#             DV2 = [a - b for a, b in zip(v2, l.get_v2()[0])]
-#             DV = np.linalg.norm(DV1) + np.linalg.norm(DV2)    
-#             return DV                                        # ACHTUNG: Hier kommen Werte wie "622902.82..." raus !!
-#     # else: DV_lambert()
-#     # def propellant_used():
-#     #     propellant = propellant - get_DV / DV_per_propellant  # Und hier dann prop. -8..von 1 aus gerechnet
-# # print(T_START.mjd2000)
-
-
-
-
-
 def get_dv(asteroid1, asteroid2, t_start, t_flug, print_result=False):
     """ Berechnung des approximierten Delta V mithilfe des Lambert-Problems
     
@@ -238,6 +174,39 @@ def get_dv(asteroid1, asteroid2, t_start, t_flug, print_result=False):
         print("Starttag:", f"{t_start:.0f}", "Flugzeit:", f"{t_flug:.0f}", " => Delta V =", f"{DV:.0f}")
 
     return DV
+
+
+#################
+### CLUSTERING
+#################
+
+def clustering(knn, asteroids_kp, asteroid_1_idx, radius): 
+    ''' 
+        1) knn_fuel:            Cluster for "asteroids_kp"
+        2) asteroids_idx:       Index-Liste von allen Asteroiden
+        3) asteroid_1_idx:      Index vom aktuellen Asteroiden
+        4) rdius:               Begrenzung des Clusters auf max. Radius
+    '''
+    neighb, neighb_ids, neighb_dis = knn.find_neighbours(asteroids_kp[asteroid_1_idx], query_type='ball', r=radius)
+    # neighb = list(neighb)
+    neighb_ids = list(neighb_ids)
+    # neighb.remove(asteroid_1_idx)
+    neighb_ids.remove(asteroid_1_idx)
+    return neighb_ids
+
+def clustering_fuel(knn_fuel, asteroids_kp, asteroid_1_idx, radius):
+    '''
+        1) knn_fuel:            Cluster for "asteroids_fuel_kp"
+        2) asteroids_idx:       Index-Liste von allen Asteroiden
+        3) asteroid_1_idx:      Index vom aktuellen Asteroiden
+        4) rdius:               Begrenzung des Clusters auf max. Radius   
+    '''
+    neighb_fuel, neighb_fuel_ids, neighb_fuel_dis = knn_fuel.find_neighbours(asteroids_kp[asteroid_1_idx], query_type='ball', r=radius)
+    # neighb_fuel = list(neighb_fuel)
+    neighb_fuel_ids = list(neighb_fuel_ids)
+    # neighb_fuel.remove(asteroid_1_idx) #remove(asteroids_idx[asteroid_1_idx])
+    neighb_fuel_ids.remove(asteroid_1_idx)
+    return neighb_fuel_ids
 
 # ToDo: Zeitraum der Flugzeit neu definieren (z.B. auf 5-46 in 4er Schritten)
 #       - Reicht Auflösung? Sonst: nach gefundenem Minimum nochmal einen halben Schritt in jede Richtung machen
@@ -289,8 +258,6 @@ def time_optimize_time_v1(asteroid1, asteroid2, t_start, t_opt):
     return t_start_min_dv, t_flug_min_dv, dv_min
 
 
-
-
 def DV_norm(DV,norm_goal=4000):
     """ Skalierung des DV auf den Wertebereich von      0 bis 4.000   
     Übergabe:
@@ -300,12 +267,6 @@ def DV_norm(DV,norm_goal=4000):
                 Max Skalierungsgrenze (default = 4000)  
     """
     return DV/norm_goal
-
-
-
-
-
-
 
 
 # ToDo: Zeitraum der Flugzeit neu definieren (z.B. auf 5-46 in 4er Schritten)
@@ -393,38 +354,14 @@ def time_optimize_time_v2(asteroid1, asteroid2, t_start, t_opt):
 
 
 
-def clustering(knn, asteroids_kp, asteroid_1_idx, radius): 
-    ''' 
-        1) knn_fuel:            Cluster for "asteroids_kp"
-        2) asteroids_idx:       Index-Liste von allen Asteroiden
-        3) asteroid_1_idx:      Index vom aktuellen Asteroiden
-        4) rdius:               Begrenzung des Clusters auf max. Radius
-    '''
-    neighb, neighb_ids, neighb_dis = knn.find_neighbours(asteroids_kp[asteroid_1_idx], query_type='ball', r=radius)
-    # neighb = list(neighb)
-    neighb_ids = list(neighb_ids)
-    # neighb.remove(asteroid_1_idx)
-    neighb_ids.remove(asteroid_1_idx)
-    return neighb_ids
-
-def clustering_fuel(knn_fuel, asteroids_kp, asteroid_1_idx, radius):
-    '''
-        1) knn_fuel:            Cluster for "asteroids_fuel_kp"
-        2) asteroids_idx:       Index-Liste von allen Asteroiden
-        3) asteroid_1_idx:      Index vom aktuellen Asteroiden
-        4) rdius:               Begrenzung des Clusters auf max. Radius   
-    '''
-    neighb_fuel, neighb_fuel_ids, neighb_fuel_dis = knn_fuel.find_neighbours(asteroids_kp[asteroid_1_idx], query_type='ball', r=radius)
-    # neighb_fuel = list(neighb_fuel)
-    neighb_fuel_ids = list(neighb_fuel_ids)
-    # neighb_fuel.remove(asteroid_1_idx) #remove(asteroids_idx[asteroid_1_idx])
-    neighb_fuel_ids.remove(asteroid_1_idx)
-    return neighb_fuel_ids
+##################
+### FUZZY-LOGIC
+##################
 
 
-
-
-
+#############
+### ABBAU
+#############
 
 def abbau(bestand,ast_id, t_aufenthalt):
     """ Berechnung des abgebauten Materials

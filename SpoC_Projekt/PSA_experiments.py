@@ -203,8 +203,10 @@ while len(ERG_a) <= 1: # <= 10000
     # Annahme:  Cluster wurde gebildet und man hat aus 10.000 nur noch 300 (=beta) mögliche/sinnvolle Asteroiden zur Auswahl
     # Cluster nicht abhängig von DV, deswegen wird Fuzzy zustätzlich dafür benutzt
     # ERGEBNIS: beta-Beste Asteroiden werden durch Fuzzy vorgeschlagen
+    import Copy_Mathias as mt
+    
 
-    # Hier muss Mathias' Code eingebaut werden, so gut es geht
+    # calculate score
 
     ###################################
     # SCHRITT 3:        Tree-Search

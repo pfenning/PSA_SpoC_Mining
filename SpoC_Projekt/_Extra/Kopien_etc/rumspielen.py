@@ -175,3 +175,104 @@ asteroid_materials = data[:, -1].astype(int)
 
     # # ACHTUNG: WENN CLUSTER DURCH BEDINGUNG LEER, DANN IST "dv_min_2" LEER UND ER BESUCHT DEN GLEICHEN ASTEROIDEN NOCHMAL!!! 
     # # DAS IST ZU VERMEIDEN!!!!!!
+
+# DV Rumspielerei
+# def get_DV(asteroid1, asteroid2, t_start, t_flug, print_result=False):  #variante="lambert", 
+#     """ Berechnung von DV mit verschiedenen Varianten
+#         Args:
+#             Orbital
+#             Direct
+#             Indirect
+#             Lambert (default)
+#         i:  int
+#             aktueller Asteroid
+#         j:  int
+#             nächster Asteroid
+#     """
+#     # Wenn tof < 0.1, dann ist Flug zu kurz --> singular lambert solution
+#     # DIE ZEITVEKTOREN BRAUCHEN SCHON 2 EINTRÄGE !!! ANKUNFT & VORBEREITUNG muss bekannt sein
+#     #       ==> TOF & t_spent geben wir vor durch Zeitoptimierung!! 
+#     # r1, v1 = asteroids[asteroid1].eph(T_START.mjd2000 + t_arrival[-2] + t_spent[-2])
+#     #t_start_rv1 = T_START.mjd2000 + t_start
+#     r1, v1 = asteroid1.eph(T_START.mjd2000 + t_start)    
+#     # r2, v2 = asteroids[asteroid2].eph(T_START.mjd2000 + t_arrival[-1])
+#     r2, v2 = asteroid2.eph(T_START.mjd2000 + t_start + t_flug)            
+#     l = pk.lambert_problem(r1=r1,r2=r2,tof=t_flug*pk.DAY2SEC, mu=MU_TRAPPIST, cw=False, max_revs=0
+#     DV1 = [a - b for a, b in zip(v1, l.get_v1()[0])]
+#     DV2 = [a - b for a, b in zip(v2, l.get_v2()[0])]
+#     DV = np.linalg.norm(DV1) + np.linalg.norm(DV2)    
+#     return DV   
+
+#     if variante == "orbital":
+#         def DV_orbital():
+#             pass
+#     if variante == "direct":
+#         def DV_direct():
+#             pass
+#     if variante == "indirect":
+#         def DV_indirect():
+#             pass
+#     if variante == "lambert":
+#         def DV_lambert():            
+#             # Wenn tof < 0.1, dann ist Flug zu kurz --> singular lambert solution
+#             # DIE ZEITVEKTOREN BRAUCHEN SCHON 2 EINTRÄGE !!! ANKUNFT & VORBEREITUNG muss bekannt sein
+#             #       ==> TOF & t_spent geben wir vor durch Zeitoptimierung!! 
+#             # r1, v1 = asteroids[asteroid1].eph(T_START.mjd2000 + t_arrival[-2] + t_spent[-2])
+#             r1, v1 = asteroids[asteroid1].eph(T_START.mjd2000 + t_start)
+#             # r2, v2 = asteroids[asteroid2].eph(T_START.mjd2000 + t_arrival[-1])
+#             r2, v2 = asteroids[asteroid2].eph(T_START.mjd2000 + t_start + t_flug)            
+#             l = pk.lambert_problem(r1=r1,r2=r2,tof=tof*pk.DAY2SEC, mu=MU_TRAPPIST, cw=False, max_revs=0)
+#             DV1 = [a - b for a, b in zip(v1, l.get_v1()[0])]
+#             DV2 = [a - b for a, b in zip(v2, l.get_v2()[0])]
+#             DV = np.linalg.norm(DV1) + np.linalg.norm(DV2)    
+#             return DV                                        # ACHTUNG: Hier kommen Werte wie "622902.82..." raus !!
+#     # else: DV_lambert()
+#     # def propellant_used():
+#     #     propellant = propellant - get_DV / DV_per_propellant  # Und hier dann prop. -8..von 1 aus gerechnet
+# # print(T_START.mjd2000)
+
+
+
+
+
+
+
+# DV berechnen
+import PSA_functions as psa
+# 1) Spoc-Kontrolle
+# Also break if the time of flight is too short (avoids singular lambert solutions)
+ast_1_idx = 9953
+ast_1_kp = asteroids[ast_1_idx]
+ast_2_idx = 6961
+ast_2_kp = asteroids[ast_2_idx]
+
+t_opt = 0
+t_abflug_opt_, t_flug_min_dv_, dv_min_ = psa.time_optimize_time_v2(ast_1_kp, ast_2_kp, 0 + t_opt, t_opt)     
+time_at_arrival = [t_abflug_opt_ + t_flug_min_dv_]   
+time_spent_preparing = [t_abflug_opt_]
+tof = t_flug_min_dv_
+
+# Compute the ephemeris of the asteroid we are departing
+r1, v1 = asteroids[ast_1_idx].eph(
+    T_START.mjd2000 + time_at_arrival[i - 1] + time_spent_preparing[i - 1]
+)
+
+# Compute the ephemeris of the next target asteroid
+r2, v2 = asteroids[ast_2_idx].eph(
+    T_START.mjd2000 + time_at_arrival[i]
+)
+
+# Solve the lambert problem for this flight
+l = pk.lambert_problem(
+    r1=r1, r2=r2, tof=tof * pk.DAY2SEC, mu=MU_TRAPPIST, cw=False, max_revs=0
+)
+
+# Compute the delta-v necessary to go there and match its velocity
+DV1 = [a - b for a, b in zip(v1, l.get_v1()[0])]
+DV2 = [a - b for a, b in zip(v2, l.get_v2()[0])]
+DV = np.linalg.norm(DV1) + np.linalg.norm(DV2)
+
+# Compute propellant used for this transfer and update ship propellant level
+propellant = propellant - DV / DV_per_propellant
+
+print("DV Spoc Kontrolle: ", DV)
