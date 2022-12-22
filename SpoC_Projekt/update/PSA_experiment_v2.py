@@ -48,7 +48,7 @@ for line in data:
         "Asteroid " + str(int(line[0])),
     )
     asteroids_kp.append(p)
-    dict_asteroids[line[0]] = p, line[-2], int(line[-1])  # Key = ID, Liste mit [Planet Object, Masse, Material]
+    dict_asteroids[line[0]] = [p, line[-2], int(line[-1])]  # Key = ID, Liste mit [Kaplerian, Masse, Material]
 
 
 #########
@@ -86,8 +86,8 @@ branch = {0: {'id': i_start, 't_m': 0.0, 't_arr': 0.0}}
 print("Start-Asteroid: ", branch[0]['id'])
 
 # while ERG_t_arr[-1] < T_DAUER:
-for i in range(5):     # ToDo: Für Tests auf Anzahl Schritte beschränkt. Später auf Zeit
-    print("================ Neuer Durchlauf ================")
+for i in range(30):     # ToDo: Für Tests auf Anzahl Schritte beschränkt. Später auf Zeit
+    print(f"================ Durchlauf {i} ================")
     # for branch in beams:    # ToDo: Ermöglicht später ads iterieren durch die verschiedenen Branches - wenns so klappt
     # Aktuellen Startpunkt auslesen
     asteroid_1_id = branch[i]['id']
@@ -118,12 +118,12 @@ for i in range(5):     # ToDo: Für Tests auf Anzahl Schritte beschränkt. Spät
     for asteroid_2_id in neighb_ids:
         asteroid_2_kp, asteroid_2_mas, asteroid_2_mat = dict_asteroids[asteroid_2_id]
         # Zeitoptimierung für Überflug
-        t_abflug_opt_, t_flug_min_dv_, dv_min_ = psa.time_optimize_time_v2(
+        t_abflug_opt_, t_flug_min_dv_, dv_min_ = psa.time_optimize_time_v1(
             asteroid_1_kp,
             asteroid_2_kp,
             t_start=branch[i]['t_arr']+t_opt,
             t_opt=t_opt,
-            print_result=True
+            # print_result=True
         )
         # Bewertung des Asteroids und des Wechsels
         score = my_system.calculate_score(  # ToDo: Über Normierung des delta_v sprechen
@@ -179,6 +179,6 @@ for a, t_m, t_arr in ERG_list:
 print("Anzahl der besuchten Asteroiden: ", len(ERG_a))
 print(branch)
 for a, t_m, t_arr in zip(ERG_a, ERG_t_m, ERG_t_arr):
-    print("Asteroid ID: ", a, f"Ankunftszeit: {t_arr:.3}", f"Verweildauer: {t_m:.2}")
+    print(f"Asteroid ID:{a}     Ankunftszeit:{t_arr:.4}     Verweildauer:{t_m:.3}")
 # for i in range(len(ERG_a)):
 #     print("Asteroid ID: ", ERG_a[i], f"Ankunftszeit: {ERG_t_arr[i]:.3}", f"Verweildauer: {ERG_t_m[i]:.2}")

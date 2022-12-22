@@ -291,12 +291,13 @@ def time_optimize_time_v2(asteroid1, asteroid2, t_start, t_opt):
     """
     dv_t_flug = []
     dv_t_start = []
+
+    ###################################################
+    # Variation der Flugzeit, Startpunkt fest
+    ###################################################
     # Mit der Suche wird am Tag begonnen, an dem der Start-Asteroid vollständig abgebaut ist.
-    # zunächst wird nur die Flugzeit optimiert in einem Bereich von 20-30 Tagen
-    # oben ist t_flug mit 30 angegeben, könnte man auch ändern
     t_flug_1 = range(5, 46, 4)
 
-    # Variation der Flugzeit, Startpunkt fest
     for t in t_flug_1:
         dv_t_flug.append(get_dv(asteroid1, asteroid2, t_start, t))
 
@@ -310,14 +311,17 @@ def time_optimize_time_v2(asteroid1, asteroid2, t_start, t_opt):
     weights = np.array([0.3, 0.7])
     rank_t_flug = []
     for sol in results_t_flug:
-        rank_t_flug.append(sum(weights * sol))                          # Bewertung aus gewichteter Summe
+        rank_t_flug.append(sum(weights * sol))  # Bewertung aus gewichteter Summe
 
     index_min = rank_t_flug.index(min(rank_t_flug))
     # index_min = dv_t_flug.index(min(dv_t_flug))
     t_flug_min_dv = t_flug_1[index_min]
 
+
+    ###################################################
     # Variation des Startpunktes bei gegebener Flugzeit
     # vor optimalem Starttag
+    ###################################################
     t_start_relativ_var = [-0.3, -0.2, -0.1, -0.05]
     t_start_var = []
     for rel in t_start_relativ_var:
@@ -337,7 +341,7 @@ def time_optimize_time_v2(asteroid1, asteroid2, t_start, t_opt):
     for i in range(0, len(t_start_var)):
         # "Normierung" für ähnliche Skalierung - abs(t_var) da Betrag der Abweichung von t_opt relevant
         # nur t_start, DV (t_flug bereits zuvor gewählt)
-        results_t_start.append([abs(t_start_var[i]/10), dv_t_start[i]/1000])
+        results_t_start.append([abs(t_start_var[i] / 10), dv_t_start[i] / 1000])
 
     weights_neg_var = np.array([1.5, 0.7])
     weights_pos_var = np.array([0.3, 0.7])
@@ -354,7 +358,6 @@ def time_optimize_time_v2(asteroid1, asteroid2, t_start, t_opt):
 
     # Wertepaar für Index des Minimums
     t_start_min_dv = t_start + t_start_var[index_min]
-    # t_flug_min_dv = t_flug_1[index_min]
     dv_min = dv_t_start[index_min]
 
     return t_start_min_dv, t_flug_min_dv, dv_min

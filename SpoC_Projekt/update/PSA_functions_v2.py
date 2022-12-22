@@ -79,6 +79,54 @@ def clustering(knn, asteroids_kp, asteroid_1_idx, radius=4000):
     return neighb_ids
 
 
+def time_optimize_time_v1(asteroid1, asteroid2, t_start, t_opt):
+    """ Zeitoptimierung von Delta V mit 2 Levels. Erst Flugzeit, dann Startzeit
+        Rechenaufwand: Anzahl Flugzeit-Elemente + Anzahl Startzeitpunkte (10+7=17)
+
+        Übergabe: Asteroid 1 und 2, optimaler Startpunkt, optimale Abbauzeit auf aktuellem Asteroiden
+        Rückgabe: optimaler Startpunkt, optimale Flugzeit, optimiertes DV
+        t_start_min_DV_ float
+            Startpunkt der optimalen Konstellation
+        t_flug_min_DV float
+            Flugzeit der optimalen Konstellation
+        dv_min float
+            Minimales DV
+    """
+    # DVs für variable Flugzeiten t_flug_1, bzw. Variable Startpunkte t_start
+    dv_t_flug = []
+    dv_t_start = []
+    # Mit der Suche wird am Tag begonnen, an dem der Start-Asteroid vollständig abgebaut ist.
+    # zunächst wird nur die Flugzeit optimiert in einem Bereich von 20-30 Tagen
+    # oben ist t_flug mit 30 angegeben, könnte man auch ändern
+    t_flug_1 = range(5, 46, 4)
+
+    # Variation der Flugzeit, Startpunkt fest
+    for t in t_flug_1:
+        dv_t_flug.append(get_dv(asteroid1, asteroid2, t_start, t))
+
+    # Minimum heraussuchen
+    index_min = dv_t_flug.index(min(dv_t_flug))
+    t_flug_min_dv = t_flug_1[index_min]
+
+    # Variation des Startpunktes bei gegebener Flugzeit
+    # vor optimalem Starttag
+    t_start_relativ_var = [-0.3, -0.2, -0.1, -0.05, 0, 0.05, 0.1, 0.2, 0.3]
+    t_start_var = []
+    for rel in t_start_relativ_var:
+        t_start_var.append(rel * t_opt)
+    # Berechnung für alle Variationen t_var
+    for t_var in t_start_var:
+        t = t_start + t_var
+        dv_t_start.append(get_dv(asteroid1, asteroid2, t, t_flug_min_dv))
+
+    # Minimum heraussuchen
+    index_min = dv_t_start.index(min(dv_t_start))
+    t_start_min_dv = t_start + t_start_var[index_min]
+    dv_min = dv_t_start[index_min]
+
+    return t_start_min_dv, t_flug_min_dv, dv_min
+
+
 # ToDo: Zeitraum der Flugzeit neu definieren (z.B. auf 5-46 in 4er Schritten)
 #       - Reicht Auflösung? Sonst: nach gefundenem Minimum nochmal einen halben Schritt in jede Richtung machen
 def time_optimize_time_v2(asteroid1, asteroid2, t_start, t_opt, print_result=False):
@@ -100,12 +148,13 @@ def time_optimize_time_v2(asteroid1, asteroid2, t_start, t_opt, print_result=Fal
     """
     dv_t_flug = []
     dv_t_start = []
+
+    ###################################################
+    # Variation der Flugzeit, Startpunkt fest
+    ###################################################
     # Mit der Suche wird am Tag begonnen, an dem der Start-Asteroid vollständig abgebaut ist.
-    # zunächst wird nur die Flugzeit optimiert in einem Bereich von 20-30 Tagen
-    # oben ist t_flug mit 30 angegeben, könnte man auch ändern
     t_flug_1 = range(5, 46, 4)
 
-    # Variation der Flugzeit, Startpunkt fest
     for t in t_flug_1:
         dv_t_flug.append(get_dv(asteroid1, asteroid2, t_start, t))
 
@@ -119,14 +168,16 @@ def time_optimize_time_v2(asteroid1, asteroid2, t_start, t_opt, print_result=Fal
     weights = np.array([0.3, 0.7])
     rank_t_flug = []
     for sol in results_t_flug:
-        rank_t_flug.append(sum(weights * sol))                          # Bewertung aus gewichteter Summe
+        rank_t_flug.append(sum(weights * sol))  # Bewertung aus gewichteter Summe
 
     index_min = rank_t_flug.index(min(rank_t_flug))
     # index_min = dv_t_flug.index(min(dv_t_flug))
     t_flug_min_dv = t_flug_1[index_min]
 
+    ###################################################
     # Variation des Startpunktes bei gegebener Flugzeit
     # vor optimalem Starttag
+    ###################################################
     t_start_relativ_var = [-0.3, -0.2, -0.1, -0.05]
     t_start_var = []
     for rel in t_start_relativ_var:
@@ -146,7 +197,7 @@ def time_optimize_time_v2(asteroid1, asteroid2, t_start, t_opt, print_result=Fal
     for i in range(0, len(t_start_var)):
         # "Normierung" für ähnliche Skalierung - abs(t_var) da Betrag der Abweichung von t_opt relevant
         # nur t_start, DV (t_flug bereits zuvor gewählt)
-        results_t_start.append([abs(t_start_var[i]/10), dv_t_start[i]/1000])
+        results_t_start.append([abs(t_start_var[i] / 10), dv_t_start[i] / 1000])
 
     weights_neg_var = np.array([1.5, 0.7])
     weights_pos_var = np.array([0.3, 0.7])
@@ -163,7 +214,6 @@ def time_optimize_time_v2(asteroid1, asteroid2, t_start, t_opt, print_result=Fal
 
     # Wertepaar für Index des Minimums
     t_start_min_dv = t_start + t_start_var[index_min]
-    # t_flug_min_dv = t_flug_1[index_min]
     dv_min = dv_t_start[index_min]
 
     return t_start_min_dv, t_flug_min_dv, dv_min
