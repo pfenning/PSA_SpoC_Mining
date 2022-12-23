@@ -104,6 +104,8 @@ for i in range(100):     # ToDo: Für Tests auf Anzahl Schritte beschränkt. Sp�
 
     # Asteroidenpool abhängig von vorhandenem Tank
     # ToDo: Leider nicht als Dictionary lösbar, oder? - clustering funktioniert sonst nicht
+    # ToDo: evtl. auch später erst TankAsteroid auswählen, sonst zu wenige andere Asteroiden
+    # ToDo: Beschränkung auf Basis des Tanks nach Abbau nicht vor - sonst bei Landung auf Tankasteroid zu streng
     if bestand[-1] < 0.6:
         candidates_id = [asteroid_id for asteroid_id, values in dict_asteroids.items() if values[-1] == 3]
         print("Als nächstes Tank-Asteroiden aussuchen")
@@ -136,6 +138,9 @@ for i in range(100):     # ToDo: Für Tests auf Anzahl Schritte beschränkt. Sp�
             limit=bestand[-1]
             # print_result=True
         )
+        # ToDo: Derzeit Bestand vor Abbau - Bei Tankasteroiden sollte das evtl. berücksichtigt werden
+        # if asteroid_2_mat == 3:
+        #     limit =
         # Bewertung nur durchführen, wenn Asteroid auch erreichbar!
         if (dv_min_/DV_per_propellant) < bestand[-1]:
             # Bewertung des Asteroids und des Wechsels
