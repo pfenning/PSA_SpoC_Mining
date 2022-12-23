@@ -48,8 +48,10 @@ for line in data:
         "Asteroid " + str(int(line[0])),
     )
     asteroids_kp.append(p)
-    dict_asteroids[line[0]] = [p, line[-2], int(line[-1])]  # Key = ID, Liste mit [Kaplerian, Masse, Material]
-
+    dict_asteroids[int(line[0])] = [p, line[-2], int(line[-1])]  # Key = ID, Liste mit [Kaplerian, Masse, Material]
+# Putzen - wahrscheinlich nicht notwendig
+del p
+del data
 
 #########
 # TIME
@@ -76,7 +78,7 @@ my_system = FuzzySystem(verf.min(), verf.max(), resolution=0.02)
 ###########
 
 # Startpunkt festlegen ToDo: Später müssen es mehrere sein, Funktion die gute Kandidaten findet fehlt noch!
-# i_start = 9953
+# i_start = 3869, 8836 # Für diesen Asteroiden super weg bisher gefunden! - Ursprünglich: 9953
 i_start = random.randrange(0, len(asteroids_kp), 1)
 # Speicher für die beta Pfade:
 # ToDo: Für Beam-Search gibt es wiederum ein Dictionary mit brachnN als Inhalte
@@ -87,7 +89,7 @@ branch = {0: {'id': i_start, 't_m': 0.0, 't_arr': 0.0}}
 print("Start-Asteroid: ", branch[0]['id'])
 
 # while ERG_t_arr[-1] < T_DAUER:
-for i in range(30):     # ToDo: Für Tests auf Anzahl Schritte beschränkt. Später auf Zeit
+for i in range(100):     # ToDo: Für Tests auf Anzahl Schritte beschränkt. Später auf Zeit
     print(f"================ Durchlauf {i} ================")
     # for branch in beams:    # ToDo: Ermöglicht später ads iterieren durch die verschiedenen Branches - wenns so klappt
     # Aktuellen Startpunkt auslesen
@@ -101,22 +103,29 @@ for i in range(30):     # ToDo: Für Tests auf Anzahl Schritte beschränkt. Spä
         t_opt = 30*asteroid_1_mas
 
     # Asteroidenpool abhängig von vorhandenem Tank
+    # ToDo: Leider nicht als Dictionary lösbar, oder? - clustering funktioniert sonst nicht
     if bestand[-1] < 0.6:
-        candidates = [asteroid for asteroid, mas, mat in dict_asteroids.values() if mat == 3]
+        candidates_id = [asteroid_id for asteroid_id, values in dict_asteroids.items() if values[-1] == 3]
         print("Als nächstes Tank-Asteroiden aussuchen")
     else:
-        candidates = [asteroid for asteroid, mas, mat in dict_asteroids.values()]
+        candidates_id = [asteroid_id for asteroid_id, values in dict_asteroids.items()]
+    candidates = [dict_asteroids[asteroid_id][0] for asteroid_id in candidates_id]
+
     # ===================
     # Clustering itself
     # ToDo: T & radius können auch anders gewählt werden
     radius = 4000
     knn = phasing.knn(candidates, branch[i]['t_arr']+t_opt, 'orbital', T=30)
-    neighb_ids = psa.clustering(knn, asteroids_kp, asteroid_1_id, radius)   # ToDo: Eventuell knn anstatt ball?
-    print(f"{len(neighb_ids)} gefundene Nachbarn: ", neighb_ids)
+    neighb_inds = psa.clustering(knn, asteroids_kp, asteroid_1_id, radius)   # ToDo: Eventuell knn anstatt ball?
+    print(f"{len(neighb_inds)} gefundene Nachbarn: ", neighb_inds)
     # Iteration durch Cluster
     score_2 = []
     flight_opt = []
-    for asteroid_2_id in neighb_ids:
+    for index in neighb_inds:
+        if candidates_id[index] == asteroid_1_id:
+            continue
+        # Index ist nicht Startasteroid
+        asteroid_2_id = candidates_id[index]
         asteroid_2_kp, asteroid_2_mas, asteroid_2_mat = dict_asteroids[asteroid_2_id]
         # Zeitoptimierung für Überflug
         t_abflug_opt_, t_flug_min_dv_, dv_min_ = psa.time_optimize_time_v2(
@@ -147,9 +156,9 @@ for i in range(30):     # ToDo: Für Tests auf Anzahl Schritte beschränkt. Spä
     # Optimum wählen:
     asteroid_2_id, t_abflug_opt_, t_flug_min_dv_, dv_min_ = flight_opt[score_2.index(max(score_2))]
     print(f"Starttag:{t_abflug_opt_:.0f}  Flugzeit:{t_flug_min_dv_:.0f}   => Delta V ={dv_min_:.0f}")
-    print("Ziel-Asteroid: ", asteroid_2_id,
-          "Material: ", dict_asteroids[asteroid_2_id][2],
-          "Masse: ", dict_asteroids[asteroid_2_id][1])
+    print(f"Ziel-Asteroid: {asteroid_2_id}  "
+          f"Material:{dict_asteroids[asteroid_2_id][2]}  "
+          f"Masse:{dict_asteroids[asteroid_2_id][1]:.3}")
 
     # Übername in Branch:
     branch[i+1] = {'id': asteroid_2_id, 't_m': 0.0, 't_arr': t_abflug_opt_+t_flug_min_dv_}
@@ -159,7 +168,7 @@ for i in range(30):     # ToDo: Für Tests auf Anzahl Schritte beschränkt. Spä
     # Abbau des Rohstoffs von Asteroid 1:
     psa.abbau(bestand, asteroid_1_mas, asteroid_1_mat, branch[i]['t_m'])
     # Bewertung:
-    print("Gütemaß ohne Tank: ", - np.min(bestand[0:3]))
+    print(f"Gütemaß ohne Tank: {- np.min(bestand[0:3]):.3}")
     print("Bestand: ", bestand[0:3])
     # Flug zum anderen Asteroiden
     bestand[-1] -= dv_min_/DV_per_propellant
@@ -168,6 +177,10 @@ for i in range(30):     # ToDo: Für Tests auf Anzahl Schritte beschränkt. Spä
     # Besuchten Asteroiden aus Dictionary streichen
     # del dict_asteroids[asteroid_1_id]
     dict_asteroids.pop(asteroid_1_id)
+    # Kandidaten leeren
+    # candidates_id.clear()
+    # candidates.clear()
+    # neighb_inds.clear()
 
 
 ######################################

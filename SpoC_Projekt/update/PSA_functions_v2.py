@@ -70,13 +70,13 @@ def clustering(knn, asteroids_kp, asteroid_1_idx, radius=4000):
     :param radius: Begrenzung des Clusters auf max. Radius
     :return: IDs der Nachbarn
     """
-    neighb, neighb_ids, neighb_dis = knn.find_neighbours(asteroids_kp[asteroid_1_idx], query_type='ball', r=radius)
-    neighb_ids = list(neighb_ids)
-    try:
-        neighb_ids.remove(asteroid_1_idx)
-    except ValueError:
-        pass
-    return neighb_ids
+    neighb, neighb_inds, neighb_dis = knn.find_neighbours(asteroids_kp[asteroid_1_idx], query_type='ball', r=radius)
+    neighb_inds = list(neighb_inds)
+    # try:
+    #     neighb_inds.remove(asteroid_1_idx)
+    # except ValueError:
+    #     pass
+    return neighb_inds
 
 
 def time_optimize_time_v1(asteroid1, asteroid2, t_start, t_opt, limit):
