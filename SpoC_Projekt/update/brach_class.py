@@ -75,10 +75,10 @@ class Branch:
         Erzeugt einen ganz neuen Pfad ausgehend einem übergebenden Startasteroiden
         :param i_start: ID des Startasteroiden
         """
-        self.steps = [{'id': i_start, 't_m': 0.0, 't_arr': 0.0, 'score next step': 0.0, 'branch score yet': 0.0}]
+        self.visited = [{'id': i_start, 't_m': 0.0, 't_arr': 0.0, 'score next step': 0.0, 'branch score yet': 0.0}]
         self.not_visited = Branch.dict_asteroids.copy()     # Jedes Branch-Objekt hat eigene Visited-Asteroiden-Liste
         self.bestand = [0.0, 0.0, 0.0, 1.0]
-        self.asteroid_1_id = self.steps[0]['id']
+        self.asteroid_1_id = self.visited[0]['id']
         self.asteroid_1_kp, self.asteroid_1_mas, self.asteroid_1_mat = self.not_visited[self.asteroid_1_id]
         self.t_opt = 0.0
 
@@ -87,15 +87,34 @@ class Branch:
         Setzt ID, Planet-Objekt, Masse, Material und optimale Abbauzeit auf Werte zuletzt besuchten Asteroids
         :return:
         """
-        self.asteroid_1_id = self.steps[-1]['id']
+        self.asteroid_1_id = self.visited[-1]['id']
         self.asteroid_1_kp, self.asteroid_1_mas, self.asteroid_1_mat = self.not_visited[self.asteroid_1_id]
         # Abbauzeit für gesamte Masse bestimmen
-        if self.asteroid_1_id == self.steps[0]['id']:  # bzw. i == 0
+        if self.asteroid_1_id == self.visited[0]['id']:  # bzw. i == 0
             self.t_opt = 0
         else:
             self.t_opt = 30 * self.asteroid_1_mas
 
-    def creat_cluster_by_material(self, materials, radius=4000):
+    def get_next_possible_steps(self):
+        """
+        Bestimmt die Menge von Asteroiden, die für Expand-Schritt verwendet werden sollen.
+        - Cluster gewinnen
+        - Durch Cluster iterieren: siehe Vorversion (Zeitoptimierung, Score, SCORE PFAD)
+        - Prüfen, ob leere Menge, wenn ja Kandidaten erweitern und neu anfangen (Rekursion mit Hilfsfunktion?)
+
+        Kandidaten:
+        Falls Tank fast leer, oder Zeit bald abgelaufen:
+            Cluster mit Sprit-ASteroiden (falls leere Menge anderes testen)
+        Ansonsten versuchen (wenn leere Menge = nächstes testen):
+        1. Cluster mit geringstem Bestand, wenn min Bestand < 2x mittlerer Bestand
+        2. Cluster mit 2.geringstem Bestand, wenn höchster Bestand > 2x mittlere Bestand
+        3. Cluster mit 3. (oder 2. 3. oder allen, je nachdem wie Verteilung)
+        ToDo: Cluster-Fälle genauer überlegen
+        :return: Liste mit [neue Zeile im Stil von Visited, neuer Bestand]
+        """
+        # Cluster-Fall bestimmen
+
+    def get_cluster_by_material(self, materials, radius=4000):
         """
         Erstellt Cluster für aktuellen Asteroiden aus allen Asteroiden, die übergebene Materialien besitzen
         :param materials: int oder list of ints - Liste von Materialien, die geclustert werden sollen
@@ -107,7 +126,7 @@ class Branch:
         candidates_id = [asteroid_id for asteroid_id, values in self.not_visited.items() if values[-1] in materials]
         candidates = [self.not_visited[asteroid_id][0] for asteroid_id in candidates_id]
 
-        knn = phasing.knn(candidates, self.steps[-1]['t_arr'] + self.t_opt, 'orbital', T=30)
+        knn = phasing.knn(candidates, self.visited[-1]['t_arr'] + self.t_opt, 'orbital', T=30)
         # neighb_inds = psa.clustering(knn, Branch.asteroids_kp, self.asteroid_1_id, radius)
         neighb, neighb_inds, neighb_dis = knn.find_neighbours(Branch.asteroids_kp[self.asteroid_1_id],
                                                               query_type='ball', r=radius)
@@ -115,7 +134,17 @@ class Branch:
         # ToDo: Eventuell knn anstatt ball?
         return [candidates_id[index] for index in neighb_inds if index is not self.asteroid_1_id]
 
-    def
+    def new_step(self, step, bestand):
+        """
+        Führt neuen Schritt aus:
+        - berechnet t_m von aktuellem Asteroiden
+        - fügt Asteroiden zu Visited hinzu
+        - aktualisiert Bestand von Rohstoffen und Tank
+        - entfernt aktuellen Asteroiden aus Not_Visited
+        :return:
+        """
+        pass
+
 
 
 

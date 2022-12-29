@@ -67,7 +67,6 @@ class FuzzySystem:
         self.delt = ctrl.Antecedent(np.linspace(0, 1, _item_count(resolution)), 'Spritverbrauch')
         self.out_sub = ctrl.Consequent(np.linspace(0, 1, _item_count(resolution)), 'Ausgang Subsystem 1')
         # Subsystem 2 - Material
-        # ToDo: Grenzen weggelassen. Stattdessen wird Input später transformiert
         self.verf = ctrl.Antecedent(np.linspace(0, 1, _item_count(resolution)), 'Verfügbarkeit des Materials')
         self.bes = ctrl.Antecedent(np.linspace(0, 1, _item_count(resolution)), 'Bestand des Materials')
         self.out_sub_2 = ctrl.Consequent(np.linspace(0, 1, _item_count(resolution)), 'Ausgang Subsystem 2')
@@ -165,7 +164,7 @@ class FuzzySystem:
         # Boundaries
         # ToDo: Falls Varianz zu gering ist, Grenzen auf 0 und 1 setzen,
         #  sonst Materialverfügbarkeit ungleich behandelt, obwohl sie etwa gleich
-        if verf_max/verf_min < 3:
+        if verf_max/verf_min < 2:
             self.verf_min = 0
             self.verf_max = 1
         else:
@@ -269,6 +268,7 @@ class FuzzySystem:
         :param mas: Masse des Zielasteroiden
         :return: Bewertung des Asteroidenwechsels
         """
+        # ToDo: griddata verwenden für Interpolation
         # interp = LinearNDInterpolator(list(zip(self.t_n_map, self.delt_map)), self.out_sub_1_map)
         #
         # return interp(t_n, delta_v)
@@ -325,3 +325,16 @@ class FuzzySystem:
         except FileNotFoundError:
             print("Kennfelder noch nicht erzeugt, oder Dateien gelöscht")
 
+
+    def plot_by_map(self):
+        """
+        Plottet Fuzzy-Kennfelder anhand der erstellten Maps
+        :return:
+        """
+        # Überprüfen, ob Kennfeld schon geladen, wenn Nein, dann versuchen es zu laden, ansonsten Neues erstellen
+        # if self.out_sub_1_map is None or self.out_sub_2_map is None or self.score_map is None:
+        #     try:
+        #         self.load_maps_from_npy()
+        #     except:
+        #         self.creat_score_map()
+        pass
