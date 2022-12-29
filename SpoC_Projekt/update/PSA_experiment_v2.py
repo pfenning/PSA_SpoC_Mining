@@ -88,8 +88,17 @@ branch = {0: {'id': i_start, 't_m': 0.0, 't_arr': 0.0}}
 
 print("Start-Asteroid: ", branch[0]['id'])
 
-# while ERG_t_arr[-1] < T_DAUER:
-for i in range(100):     # ToDo: Für Tests auf Anzahl Schritte beschränkt. Später auf Zeit
+
+for i in range(50):
+    if T_DAUER < (branch[i]['t_arr']-59):
+        branch[i]['t_m'] = 60.0
+        # Abbau des Rohstoffs von Asteroid 1:
+        psa.abbau(bestand, dict_asteroids[branch[i]['id']][1], dict_asteroids[branch[i]['id']][2], branch[i]['t_m'])
+        # Bewertung:
+        print(f"Gütemaß ohne Tank: {- np.min(bestand[0:3]):.3}")
+        print("Bestand: ", bestand[0:3])
+        break
+
     print(f"================ Durchlauf {i} ================")
     # for branch in beams:    # ToDo: Ermöglicht später ads iterieren durch die verschiedenen Branches - wenns so klappt
     # Aktuellen Startpunkt auslesen
@@ -106,9 +115,13 @@ for i in range(100):     # ToDo: Für Tests auf Anzahl Schritte beschränkt. Sp�
     # ToDo: Leider nicht als Dictionary lösbar, oder? - clustering funktioniert sonst nicht
     # ToDo: evtl. auch später erst TankAsteroid auswählen, sonst zu wenige andere Asteroiden
     # ToDo: Beschränkung auf Basis des Tanks nach Abbau nicht vor - sonst bei Landung auf Tankasteroid zu streng
-    if bestand[-1] < 0.6:
+    if (bestand[-1] < 0.3) and (branch[i]['t_arr'] < 1750):
         candidates_id = [asteroid_id for asteroid_id, values in dict_asteroids.items() if values[-1] == 3]
         print("Als nächstes Tank-Asteroiden aussuchen")
+    elif 3*np.min(bestand[:3]) < np.max(bestand[:3]):
+        candidates_id = [asteroid_id for asteroid_id, values in dict_asteroids.items()
+                         if values[-1] is not np.argmax(bestand[:3])]
+        print(f"Ausschluss von Material {np.argmax(bestand[:3])}")
     else:
         candidates_id = [asteroid_id for asteroid_id, values in dict_asteroids.items()]
     candidates = [dict_asteroids[asteroid_id][0] for asteroid_id in candidates_id]
@@ -166,6 +179,7 @@ for i in range(100):     # ToDo: Für Tests auf Anzahl Schritte beschränkt. Sp�
           f"Masse:{dict_asteroids[asteroid_2_id][1]:.3}")
 
     # Übername in Branch:
+    # ToDo: Scheife Stoppen, sobald t_arr nach T_Dauer ist (was passiert mit dem  letzten Eintrag?)
     branch[i+1] = {'id': asteroid_2_id, 't_m': 0.0, 't_arr': t_abflug_opt_+t_flug_min_dv_}
     # t_m von aktuellem ASteroiden bestimmen
     branch[i]['t_m'] = t_abflug_opt_ - branch[i]['t_arr']
