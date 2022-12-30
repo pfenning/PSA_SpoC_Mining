@@ -90,24 +90,39 @@ class Branch:
         else:
             self.t_opt = self.asteroid_1_mas*Branch.TIME_TO_MINE_FULLY
 
+    def _sort_material_types(self):
+        sort_items = enumerate(self.bestand[:3])
+        sorted_material = sorted(sort_items, key=lambda item: item[1])
+        sorted_material_types = []
+        sorted_materials = []
+        for i, x in sorted_material:
+            sorted_material_types.append(i)
+            sorted_materials.append(x)
+        return sorted_material_types, sorted_materials
+
     def _get_cluster_case(self):
         """
         Bestimmt den Cluster-Case
         :return: Array von Material-Type-Arrays für Clusterbildung
         """
-        sort_materials = sorted(self.bestand[0:3])
-        sorted_material_types = [self.bestand[0:3].index(value) for value in sort_materials]
+        sorted_material_types, sorted_materials = self._sort_material_types()
+        for value in sorted_materials:
+            types = np.argwhere(self.bestand[:3] == value)
+            for material_type in types:
+                if material_type not in sorted_material_types:
+                    sorted_material_types.append(material_type)
+        # sorted_material_types = [self.bestand[:3].index(value) for value in sorted_materials]
         # Fallunterscheidung
         if self.bestand[3] < 0.4 and self.visited[-1]['t_arr'] < 1750:
             # Sprit, ansonsten irgendein Rohstoff
             cluster_iteration = [3]
-        elif 3*sort_materials[0] < sort_materials[1] and 3*sort_materials[1] < sort_materials[2]:
+        elif 3*sorted_materials[0] < sorted_materials[1] and 3*sorted_materials[1] < sorted_materials[2]:
             # geringste Verfügbarkeit, mittlere, häufigstes oder Sprit
             cluster_iteration = [sorted_material_types[0], sorted_material_types[1], [sorted_material_types[2], 3]]
-        elif 3*sort_materials[0] < sort_materials[1]:
+        elif 3*sorted_materials[0] < sorted_materials[1]:
             # geringste Verfügbarkeit, ansonsten Rest
-            cluster_iteration = [sorted_material_types[0], [sorted_material_types[1:], 3]]
-        elif 3*sort_materials[1] < sort_materials[2]:
+            cluster_iteration = [sorted_material_types[0], [sorted_material_types[1], sorted_material_types[2], 3]]
+        elif 3*sorted_materials[1] < sorted_materials[2]:
             # beiden geringsten, ansonsten Rest
             cluster_iteration = [sorted_material_types[:2], [sorted_material_types[2], 3]]
         else:

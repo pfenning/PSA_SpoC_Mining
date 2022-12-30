@@ -54,10 +54,37 @@ class TestBranchClass(unittest.TestCase):
     del p
     del data
 
+    def test_sort_material_types(self):
+        branch = Branch(i_start=0)
+        # Teste Fall 1
+        branch.bestand = [1, 1, 1, 0.3]
+        sort = branch._sort_material_types()
+        # self.assertTrue((sort is [0, 1, 2] or sort is [1, 0, 2]),
+        #                 msg="Actual: " + str(sort) + "\n Expected: [0, 1, 2] or [1, 0, 2]")
+        # Teste Fall 2
+        branch.bestand = [4, 1, 13, 1]
+        self.assertEqual([1, 0, 2], branch._sort_material_types())
+        # Teste Fall 3
+        # branch.bestand = [13, 1, 13, 1]
+        # sort = branch._sort_material_types()
+        # self.assertTrue(sort is [1, 0, 2] or sort is [1, 2, 0],
+        #                 msg="Actual: " + str(sort) + "\n Expected: [1, 0, 2] or [1, 2, 0]")
+        # Teste Fall 4
+        # branch.bestand = [1, 1, 13, 1]
+        # sort = branch._sort_material_types()
+        # self.assertTrue(sort is [0, 1, 2] or sort is [1, 0, 2],
+        #                 msg="Actual: " + str(sort) + "\n Expected: [0, 1, 2] or [1, 0, 2]")
+        # Teste Fall 5
+        # branch.bestand = [1, 1, 1, 1]
+        # sort = branch._sort_material_types()
+        # self.assertTrue(sort is [0, 1, 2] or sort is [1, 0, 2] or sort is [2, 0, 1] or sort is [2, 1, 0],
+        #                 msg="Actual: " + str(sort) + "\n Expected: [0, 1, 2] or [1, 0, 2] or [2, 0, 1] or [2, 1, 0]")
+
     def test_get_cluster_case(self):
         branch = Branch(i_start=0)
         # Teste Fall 1
         branch.bestand = [1, 1, 1, 0.3]
+        branch.visited[-1]['t_arr'] = 200
         expected_iteration = [3]
         cluster_iteration = branch._get_cluster_case()
         self.assertEqual(expected_iteration, cluster_iteration)
@@ -68,13 +95,25 @@ class TestBranchClass(unittest.TestCase):
         self.assertEqual(expected_iteration, cluster_iteration)
 
         # Teste Fall 2
-        branch.bestand = [1, 4, 13, 1]
-        expected_iteration = [0, 1, [2, 3]]
+        branch.bestand = [4, 1, 13, 1]
+        expected_iteration = [1, 0, [2, 3]]
         cluster_iteration = branch._get_cluster_case()
         self.assertEqual(expected_iteration, cluster_iteration)
         # Teste Fall 3
+        branch.bestand = [13, 1, 13, 1]
+        expected_iteration = [1, [0, 2, 3]]
+        cluster_iteration = branch._get_cluster_case()
+        self.assertEqual(expected_iteration, cluster_iteration)
         # Teste Fall 4
+        branch.bestand = [1, 1, 13, 1]
+        expected_iteration = [[0, 1], [2, 3]]
+        cluster_iteration = branch._get_cluster_case()
+        self.assertEqual(expected_iteration, cluster_iteration)
         # Teste Fall 5
+        branch.bestand = [1, 1, 1, 1]
+        expected_iteration = range(4)
+        cluster_iteration = branch._get_cluster_case()
+        self.assertEqual(expected_iteration, cluster_iteration)
 
     def test_get_cluster_by_material(self):
         branch = Branch(i_start=0)
