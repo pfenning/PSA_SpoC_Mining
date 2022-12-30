@@ -59,26 +59,26 @@ class TestBranchClass(unittest.TestCase):
         # Teste Fall 1
         branch.bestand = [1, 1, 1, 0.3]
         sort = branch._sort_material_types()
-        # self.assertTrue((sort is [0, 1, 2] or sort is [1, 0, 2]),
-        #                 msg="Actual: " + str(sort) + "\n Expected: [0, 1, 2] or [1, 0, 2]")
+        assert sort in [[0, 1, 2], [1, 0, 2]]
+        # "Actual: " + str(sort) + "\n Expected: [0, 1, 2] or [1, 0, 2]"
         # Teste Fall 2
         branch.bestand = [4, 1, 13, 1]
         self.assertEqual([1, 0, 2], branch._sort_material_types())
         # Teste Fall 3
-        # branch.bestand = [13, 1, 13, 1]
-        # sort = branch._sort_material_types()
-        # self.assertTrue(sort is [1, 0, 2] or sort is [1, 2, 0],
-        #                 msg="Actual: " + str(sort) + "\n Expected: [1, 0, 2] or [1, 2, 0]")
+        branch.bestand = [13, 1, 13, 1]
+        sort = branch._sort_material_types()
+        assert sort in [[1, 0, 2], [1, 2, 0]]
+            # "Actual: " + str(sort) + "\n Expected: [1, 0, 2] or [1, 2, 0]"
         # Teste Fall 4
-        # branch.bestand = [1, 1, 13, 1]
-        # sort = branch._sort_material_types()
-        # self.assertTrue(sort is [0, 1, 2] or sort is [1, 0, 2],
-        #                 msg="Actual: " + str(sort) + "\n Expected: [0, 1, 2] or [1, 0, 2]")
+        branch.bestand = [1, 1, 13, 1]
+        sort = branch._sort_material_types()
+        assert sort in [[0, 1, 2], [1, 0, 2]]
+            # "Actual: " + str(sort) + "\n Expected: [0, 1, 2] or [1, 0, 2]"
         # Teste Fall 5
-        # branch.bestand = [1, 1, 1, 1]
-        # sort = branch._sort_material_types()
-        # self.assertTrue(sort is [0, 1, 2] or sort is [1, 0, 2] or sort is [2, 0, 1] or sort is [2, 1, 0],
-        #                 msg="Actual: " + str(sort) + "\n Expected: [0, 1, 2] or [1, 0, 2] or [2, 0, 1] or [2, 1, 0]")
+        branch.bestand = [1, 1, 1, 1]
+        sort = branch._sort_material_types()
+        assert sort in [[0, 1, 2], [1, 0, 2], [2, 0, 1], [2, 1, 0]]
+            # "Actual: " + str(sort) + "\n Expected: [0, 1, 2] or [1, 0, 2] or [2, 0, 1] or [2, 1, 0]"
 
     def test_get_cluster_case(self):
         branch = Branch(i_start=0)
