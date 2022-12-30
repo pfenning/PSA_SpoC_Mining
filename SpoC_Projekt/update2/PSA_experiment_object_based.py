@@ -1,12 +1,14 @@
 import numpy as np
 
 import PSA_functions_v3 as psa
-from brach_class import Branch
+from branch_class import Branch
 import copy
+import random
 
-i_start = 3869  # 8836,.. Für diesen Asteroiden super weg bisher gefunden! - Ursprünglich: 9953
-# i_start = random.randrange(0, len(asteroids_kp), 1)
+i_start = 3622  # 3869, 8836,.. Für diesen Asteroiden super weg bisher gefunden! - Ursprünglich: 9953
+# i_start = random.randrange(0, 10000, 1)
 branch1 = Branch(i_start)
+print(f"Startasteroid:{i_start}")
 
 for i in range(50):
     try:
@@ -20,9 +22,10 @@ for i in range(50):
     branch_expand = []
     for step in possible_steps:
         branch_expand.append(copy.deepcopy(branch1))
-        branch_expand[-1].new_step()
+        branch_expand[-1].new_step(step['t_m'], step['step'], step['dv'])
 
-    branch1 = branch_expand[np.argmin([branch.get_score() for branch in branch_expand])[0]]
+    branch1 = branch_expand[np.argmax([branch.get_score() for branch in branch_expand])]
+    branch1.print_last_step()
 
 # Lösungvektoren erzeugen
 branch1.print()
