@@ -212,7 +212,7 @@ while len(ERG_a) <= 30:     # <= 10000
         print("Verbrauchtes DV: ", dv_min_)
 
         # PRÜFUNG von DV
-        # print("get_DV: ", psa.get_dv(asteroid_1_kp, asteroid_2_kp, t_abflug_opt_, t_flug_min_dv_))
+        # print("get_DV: ", psa.get_dv(asteroid_1_kp, asteroid_2_kp, t_m_opt, t_flug_min_dv_))
         # print("Alle möglichen DV: ", dv_min_2)
         # print("Notw DV: ", min(dv_min_2))
 
@@ -272,10 +272,10 @@ while len(ERG_a) <= 30:     # <= 10000
     ERG_a.append(asteroid_2_idx)
 
     # if ERG_a[-1] == i_start: 
-    #     ERG_t_m.append(t_abflug_opt_)
-    #     ERG_t_arr.append(t_abflug_opt_ + t_flug_min_dv_)
+    #     ERG_t_m.append(t_m_opt)
+    #     ERG_t_arr.append(t_m_opt + t_flug_min_dv_)
     # else: 
-    #     ERG_t_m.append(t_abflug_opt_ - ERG_t_arr[-1])
+    #     ERG_t_m.append(t_m_opt - ERG_t_arr[-1])
     #     ERG_t_arr.append(ERG_t_arr[-1] + ERG_t_m[-1] + t_flug_min_dv_)
     # ERG_a.append(asteroid2_id)
 

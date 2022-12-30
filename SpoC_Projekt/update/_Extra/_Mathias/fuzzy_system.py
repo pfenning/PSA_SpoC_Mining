@@ -269,6 +269,7 @@ class FuzzySystem:
         :return: Bewertung des Asteroidenwechsels
         """
         # ToDo: griddata verwenden für Interpolation
+        # ToDo: self.out_sub_1_map.reshape(1)
         # interp = LinearNDInterpolator(list(zip(self.t_n_map, self.delt_map)), self.out_sub_1_map)
         #
         # return interp(t_n, delta_v)

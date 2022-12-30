@@ -234,9 +234,22 @@ def abbau(bestand, mass, material, t_aufenthalt):
     :param t_aufenthalt: Aufenthaltsdauer auf Planet
     :return:
     """
+    bestand[material] = get_abbau_menge(bestand[material], mass, material, t_aufenthalt)
+
+
+def get_abbau_menge(material_bestand, mass, material, t_aufenthalt):
+    """
+    Berechnet die Abbaumenge für ein übergebenes Material und addiert es auf den Bestand
+    :param material_bestand: aktueller Bestand des Materials
+    :param mass: Masse des Asteroiden
+    :param material: Material-Typ
+    :param t_aufenthalt: Aufenthaltszeit auf Asteroiden
+    :return: neuer Bestand des Materials
+    """
     if material == 3:
-        propellant_found = np.minimum(mass, (t_aufenthalt/TIME_TO_MINE_FULLY))
-        bestand[material] = np.minimum(1.0, bestand[material] + propellant_found)
+        propellant_found = np.minimum(mass, (t_aufenthalt / TIME_TO_MINE_FULLY))
+        material_bestand = np.minimum(1.0, material_bestand + propellant_found)
     else:
-        bestand[material] += np.minimum(mass, (t_aufenthalt/TIME_TO_MINE_FULLY))
-    # return bestand
+        material_bestand += np.minimum(mass, (t_aufenthalt / TIME_TO_MINE_FULLY))
+
+    return material_bestand

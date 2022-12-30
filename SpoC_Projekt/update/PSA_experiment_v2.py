@@ -90,7 +90,7 @@ print("Start-Asteroid: ", branch[0]['id'])
 
 
 for i in range(50):
-    if T_DAUER < (branch[i]['t_arr']-59):
+    if T_DAUER-59 < branch[i]['t_arr']:
         branch[i]['t_m'] = 60.0
         # Abbau des Rohstoffs von Asteroid 1:
         psa.abbau(bestand, dict_asteroids[branch[i]['id']][1], dict_asteroids[branch[i]['id']][2], branch[i]['t_m'])
@@ -168,7 +168,7 @@ for i in range(50):
             flight_opt.append([asteroid_2_id, t_abflug_opt_, t_flug_min_dv_, dv_min_])
             # print(f"Kandidat:{asteroid_2_id} Material:{dict_asteroids[asteroid_2_id][2]} "
             #       f"Masse:{dict_asteroids[asteroid_2_id][1]:.3} Güte: {score:.3}")
-            # print(f"Starttag:{t_abflug_opt_:.0f}  Flugzeit:{t_flug_min_dv_:.0f}   => Delta V ={dv_min_:.0f}")
+            # print(f"Starttag:{t_m_opt:.0f}  Flugzeit:{t_flug_min_dv_:.0f}   => Delta V ={dv_min_:.0f}")
 
     print("========== Clustering abgeschlossen, Optimum wählen ==========")
     # Optimum wählen:
