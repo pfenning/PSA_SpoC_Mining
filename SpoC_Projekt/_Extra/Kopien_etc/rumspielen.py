@@ -158,7 +158,7 @@ asteroid_materials = data[:, -1].astype(int)
     #     if neighb_ids[i] not in visited_ind:
     #         asteroid2_id = neighb_ids[i]
     #         asteroid2 = asteroids[asteroid2_id]
-    #         t_abflug_opt_, t_flug_min_dv_, dv_min_ = psa.time_optimize_time_v2(asteroid1, asteroid2, ERG_t_arr[-1] + t_opt, t_opt)        
+    #         t_m_opt, t_flug_min_dv_, dv_min_ = psa.time_optimize_time_v2(asteroid1, asteroid2, ERG_t_arr[-1] + t_opt, t_opt)
     #         dv_min_2.append(dv_min_)
     #         i += 1
     #     else:
@@ -247,8 +247,8 @@ ast_2_idx = 6961
 ast_2_kp = asteroids[ast_2_idx]
 
 t_opt = 0
-t_abflug_opt_, t_flug_min_dv_, dv_min_ = psa.time_optimize_time_v2(ast_1_kp, ast_2_kp, 0 + t_opt, t_opt)     
-time_at_arrival = [t_abflug_opt_ + t_flug_min_dv_]   
+t_abflug_opt_, t_flug_min_dv_, dv_min_ = psa.time_optimize(ast_1_kp, ast_2_kp, 0 + t_opt, t_opt,,,
+                                         time_at_arrival = [t_abflug_opt_ + t_flug_min_dv_]
 time_spent_preparing = [t_abflug_opt_]
 tof = t_flug_min_dv_
 

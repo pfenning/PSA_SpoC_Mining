@@ -47,7 +47,7 @@ class Branch:
             1,  # these variable are not relevant for this problem
             1.1,  # these variable are not relevant for this problem
             "Asteroid " + str(int(line[0])),
-        )
+            )
         asteroids_kp.append(p)
         dict_asteroids[int(line[0])] = [p, line[-2], int(line[-1])]  # Key = ID, Liste mit [Kaplerian, Masse, Material]
     # Putzen - wahrscheinlich nicht notwendig
@@ -105,28 +105,29 @@ class Branch:
         Bestimmt den Cluster-Case
         :return: Array von Material-Type-Arrays für Clusterbildung
         """
+        # Materialtypen nach Bestand sortieren (ohne Sprit)
         sorted_material_types, sorted_materials = self._sort_material_types()
-        for value in sorted_materials:
-            types = np.argwhere(self.bestand[:3] == value)
-            for material_type in types:
-                if material_type not in sorted_material_types:
-                    sorted_material_types.append(material_type)
+        # for value in sorted_materials:
+        #     types = np.argwhere(self.bestand[:3] == value)
+        #     for material_type in types:
+        #         if material_type not in sorted_material_types:
+        #             sorted_material_types.append(material_type)
         # sorted_material_types = [self.bestand[:3].index(value) for value in sorted_materials]
         # Fallunterscheidung
         if self.bestand[3] < 0.4 and self.visited[-1]['t_arr'] < 1750:
             # Sprit, ansonsten irgendein Rohstoff
-            cluster_iteration = [3]
+            cluster_iteration = [[3]]
         elif 3*sorted_materials[0] < sorted_materials[1] and 3*sorted_materials[1] < sorted_materials[2]:
             # geringste Verfügbarkeit, mittlere, häufigstes oder Sprit
-            cluster_iteration = [sorted_material_types[0], sorted_material_types[1], [sorted_material_types[2], 3]]
+            cluster_iteration = [[sorted_material_types[0]], [sorted_material_types[1]], [sorted_material_types[2], 3]]
         elif 3*sorted_materials[0] < sorted_materials[1]:
             # geringste Verfügbarkeit, ansonsten Rest
-            cluster_iteration = [sorted_material_types[0], [sorted_material_types[1], sorted_material_types[2], 3]]
+            cluster_iteration = [[sorted_material_types[0]], [sorted_material_types[1], sorted_material_types[2], 3]]
         elif 3*sorted_materials[1] < sorted_materials[2]:
             # beiden geringsten, ansonsten Rest
             cluster_iteration = [sorted_material_types[:2], [sorted_material_types[2], 3]]
         else:
-            cluster_iteration = range(4)
+            cluster_iteration = [range(4)]
 
         return cluster_iteration
 
@@ -139,16 +140,36 @@ class Branch:
         """
         if isinstance(materials, int):
             materials = [materials]
+
         candidates_id = [asteroid_id for asteroid_id, values in self.not_visited.items() if values[-1] in materials]
         candidates = [self.not_visited[asteroid_id][0] for asteroid_id in candidates_id]
 
+        if not candidates:
+            print(f"Keine Asteroiden mit Materialien {materials} mehr vorhanden.")
+            return []
         knn = phasing.knn(candidates, self.visited[-1]['t_arr'] + self.t_opt, 'orbital', T=30)
         # neighb_inds = psa.clustering(knn, Branch.asteroids_kp, self.asteroid_1_id, radius)
         neighb, neighb_inds, neighb_dis = knn.find_neighbours(Branch.asteroids_kp[self.asteroid_1_id],
                                                               query_type='ball', r=radius)
         neighb_inds = list(neighb_inds)
         # ToDo: Eventuell knn anstatt ball?
-        return [candidates_id[index] for index in neighb_inds if candidates_id[index] != self.asteroid_1_id]
+
+        # Prüfen, dass Cluster wie gewollt:
+        neighb_id = [candidates_id[index] for index in neighb_inds if candidates_id[index] != self.asteroid_1_id]
+
+        # Testverfahren ToDo auskommentieren
+        print(f"Cluster wurde für die Materialien {materials} gebildet.")
+        assert self._control_cluster_materials(neighb_id, materials), \
+            f"Expected: {materials}, Actual: {self._control_cluster_materials(neighb_id)}"
+
+        return neighb_id
+
+    def _control_cluster_materials(self, neighb_id, materials):
+        cluster_materials = []
+        for asteroid_id in neighb_id:
+            if self.dict_asteroids[asteroid_id][-1] not in materials:
+                return False
+        return True
 
     def get_next_possible_steps(self):
         """
@@ -161,7 +182,8 @@ class Branch:
                   'dv': DV für Schritt}
         """
         # Prüfen, ob noch ein Schritt notwendig
-        if Branch.T_DAUER-59 < self.visited[-1]['t_arr']:
+        if Branch.T_DAUER-40 < self.visited[-1]['t_arr']:
+            print("Letzter Asteroid")
             self.visited[-1]['t_m'] = 60.0
             raise StopIteration
         # Update von Asteroid 1
@@ -177,6 +199,9 @@ class Branch:
             # Iteration durch Nachbar. Hinzufügen zu Menge, wenn erreichbar
             for asteroid_2_id in neighbour_ids:
                 asteroid_2_kp, asteroid_2_mas, asteroid_2_mat = self.not_visited[asteroid_2_id]
+
+                assert asteroid_2_mat in materials, f"Asteroid 2 besitzt ein Material, dass nicht gesucht wird"
+
                 t_m_opt_, t_flug_min_dv_, dv_min_ = psa.time_optimize(self.asteroid_1_kp,
                                                                       self.asteroid_1_mas,
                                                                       self.asteroid_1_mat,
@@ -185,13 +210,16 @@ class Branch:
                                                                       t_opt=self.t_opt,
                                                                       propellant=self.bestand[-1])
                 # Bewertung nur durchführen, wenn Asteroid auch erreichbar
-                if self.asteroid_1_mat is 3:
+                if self.asteroid_1_mat == 3:
                     limit = psa.get_abbau_menge(self.bestand[-1],
                                                 self.asteroid_1_mas,
                                                 self.asteroid_1_mat,
                                                 t_m_opt_)
                 else:
                     limit = self.bestand[-1]
+
+                # print(f"Limit für Wechsel ist:{limit}")
+
                 if (dv_min_ / Branch.DV_per_propellant) < limit:
                     # Bewertung des Asteroids und des Wechsels
                     score = Branch.my_system.calculate_score(  # ToDo: Über Normierung des delta_v sprechen
@@ -238,9 +266,13 @@ class Branch:
         self.not_visited.pop(self.asteroid_1_id)
 
     def print_last_step(self):
-        print(f"Asteroid:{self.visited[-2]['id']}, Abbauzeit:{self.visited[-2]['t_m']:.0f}, "
-              f"Flugzeit: {self.visited[-2]['t_arr']:.0f}, Bestand bei Ankunft am neuen Asteroiden:", self.bestand,
-              f"Material:{Branch.dict_asteroids[self.visited[-2]['id']][-1]}")
+        print(f"=================== Neuer Schritt =================== \n"
+              f"Abbauzeit auf letztem Assteroiden:{self.visited[-2]['t_m']:.0f} Tage, \n"
+              f"Neuer Asteroid:\n"
+              f"ID {self.visited[-1]['id']}, "
+              f"Ankunftstag: {self.visited[-1]['t_arr']:.0f}, ",
+              f"Material:{Branch.dict_asteroids[self.visited[-1]['id']][-1]}", "\n",
+              f"Bestand bei Ankunft am neuen Asteroiden:", self.bestand)
 
     def get_score(self):
         """

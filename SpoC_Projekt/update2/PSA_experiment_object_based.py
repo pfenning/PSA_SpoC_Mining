@@ -36,6 +36,6 @@ ERG_a, ERG_t_m, ERG_t_arr = branch1.get_result()
 #################################################
 from from_website import SpoC_Kontrolle as SpoC
 
-x = ERG_t_arr[0:-2] + ERG_t_m + ERG_a[0:-2]
+x = SpoC.convert_to_chromosome(ERG_t_arr + ERG_t_m + ERG_a)
 print(SpoC.udp.pretty(x))
 

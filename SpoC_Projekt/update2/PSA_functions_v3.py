@@ -44,8 +44,12 @@ def get_dv(asteroid1, asteroid2, t_start, t_flug, print_result=False):
     :param print_result: Ausgabe des Ergebnisses mit print()
     :return: Delta V für berechnete Flugbahn
     """
-    r1, v1 = asteroid1.eph(t_start)
-    r2, v2 = asteroid2.eph(t_start + t_flug)
+    r1, v1 = asteroid1.eph(
+        T_START.mjd2000 + t_start
+    )
+    r2, v2 = asteroid2.eph(
+        T_START.mjd2000 + t_start + t_flug
+    )
     # Solve the lambert problem for this flight
     l = pk.lambert_problem(
         r1=r1, r2=r2, tof=t_flug * pk.DAY2SEC, mu=MU_TRAPPIST, cw=False, max_revs=0
@@ -106,7 +110,7 @@ def time_optimize(asteroid1, asteroid1_mas, asteroid1_mat,
     dv_t_start = []
     t_start = t_arr+t_opt
     # Limit nach abbau, es werden mindestens 70 % abgebaut
-    if asteroid1_mat is 3:
+    if asteroid1_mat == 3:
         limit = get_abbau_menge(propellant, asteroid1_mas, asteroid1_mat, 0.7*t_opt)
     else:
         limit = propellant
