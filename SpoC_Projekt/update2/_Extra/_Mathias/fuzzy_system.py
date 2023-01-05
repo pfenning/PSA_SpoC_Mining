@@ -218,6 +218,7 @@ class FuzzySystem:
         self.score.input['Güte vom Spritverbrauch'] = sprit
         self.score.input['Relevanz des Materials'] = rele
         self.score.compute()
+        
         return self.score.output['Güte des Asteroids']
 
     def creat_score_map(self):

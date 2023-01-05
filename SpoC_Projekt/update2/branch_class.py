@@ -51,15 +51,18 @@ class Branch:
         asteroids_kp.append(p)
         dict_asteroids[int(line[0])] = [p, line[-2], int(line[-1])]  # Key = ID, Liste mit [Kaplerian, Masse, Material]
     # Putzen - wahrscheinlich nicht notwendig
-    del p
-    del data
 
     #########
     # GÜTE
     #########
-    verf = np.array([0.03, 0.4, 0.42, 0.15])  # ToDo: Verfügbarkeit berechnen
-
+    #verf = np.array([0.03, 0.4, 0.42, 0.15])  # ToDo: Verfügbarkeit berechnen
+    
+    verf = psa.verfuegbarkeit(data)
+    print(verf)
     my_system = FuzzySystem(verf.min(), verf.max(), resolution=0.02)
+
+    del p
+    del data
 
     ################
     # Branch Objekt
@@ -127,7 +130,7 @@ class Branch:
             # beiden geringsten, ansonsten Rest
             cluster_iteration = [sorted_material_types[:2], [sorted_material_types[2], 3]]
         else:
-            cluster_iteration = [range(4)]
+            cluster_iteration = [range(3)]
 
         return cluster_iteration
 
@@ -200,7 +203,7 @@ class Branch:
             for asteroid_2_id in neighbour_ids:
                 asteroid_2_kp, asteroid_2_mas, asteroid_2_mat = self.not_visited[asteroid_2_id]
 
-                assert asteroid_2_mat in materials, f"Asteroid 2 besitzt ein Material, dass nicht gesucht wird"
+                assert asteroid_2_mat in materials, f"Asteroid 2 besitzt ein Material, das nicht gesucht wird"
 
                 t_m_opt_, t_flug_min_dv_, dv_min_ = psa.time_optimize(self.asteroid_1_kp,
                                                                       self.asteroid_1_mas,

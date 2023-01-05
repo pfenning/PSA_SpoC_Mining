@@ -17,6 +17,49 @@ DV_per_propellant = 10000                       # DV per propellant [m/s]
 TIME_TO_MINE_FULLY = 30                         # Maximum time to fully mine an asteroid
 
 
+def verfuegbarkeit(asteroids):
+    """
+    Berechnet die ursprüngliche Verfügbarkeit der Materialien
+    """
+    material = asteroids[:,-1]
+    masse = asteroids[:,-2]
+    gesamt = np.sum(masse)
+    verf = [0,0,0,0]
+    summe0=0
+    summe1=0
+    summe2=0
+    summe3=0
+    for i in range(0,len(material)):
+        if material[i] == 0: 
+            masse0 = masse[i]
+            summe0 += masse0
+            verf[0]=summe0
+        elif material[i] == 1: 
+            masse1 = masse[i]
+            summe1 += masse1
+            verf[1]=summe1
+        elif material[i] == 2: 
+            masse2 = masse[i]
+            summe2 += masse2
+            verf[2]=summe2
+        elif material[i] == 3: 
+            masse3 = masse[i]
+            summe3 += masse3
+            verf[3]=summe3
+    verf_norm = verf/gesamt
+    return np.array(verf_norm)
+
+def find_idx_start(data):
+    """
+    Durchsucht den Datensatz und gibt den Index eines Startasteroiden
+    """
+    semi_axis = data[:,1]
+    mean_semi_axis = np.mean(semi_axis)
+    import pandas as pd
+    df = open("SpoC_Datensatz.txt", "r")
+    print(df.min())
+
+
 def norm_bestand(bestand, material):
     """
     Gibt "normierten" Bestand zurück.

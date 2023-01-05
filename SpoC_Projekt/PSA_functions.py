@@ -41,7 +41,7 @@ TIME_TO_MINE_FULLY = 30                         # Maximum time to fully mine an 
 ### Before start
 ###################
 # #   Loading data
-data = np.loadtxt("SpoC_Datensatz.txt")
+data = open("SpoC_Datensatz.txt", "r")
 # for line in data:
 #     p = pk.planet.keplerian(
 #         T_START,
