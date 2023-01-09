@@ -116,6 +116,7 @@ class Branch:
         #         if material_type not in sorted_material_types:
         #             sorted_material_types.append(material_type)
         # sorted_material_types = [self.bestand[:3].index(value) for value in sorted_materials]
+        # ToDo: Softe Grenze mit Berech Sprit zwischen 0.2 und 0.4, oder so, ansonsten gar kein Sprit?
         # Fallunterscheidung
         if self.bestand[3] < 0.4 and self.visited[-1]['t_arr'] < 1750:
             # Sprit, ansonsten irgendein Rohstoff
@@ -134,7 +135,7 @@ class Branch:
 
         return cluster_iteration
 
-    def _get_cluster_by_material(self, materials, radius=4000):
+    def _get_cluster_by_material(self, materials, radius=5000):
         """
         Erstellt Cluster für aktuellen Asteroiden aus allen Asteroiden, die übergebene Materialien besitzen
         :param materials: int oder list of ints - Liste von Materialien, die geclustert werden sollen
@@ -250,6 +251,11 @@ class Branch:
                     break
         return possible_steps
 
+    def _calculate_branch_score(self):
+        self.visited[-1]['branch score yet'] = \
+            ((len(self.visited)-1) * self.visited[-2]['branch score yet']
+             + self.visited[-1]['score last step'])/len(self.visited)
+
     def new_step(self, t_m, step, dv):
         """
         Führt neuen Schritt aus:
@@ -257,16 +263,21 @@ class Branch:
         - fügt Asteroiden zu Visited hinzu
         - aktualisiert Bestand von Rohstoffen und Tank
         - entfernt aktuellen Asteroiden aus Not_Visited
+        - berechnet Score des Pfades nach neuem Schritt
         :return:
         """
         self._update_current_asteroid()     # ToDo: Notwendig? - zurzeit sicher sein, dass asteroid_1 aktuell ist
         self.visited[-1]['t_m'] = t_m
-        self.visited.append(step)
         # Abbau des Rohstoffs von Asteroid 1:
         psa.abbau(self.bestand, self.asteroid_1_mas, self.asteroid_1_mat, t_m)
-        # Flug zum anderen Asteroiden
-        self.bestand[-1] -= dv / Branch.DV_per_propellant
+        # letzten Asteroid entfernen (nicht den neuen Asteroiden)
         self.not_visited.pop(self.asteroid_1_id)
+        # Neuen Schritt hinzufügen
+        self.visited.append(step)
+        # Spritverbrauch des neuen Schritts abziehen
+        self.bestand[-1] -= dv / Branch.DV_per_propellant
+        # Branch-Score bestimmen
+        self._calculate_branch_score()
 
     def print_last_step(self):
         print(f"=================== Neuer Schritt =================== \n"
@@ -283,6 +294,20 @@ class Branch:
         :return: Score des letzten Schritts
         """
         return self.visited[-1]['score last step']
+
+    def get_branch_score(self):
+        """
+                Gibt Mittelwert von allen Schritt_Scores als Bewertung des Pfades zurück
+                :return: Bewertung des Pfades
+                """
+        return self.visited[-1]['branch score yet']
+
+    def get_guetemass(self):
+        """
+        Gibt aktuelles Gütemaß, also -(min(Bestand)) zurück
+        :return: Gütemaß
+        """
+        return -min(self.bestand[:3])
 
     def get_result(self):
         """

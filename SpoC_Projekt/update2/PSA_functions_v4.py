@@ -166,7 +166,8 @@ def time_optimize(asteroid1, asteroid1_mas, asteroid1_mat,
         for i in range(0, len(t_flug_1)):
             # "Normierung" für ähnliche Skalierung
             # Zahlenfindung: Siehe MathTests.py
-            results_t_flug.append([t_flug_1[i] / 30, dv_t_flug[i] / 2000])
+            if dv_t_flug[i] / DV_per_propellant <= limit:    # Nur hinzufügen, wenn erreichbar
+                results_t_flug.append([t_flug_1[i] / 30, dv_t_flug[i] / 2000])
         weights = np.array([0.3, 0.7])
         rank_t_flug = []
         for sol in results_t_flug:
@@ -202,7 +203,8 @@ def time_optimize(asteroid1, asteroid1_mas, asteroid1_mat,
         for i in range(0, len(t_start_var)):
             # "Normierung" für ähnliche Skalierung - abs(t_var) da Betrag der Abweichung von t_opt relevant
             # nur t_start, DV (t_flug bereits zuvor gewählt)
-            results_t_start.append([abs(t_start_var[i] / 10), dv_t_start[i] / 1000])
+            if dv_t_start[i] / DV_per_propellant <= limit:  # Nur hinzufügen, wenn erreichbar
+                results_t_start.append([abs(t_start_var[i] / 10), dv_t_start[i] / 1000])
 
         weights_neg_var = np.array([1.5, 0.7])
         weights_pos_var = np.array([0.3, 0.7])
