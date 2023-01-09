@@ -130,7 +130,7 @@ class Branch:
             # beiden geringsten, ansonsten Rest
             cluster_iteration = [sorted_material_types[:2], [sorted_material_types[2], 3]]
         else:
-            cluster_iteration = [range(3)]
+            cluster_iteration = [range(4)]
 
         return cluster_iteration
 

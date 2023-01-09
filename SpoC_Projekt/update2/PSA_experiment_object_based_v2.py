@@ -1,6 +1,6 @@
 import numpy as np
 
-import PSA_functions_v3 as psa
+import PSA_functions_v4 as psa
 from branch_class import Branch
 import copy
 import random
@@ -18,19 +18,22 @@ for i in range(50):
     if len(possible_steps) is 0:
         print("Es wurden keine weiteren möglichen Schritte gefunden")
         break
-    # Neue Branch-Objekte, die erweitert werden mit den möglichen Schritten
-    branch_expand = []
-    for step in possible_steps:
-        branch_expand.append(copy.deepcopy(branch1))
-        branch_expand[-1].new_step(step['t_m'], step['step'], step['dv'])
 
-    branch1 = branch_expand[np.argmax([branch.get_score() for branch in branch_expand])]
+
+    branch1, branch1_score, branch2, branch2_score, branch1_before, branch1_before_score = psa.beam_search_vector(branch1)
+
+    if branch1_before_score >= branch2_score: # das stimmt noch nicht ganz...hier muss quasi rückwirkend ein Wert gespeichert werden!
+        branch1 = branch1_before
+    else: branch1 = branch2
+
     branch1.print_last_step()
+
 
 
 # Lösungvektoren erzeugen
 branch1.print()
 ERG_a, ERG_t_m, ERG_t_arr = branch1.get_result()
+
 
 
 #################################################
