@@ -1,7 +1,7 @@
 import numpy as np
 import numpy as np
 import pykep as pk
-import PSA_functions_v3 as psa
+import PSA_functions_v4 as psa
 from branch_class import Branch
 import copy
 import unittest
@@ -52,7 +52,6 @@ class TestFunctions(unittest.TestCase):
         dict_asteroids[int(line[0])] = [p, line[-2], int(line[-1])]  # Key = ID, Liste mit [Kaplerian, Masse, Material]
     # Putzen - wahrscheinlich nicht notwendig
     del p
-    del data
 
     def test_get_dv(self):
         # Test, ob Spritverbrauch richtig berechnet wird
@@ -68,4 +67,12 @@ class TestFunctions(unittest.TestCase):
                                 asteroid2,
                                 t_arr=0.0, t_opt=asteroid1_mas*TestFunctions.TIME_TO_MINE_FULLY, propellant=1.0)
         print(f"Verweilzeit:{t_m_min_dv}, Flugzeit: {t_flug_min_dv}, DV:{dv_min}")
+
+    def test_verfuegbarkeit2(self):
+        verf = psa.verfuegbarkeit2(mass=list(TestFunctions.dict_asteroids.values())[-2],
+                                   material=list(TestFunctions.dict_asteroids.values())[-1])
+        # Für den späteren Einsatz: (mass=Branch.dict_asteroids[-2], material=Branch.dict_asteroids[-1])
+        print(psa.verfuegbarkeit(verf))
+        for expect, got in zip(verf, [0.42020501, 0.02968144, 0.45186633, 0.09824722]):
+            self.assertAlmostEquals(expect,got,5)
 

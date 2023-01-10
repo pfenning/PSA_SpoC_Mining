@@ -334,27 +334,23 @@ class Branch:
 
 
 def beam_search(branch_v, beta, analysis = "step", method="Fuzzy"):
-    '''
-        Übergeben wird ein Vektor, der die beta-Besten Branches beinhaltet aus dem vorherigen Iterationsschritt.
-        Ablauf:
-            1)  branch_v an den übergebenen branches
-            2)  
-        Übergabeparameter:
-            branchv_v:      Vektor mit maximal beta-vielen Branches
-            beta:           Maximallänge des Vektors branch_expand_v; für die Auswahl der beta-besten Branches
-            analysis:       Gibt die Art der Score-Bewertung an:
-                step:           Nur den Score des aktuellen steps
-                branch:         Mitterlwert des entstandenen Pfades
-            method:         Gibt die Methode an, mit welcher die Branches ausgewertet & -gewählt  werden
-                                default == Fuzzy
-        Ausgabe:
-            v_done:         Beendete Vektorpfade
-            v_continue:     Branches, die weitergeführt werden können
-    ''' 
+    """
+    Übergeben wird ein Vektor, der die beta-Besten Branches beinhaltet aus dem vorherigen Iterationsschritt.
+    Führt ausgehend davon die neuen möglichen Schritte aus und gibt davon die beta besten zurück.
+
+    :param branch_v: Vektor mit bisherigen Branches
+    :param beta:
+    :param analysis: Gibt die Art der Score-Bewertung an:
+                step: nur den Score des aktuellen steps
+                branch: Mittelwert des entstandenen Pfades
+    :param method: gibt die Methode an, mit welcher die Branches ausgewertet & -gewählt  werden
+        default == Fuzzy
+    :return: v_done: Beendete Vektorpfade
+             v_continue: Branches, die weitergeführt werden können
+    """
     v_done = []
     branch_expand = []
-    score_step = []
-    score_branch = []
+    score = []
     for branch in branch_v:
         branch_expand_ = []
         # score_ = []
@@ -366,32 +362,27 @@ def beam_search(branch_v, beta, analysis = "step", method="Fuzzy"):
             for step in next_possible_steps:
                 branch_expand_.append(copy.deepcopy(branch))
                 branch_expand_[-1].new_step(step['t_m'], step['step'], step['dv'])
+                # ToDo: Methodenauswahl für Score-Berechnung
                 if analysis == "branch":
-                    score_branch.append(0.5 * (branch.get_score() + branch_expand_[-1].get_score()))
+                    score.append(branch_expand_[-1].get_branch_score())
                 else:
-                    score_step.append(branch_expand_[-1].get_score())   # hier würde ich die methode übergeben, sodass in get_score() die richtige Meth ausgewählt wird
+                    score.append(branch_expand_[-1].get_score())
         
         branch_expand = np.concatenate((branch_expand, branch_expand_), axis=0)
         # score = np.concatenate((score, score_), axis=0)
-            
-    # Bewertung des neuen Branches:
-    if analysis == "branch": score = score_branch
-    else: score = score_step
 
+    # Nach Score sortierte Index-Reihenfolge erstellen
     if len(branch_expand) > beta: # Kontrollieren, ob branch_expand lang genug, um beta-Beste zu finden
-        idx = np.argpartition(score, -beta)[-beta:]       # performance is better than with argsort(), returns an array with indices    
-        top_beta = []
-        for line in idx:
-            top_beta.append(branch_expand[line])
+        idx = np.argpartition(score, -beta)[-beta:]     # performance is better than with argsort(), returns an array with indices
     else:
         beta_new = len(branch_expand)
         idx = np.argpartition(score, -beta_new)[-beta_new:]
-        top_beta = []
-        for line in idx:
-            top_beta.append(branch_expand[line])
+    # Beta beste ausgeben lassen
+    top_beta = []
+    for line in idx:
+        top_beta.append(branch_expand[line])
 
     return v_done, top_beta
-
 
 def find_idx_start(data):
     semimajor = data[:,1]

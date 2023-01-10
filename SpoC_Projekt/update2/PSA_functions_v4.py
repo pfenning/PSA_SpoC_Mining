@@ -25,25 +25,25 @@ def verfuegbarkeit(data):
     material = data[:,-1]
     masse = data[:,-2]
     gesamt = np.sum(masse)
-    verf = [0,0,0,0]
+    verf = [0, 0, 0, 0]
     summe0=0
     summe1=0
     summe2=0
     summe3=0
     for i in range(0,len(material)):
-        if material[i] == 0: 
+        if material[i] == 0:
             masse0 = masse[i]
             summe0 += masse0
             verf[0]=summe0
-        elif material[i] == 1: 
+        elif material[i] == 1:
             masse1 = masse[i]
             summe1 += masse1
             verf[1]=summe1
-        elif material[i] == 2: 
+        elif material[i] == 2:
             masse2 = masse[i]
             summe2 += masse2
             verf[2]=summe2
-        elif material[i] == 3: 
+        elif material[i] == 3:
             masse3 = masse[i]
             summe3 += masse3
             verf[3]=summe3
@@ -51,6 +51,23 @@ def verfuegbarkeit(data):
     return np.array(verf_norm)
     return 0
 
+def verfuegbarkeit2(mass, material):
+    """
+    Berechnet die ursprüngliche Verfügbarkeit der Materialien
+    """
+    gesamt = np.sum(mass)
+    verf = [0, 0, 0, 0]
+    for i in range(0,len(material)):
+        if material[i] == 0:
+            verf[0] += mass[i]
+        elif material[i] == 1:
+            verf[1] += mass[i]
+        elif material[i] == 2:
+            verf[2] += mass[i]
+        elif material[i] == 3:
+            verf[3] += mass[i]
+    verf_norm = verf/gesamt
+    return np.array(verf_norm)
 
 def norm_bestand(bestand, material):
     """
