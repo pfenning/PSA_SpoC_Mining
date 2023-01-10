@@ -2,7 +2,7 @@ import numpy as np
 import skfuzzy as fuzz
 from skfuzzy import control as ctrl
 from scipy.interpolate import LinearNDInterpolator
-from scipy.interpolate import griddata
+import matplotlib.pyplot as plt
 
 # ToDo: Es wird vorausgesetzt, dass die Auflösung so gewählt wird, das gilt: 1/resolution={Integer}
 
@@ -348,15 +348,140 @@ class FuzzySystem:
         except FileNotFoundError:
             raise FileNotFoundError("Kennfelder noch nicht erzeugt, oder Dateien gelöscht")
 
-    def plot_by_map(self):
+    def plot(self):
         """
         Plottet Fuzzy-Kennfelder anhand der erstellten Maps
         :return:
         """
-        # Überprüfen, ob Kennfeld schon geladen, wenn Nein, dann versuchen es zu laden, ansonsten Neues erstellen
-        # if self.out_sub_1_map is None or self.out_sub_2_map is None or self.score_map is None:
-        #     try:
-        #         self.load_maps_from_npy()
-        #     except:
-        #         self.creat_score_map()
-        pass
+        """Testformat:
+            Subsysteme einzeln,
+            daraus Wertebereiche Bestimmen
+            Hauptsystem für die gegebenen Wertebereiche
+        """
+        fig = plt.figure(figsize=(12, 18))
+
+        # Subsystem 1 - Sprit
+        # Inputs festlegen
+        t_n_test = np.arange(0, 1.1, 0.1)
+        delt_test = np.arange(0, 1.1, 0.1)
+        x_sub1, y_sub1 = np.meshgrid(t_n_test, delt_test, indexing='ij')
+        out_sub1_test = np.zeros_like(x_sub1)
+        # Auswerten
+        for m in range(0, len(t_n_test)):
+            for n in range(0, len(delt_test)):
+                self.sub_sys.input['Tank nach Wechsel'] = t_n_test[m]
+                self.sub_sys.input['Spritverbrauch'] = delt_test[n]
+                self.sub_sys.compute()
+
+                out_sub1_test[m, n] = self.sub_sys.output['Ausgang Subsystem 1']
+        # Plotten
+        subplot = 321
+        ax1 = fig.add_subplot(subplot, projection='3d')
+        surf = ax1.plot_surface(x_sub1, y_sub1, out_sub1_test, rstride=1, cstride=1, cmap='viridis',
+                                linewidth=0.4, antialiased=True)
+        plt.xlabel("Tank nach Wechsel")
+        plt.ylabel("Delta V")
+        plt.title("Subsystem Sprit")
+
+        # Subsystem 2 - Material
+        bes_test = np.arange(0, 1.1, 0.1)
+        verf_test = np.linspace(self.verf_min, self.verf_max, 11)
+        x_sub2, y_sub2 = np.meshgrid(bes_test, verf_test, indexing='ij')
+        out_sub2_test = np.zeros_like(x_sub2)
+        # Auswerten
+        for m in range(0, len(bes_test)):
+            for n in range(0, len(verf_test)):
+                self.sub_sys_2.input['Bestand des Materials'] = bes_test[m]
+                self.sub_sys_2.input['Verfügbarkeit des Materials'] = verf_test[n]
+                self.sub_sys_2.compute()
+
+                out_sub2_test[m, n] = self.sub_sys_2.output['Ausgang Subsystem 2']
+        # Plotten
+        subplot = 322
+        ax2 = fig.add_subplot(subplot, projection='3d')
+        surf = ax2.plot_surface(x_sub2, y_sub2, out_sub2_test, rstride=1, cstride=1, cmap='viridis',
+                                linewidth=0.4, antialiased=True)
+        plt.xlabel("Bestand")
+        plt.ylabel("Verfügbarkeit")
+        plt.title("Subsystem Material")
+
+        # Hauptsystem
+        mas_test = np.linspace(0, 1, 4)
+        # Wertebereich von Güte des Sprits:
+        sprit_test = np.linspace(out_sub1_test.min(), out_sub1_test.max(), 11)
+        rele_test = np.linspace(out_sub2_test.min(), out_sub2_test.max(), 11)
+        x, y = np.meshgrid(sprit_test, rele_test, indexing='ij')
+        # Speicher für Minimum und Maximum
+        out_min = 1
+        out_max = 0
+        # Auswertung
+        for i in range(0, len(mas_test)):
+            out = np.zeros_like(x)
+            for m in range(0, len(sprit_test)):
+                for n in range(0, len(rele_test)):
+                    self.score.input['Masse'] = mas_test[i]
+                    self.score.input['Güte vom Spritverbrauch'] = sprit_test[m]
+                    self.score.input['Relevanz des Materials'] = rele_test[n]
+                    self.score.compute()
+
+                    out[m, n] = self.score.output['Güte des Asteroids']
+
+            # Maximum und Minimum bestimmen
+            if out.min() < out_min:
+                out_min = out.min()
+            if out.max() > out_max:
+                out_max = out.max()
+
+            # Subplot generieren
+            if i == 0:
+                subplot = 323
+                ax3 = fig.add_subplot(subplot, projection='3d')  # subplot,
+                surf = ax3.plot_surface(x, y, out, rstride=1, cstride=1, cmap='viridis',
+                                        linewidth=0.4, antialiased=True)
+            elif i == 1:
+                subplot = 324
+                ax4 = fig.add_subplot(subplot, projection='3d')
+                surf = ax4.plot_surface(x, y, out, rstride=1, cstride=1, cmap='viridis',
+                                        linewidth=0.4, antialiased=True)
+            elif i == 2:
+                subplot = 325
+                ax5 = fig.add_subplot(subplot, projection='3d')
+                surf = ax5.plot_surface(x, y, out, rstride=1, cstride=1, cmap='viridis',
+                                        linewidth=0.4, antialiased=True)
+            elif i == 3:
+                subplot = 326
+                ax6 = fig.add_subplot(subplot, projection='3d')
+                surf = ax6.plot_surface(x, y, out, rstride=1, cstride=1, cmap='viridis',
+                                        linewidth=0.4, antialiased=True)
+            plt.xlabel("Bewertung Sprit")
+            plt.ylabel("Materialrelevanz")
+            mas_now = mas_test[i]
+            plt.title(f'Masse = {mas_now:.2}')
+
+        # Einstellung Plot Darstellung
+        # Blickwinkel auf 3D-Plots
+        ax1.view_init(20, 120)
+        ax1.set_zlim(0, 1)
+        ax2.view_init(20, 70)
+        ax2.set_zlim(0, 1)
+        ax3.view_init(15, 190)
+        ax3.set_zlim(0, 1)
+        ax4.view_init(15, 190)
+        ax4.set_zlim(0, 1)
+        ax5.view_init(15, 190)
+        ax5.set_zlim(0, 1)
+        ax6.view_init(15, 190)
+        ax6.set_zlim(0, 1)
+
+        plt.subplots_adjust(left=0.065, bottom=0.065, right=0.935, top=0.885, wspace=0.3, hspace=0.5)
+        plt.show()
+
+        # Subsystem 1
+        print(f'Ausgabewerte des Sprit-Subsystems: {out_sub1_test.min():.2} '
+              f'bis {out_sub1_test.max():.2}')
+        # Subsystem 2
+        print(f'Ausgabewerte des Material-Subsystems: {out_sub2_test.min():.2} '
+              f'bis {out_sub2_test.max():.2}')
+        # Hauptsystem
+        print(f'Ausgabewerte des Hauptsystems: {out_min:.2} '
+              f'bis {out_max:.2}')
