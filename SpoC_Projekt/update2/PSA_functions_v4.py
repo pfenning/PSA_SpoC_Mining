@@ -256,66 +256,9 @@ def get_abbau_menge(material_bestand, mass, material, t_aufenthalt):
     return material_bestand
 
 
+def sort_vector(vec_1, vec_2):
 
-def beam_search_vector(branch_source):
-    
-    # try: ####################################################################################### to-do
-    #     possible_steps_step1 = branch1.get_next_possible_steps()
-    # except StopIteration:
-    #     break
-    # if len(possible_steps_step1) is 0:
-    #     print("Es wurden keine weiteren möglichen Schritte gefunden")
+    vec_1_neu = vec_1
+    vec_2_neu = vec_2
 
-    # Neue Branch-Objekte, die erweitert werden mit den möglichen Schritten
-
-    possible_steps_s1 = branch_source.get_next_possible_steps()
-    branch_expand_s1 = [] 
-    score_expand_s1 = []
-    for step in possible_steps_s1:
-        branch_expand_s1.append(copy.deepcopy(branch_source))
-        branch_expand_s1[-1].new_step(step['t_m'], step['step'], step['dv'])
-        score_expand_s1.append(branch_expand_s1[-1].get_score())
-
-    possible_steps_s2 = []
-    branch_expand_s2 = []
-    score_expand_s2 = []
-    max_score_s2 = []
-
-    for line in branch_expand_s1:
-        next_possible_steps_s2 = line.get_next_possible_steps() ############################################# SEBASTIAN: Benutzt "line" dann wirklich das branch-Element??
-        possible_steps_s2.append([next_possible_steps_s2])
-
-        branch1 = line ##################################################################### aktuellen branch
-        branch1_score = branch1.get_score()
-
-        branch_help = []
-        branch_help_score = []
-        for step in next_possible_steps_s2:
-            branch_help.append(copy.deepcopy(branch1))
-            branch_help[-1].new_step(step['t_m'], step['step'], step['dv'])
-            branch_help_score.append(branch_help[-1].get_score())
-
-        branch_expand_s2.append([line, branch_help])
-        score_expand_s2.append([branch1_score, branch_help_score])
-
-
-    # Berechnung vom maximalen Score
-    score_and_idx = []
-    for line in score_expand_s2:
-        help = [(line[0] + max(line[1])), line[0], max(line[1]), np.argmax(line[1])]
-        score_and_idx.append(help)
-    np.array(score_and_idx)
-    
-    # Festglegen von den ausgewählten Branches
-    idx_branch1 = np.argmax(score_and_idx[:,0])
-    idx_branch2 = score_and_idx[idx_branch1][-1]
-    idx_branch1_before = np.argmax(score_expand_s1) # Höchster Score vor dem 2. Sprung, wiw wenn kein Beam-Search durchgeführt werden würde
-
-    branch1_before_score = max(score_expand_s1)
-    branch1 = branch_expand_s1[idx_branch1]
-    branch1_before = branch_expand_s1[idx_branch1_before]
-
-    branch2_score = score_expand_s2[idx_branch1][2]
-    branch2 = branch_expand_s2[idx_branch1][1][idx_branch2]
-    
-    return branch1, branch1_score, branch2, branch2_score, branch1_before, branch1_before_score
+    return vec_1_neu, vec_2_neu
