@@ -9,18 +9,18 @@ data = np.loadtxt("SpoC_Datensatz.txt")
 T_DAUER = 1827
 
 branch_v = bc.find_idx_start(data,0.001) # Vektor mit möglichen Startasteroiden
-beta = 1
+minutes = 1
+beta = 4
 
 print("branch_v done")
 
-end_time = datetime.now() + timedelta(minutes=3)
+end_time = datetime.now() + timedelta(minutes=minutes)
 print(datetime.now(), end_time)
 
 beendete_Branches = []
 while True:
     current_time = datetime.now()
-    if current_time == end_time:
-        beendete_Branches = np.concatenate((beendete_Branches, branch_v), axis=0)
+    if current_time >= end_time:
         break
 
     v_done, top_beta = bc.beam_search(branch_v,beta)
@@ -37,17 +37,25 @@ while True:
 
     branch_v = top_beta
 
-print(len(beendete_Branches))
+print(len(branch_v))
+print("beendete_Branches: ", beendete_Branches , len(beendete_Branches))
+
+if beendete_Branches == []:
+    beendete_Branches = branch_v
+
+print("beendete_Branches: ", beendete_Branches , len(beendete_Branches))
 
 # Chosing the best path
 branch = []
-score = []
-guete = []
+score = [0.0]
 for final_branch in beendete_Branches:
     _score = final_branch.get_score()
-    _guete = final_branch.get_guetemass()
-    if branch == [] and score == [] and guete == []: branch.append(final_branch), score.append(final_branch), guete.append(final_branch)
-    elif _score >= np.max(score) and _guete >= np.max(guete): branch = [final_branch], score = [_score], guete = [_guete]
+    max_score = np.max(score)
+    print("_score: ",_score, np.max(score))
+    if branch == []: branch.append(final_branch), score.append(final_branch)
+    elif _score >= max_score: 
+        branch = [final_branch]
+        score = [_score]
 
 
 
@@ -65,5 +73,5 @@ from from_website import SpoC_Kontrolle as SpoC
 x = SpoC.convert_to_chromosome(ERG_t_arr + ERG_t_m + ERG_a)
 print(SpoC.udp.pretty(x))
 
-# from from_website.submisson_helper import create_submission
-# create_submission("spoc-mining","mine-the-belt",x,"TUDa_GoldRush_"+str(i_start)+"_submission_file.json","TUDa_GoldRush","submission_description")
+from from_website.submisson_helper import create_submission
+create_submission("spoc-mining","mine-the-belt",x,"TUDa_GoldRush_submission_file_"+ minutes +"minutes_" +".json","TUDa_GoldRush","submission_description")

@@ -383,7 +383,7 @@ def beam_search(branch_v, beta, analysis="step", method="Fuzzy"):
     for line in idx:
         top_beta.append(branch_expand[line])
 
-    print("beam search done")
+    print("beam search done, top-beta length: ", len(top_beta))
 
     return v_done, top_beta
 
