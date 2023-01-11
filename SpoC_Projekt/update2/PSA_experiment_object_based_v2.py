@@ -7,36 +7,41 @@ import copy
 import random
 
 data = np.loadtxt("SpoC_Datensatz.txt")
+T_DAUER = 1827
 
-possible_starts = bc.find_idx_start(data) # Vektor mit möglichen Startasteroiden
+branch_v = bc.find_idx_start(data) # Vektor mit möglichen Startasteroiden
+beta = 10
 
-possible_i_start = []
-start_branch_v = []
-for idx_start in possible_starts:
-    branch1 = Branch(idx_start)
-    try:
-        possible_steps = branch1.get_next_possible_steps()
-    except StopIteration:
-        break
-    if len(possible_steps) is 0:
-        break
-    # Neue Branch-Objekte, die erweitert werden mit den möglichen Schritten
-    branch_expand = []
-    score = []
-    for step in possible_steps:
-        branch_expand.append(copy.deepcopy(branch1))
-        branch_expand[-1].new_step(step['t_m'], step['step'], step['dv'])
-        score.append(branch_expand[-1].get_score())
+beendete_Branches = []
+for i in range(100):
 
-    branch1 = branch_expand[np.argmax([branch.get_score() for branch in branch_expand])]
-    branch1.print_last_step()
+    v_done, top_beta = bc.beam_search(branch_v, 10)
 
+    # for branch in top_beta:
+    #     ERG_a, ERG_t_m, ERG_t_arr = branch.get_result()
+    #     if (ERG_t_m, ERG_t_arr) >= T_DAUER:
+    #         v_done.append(branch)
+    #         top_beta.pop(branch)
 
+    if v_done != []:
+        beendete_Branches.append(v_done)
+    if top_beta == []: break
 
+    branch_v = top_beta
+
+# Chosing the best path
+branch = []
+score = []
+guete = []
+for _branch in beendete_Branches:
+    _score = _branch.get_score()
+    _guete = _branch.get_guetemass()
+    if _score >= np.max(score) and _guete >= np.max(guete): branch = [_branch], core = [_score], guete = [_guete]
 
 
 
 # Lösungvektoren erzeugen
+branch1 = branch[0]
 branch1.print()
 ERG_a, ERG_t_m, ERG_t_arr = branch1.get_result()
 

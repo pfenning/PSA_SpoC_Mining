@@ -333,7 +333,7 @@ class Branch:
 
 
 
-def beam_search(branch_v, beta, analysis = "step", method="Fuzzy"):
+def beam_search(branch_v, beta, analysis="step", method="Fuzzy"):
     """
     Übergeben wird ein Vektor, der die beta-Besten Branches beinhaltet aus dem vorherigen Iterationsschritt.
     Führt ausgehend davon die neuen möglichen Schritte aus und gibt davon die beta besten zurück.
@@ -366,7 +366,7 @@ def beam_search(branch_v, beta, analysis = "step", method="Fuzzy"):
                 if analysis == "branch":
                     score.append(branch_expand_[-1].get_branch_score())
                 else:
-                    score.append(branch_expand_[-1].get_score())
+                    score.append(branch_expand_[-1].get_score()) # hier soll übergeben werden, welche Methode ausgewählt wird
         
         branch_expand = np.concatenate((branch_expand, branch_expand_), axis=0)
         # score = np.concatenate((score, score_), axis=0)
@@ -384,72 +384,30 @@ def beam_search(branch_v, beta, analysis = "step", method="Fuzzy"):
 
     return v_done, top_beta
 
-def find_idx_start(data):
-    semimajor = data[:,1]
-    mitte = np.mean(semimajor)
-    intervall = 0.01 * mitte
-    # print(mitte, min(semimajor), max(semimajor), (mitte-intervall))
-    i_start = []
+
+def find_idx_start(data, intervall=0.01):
+    '''
+        Hier wird aus dem Datensatz ein Vektor mit möglichen Startasteroiden gebildet.
+        Return:
+            Ein Vektor der möglichen Start-Asteroiden als Branch-Objekte
+                start_branches:     Vektor mit branches der Start-Asteroiden
+    '''
+    #### Auswahl des Start-Materials. Das kann durch Verfügbarkeit bestimmt werden! Optimalerweise max. Material --> Verf-Funktion benutzen
+
+    # Erstellen des Vektors der möglichen Start-Asteroiden
+    mitte_semimajor = np.mean(data[:,1])
+    grenze = intervall * mitte_semimajor
+    start_branches = []
     for line in data:
-        if (line[-1] == 3) and ((mitte-intervall) <= line[1] < (mitte+intervall)):
-            i_start.append(line[0])        
-    return i_start
+        if (line[-1] == 3) and ((mitte_semimajor-grenze) <= line[1] < (mitte_semimajor+grenze)):
+            start_branches.append(Branch(line[0]))
+    
+    return start_branches
 
-# def beam_start(possible_starts_v, beta, analysis = "step", method="Fuzzy"):
-#     '''
-#         Übergeben wird ein Vektor, der die beta-Besten Branches beinhaltet aus dem vorherigen Iterationsschritt.
-#         Ablauf:
-#             1)  branch_v an den übergebenen branches
-#             2)  
-#         Übergabeparameter:
-#             branchv_v:      Vektor mit maximal beta-vielen Branches
-#             beta:           Maximallänge des Vektors branch_expand_v; für die Auswahl der beta-besten Branches
-#             analysis:       Gibt die Art der Score-Bewertung an:
-#                 step:           Nur den Score des aktuellen steps
-#                 branch:         Mitterlwert des entstandenen Pfades
-#             method:         Gibt die Methode an, mit welcher die Branches ausgewertet & -gewählt  werden
-#                                 default == Fuzzy
-#         Ausgabe:
-#             v_done:         Beendete Vektorpfade
-#             v_continue:     Branches, die weitergeführt werden können
-#     ''' 
-#     v_done = []
-#     branch_expand = []
-#     score_step = []
-#     score_branch = []
-#     for branch in branch_v:
-#         branch_expand_ = []
-#         # score_ = []
-#         try:
-#             next_possible_steps = branch.get_next_possible_steps()
-#         except StopIteration:
-#             v_done.append(branch)
-#         else:
-#             for step in next_possible_steps:
-#                 branch_expand_.append(copy.deepcopy(branch))
-#                 branch_expand_[-1].new_step(step['t_m'], step['step'], step['dv'])
-#                 if analysis == "branch":
-#                     score_branch.append(0.5 * (branch.get_score() + branch_expand_[-1].get_score()))
-#                 else:
-#                     score_step.append(branch_expand_[-1].get_score())   # hier würde ich die methode übergeben, sodass in get_score() die richtige Meth ausgewählt wird
-        
-#         branch_expand = np.concatenate((branch_expand, branch_expand_), axis=0)
-#         # score = np.concatenate((score, score_), axis=0)
-            
-#     # Bewertung des neuen Branches:
-#     if analysis == "branch": score = score_branch
-#     else: score = score_step
 
-#     if len(branch_expand) > beta: # Kontrollieren, ob branch_expand lang genug, um beta-Beste zu finden
-#         idx = np.argpartition(score, -beta)[-beta:]       # performance is better than with argsort(), returns an array with indices    
-#         top_beta = []
-#         for line in idx:
-#             top_beta.append(branch_expand[line])
-#     else:
-#         beta_new = len(branch_expand)
-#         idx = np.argpartition(score, -beta_new)[-beta_new:]
-#         top_beta = []
-#         for line in idx:
-#             top_beta.append(branch_expand[line])
 
-#     return top_beta
+
+
+
+
+
