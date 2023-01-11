@@ -18,16 +18,16 @@ import copy
 #     i+=1
 
 
-beta = 5
-v_done = []
+# beta = 5
+# v_done = []
 
-a = ['a','b','c','d','e','f','g']
-next_possible_steps = np.array([0.5, 0.2])#,0.2,0.8] # next possible steps
-branch_expand = np.array([0.5,0.2,0.4,0.1,0.5, 0.2])#,0.2,0.8] # branch expand schon nach auffüllen
+# a = ['a','b','c','d','e','f','g']
+# next_possible_steps = np.array([0.5, 0.2])#,0.2,0.8] # next possible steps
+# branch_expand = np.array([0.5,0.2,0.4,0.1,0.5, 0.2])#,0.2,0.8] # branch expand schon nach auffüllen
 
-branch_expand = np.concatenate((branch_expand, next_possible_steps), axis=0)
+# branch_expand = np.concatenate((branch_expand, next_possible_steps), axis=0)
 
-print(branch_expand)
+# print(branch_expand)
 
 # nr_poss_steps = len(next_possible_steps)
 # idx_start = len(branch_expand) - len(next_possible_steps)
@@ -49,20 +49,19 @@ print(branch_expand)
 # print(idx_start)
 
 
-# if len(a) > beta:
-#     idx = np.argpartition(b, -beta)[-beta:]       # performance is better than with argsort(), returns an array with indices    
-#     top_beta = []
-#     for line in idx:
-#         top_beta.append(a[line])
-# else:
-#     beta_new = len(a)
-#     idx = np.argpartition(b, -beta_new)[-beta_new:]       # performance is better than with argsort(), returns an array with indices    
-#     top_beta = []
-#     for line in idx:
-#         top_beta.append(a[line])
+beendete_Branches = [5,0,1,11,2,3,10,13, 5]
+
+branch = []
+score = []
+bla = []
+for final_branch in beendete_Branches:
+    if branch == [] and score == [] and bla == []: branch.append(final_branch), score.append(final_branch)
+    elif final_branch >= np.max(branch): branch = [final_branch]
+
+print(branch[0])
 
 
-# print(top_beta)
+
 
 
 

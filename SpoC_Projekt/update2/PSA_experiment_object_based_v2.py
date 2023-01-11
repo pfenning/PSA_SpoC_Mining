@@ -3,40 +3,52 @@ import numpy as np
 import PSA_functions_v3 as psa
 import branch_class as bc
 from branch_class import Branch
-import copy
-import random
+from datetime import datetime, timedelta
 
 data = np.loadtxt("SpoC_Datensatz.txt")
 T_DAUER = 1827
 
 branch_v = bc.find_idx_start(data) # Vektor mit möglichen Startasteroiden
-beta = 10
+beta = 1
+
+print("branch_v done")
+
+end_time = datetime.now() + timedelta(minutes=3)
+print(datetime.now(), end_time)
 
 beendete_Branches = []
-for i in range(100):
+while True:
+    current_time = datetime.now()
+    if current_time == end_time:
+        break
+    for i in range(500):
 
-    v_done, top_beta = bc.beam_search(branch_v, 10)
+        v_done, top_beta = bc.beam_search(branch_v,beta)
+    
+        # for branch in top_beta:
+        #     ERG_a, ERG_t_m, ERG_t_arr = branch.get_result()
+        #     if (ERG_t_m, ERG_t_arr) >= T_DAUER:
+        #         v_done.append(branch)
+        #         top_beta.pop(branch)
 
-    # for branch in top_beta:
-    #     ERG_a, ERG_t_m, ERG_t_arr = branch.get_result()
-    #     if (ERG_t_m, ERG_t_arr) >= T_DAUER:
-    #         v_done.append(branch)
-    #         top_beta.pop(branch)
+        if v_done != []:
+            beendete_Branches = np.concatenate((beendete_Branches, v_done), axis=0)
+        if top_beta == []: break
 
-    if v_done != []:
-        beendete_Branches.append(v_done)
-    if top_beta == []: break
+        branch_v = top_beta
+        print(branch_v)
 
-    branch_v = top_beta
+print(beendete_Branches)
 
 # Chosing the best path
 branch = []
 score = []
 guete = []
-for _branch in beendete_Branches:
-    _score = _branch.get_score()
-    _guete = _branch.get_guetemass()
-    if _score >= np.max(score) and _guete >= np.max(guete): branch = [_branch], core = [_score], guete = [_guete]
+for final_branch in beendete_Branches:
+    _score = final_branch.get_score()
+    _guete = final_branch.get_guetemass()
+    if branch == [] and score == [] and guete == []: branch.append(final_branch), score.append(final_branch), guete.append(final_branch)
+    elif _score >= np.max(score) and _guete >= np.max(guete): branch = [final_branch], score = [_score], guete = [_guete]
 
 
 

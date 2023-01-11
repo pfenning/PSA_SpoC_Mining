@@ -400,7 +400,7 @@ def find_idx_start(data, intervall=0.01):
     start_branches = []
     for line in data:
         if (line[-1] == 3) and ((mitte_semimajor-grenze) <= line[1] < (mitte_semimajor+grenze)):
-            start_branches.append(Branch(line[0]))
+            start_branches.append(Branch(int(line[0])))
     
     return start_branches
 
