@@ -24,17 +24,9 @@ while True:
         break
 
     v_done, top_beta = bc.beam_search(branch_v,beta)
-    
-    # for branch in top_beta:
-    #     ERG_a, ERG_t_m, ERG_t_arr = branch.get_result()
-    #     if (ERG_t_m, ERG_t_arr) >= T_DAUER:
-    #         v_done.append(branch)
-    #         top_beta.pop(branch)
-
     if v_done != []:
         beendete_Branches = np.concatenate((beendete_Branches, v_done), axis=0)
     if top_beta == []: break
-
     branch_v = top_beta
 
 print(len(branch_v))
@@ -49,8 +41,8 @@ print("beendete_Branches: ", beendete_Branches , len(beendete_Branches))
 branch = []
 score = [0.0]
 for final_branch in beendete_Branches:
-    _score = final_branch.get_score()
-    max_score = np.max(score)
+    _score = float(final_branch.get_score())
+    max_score = float(max(score))
     print("_score: ",_score, np.max(score))
     if branch == []: branch.append(final_branch), score.append(final_branch)
     elif _score >= max_score: 
