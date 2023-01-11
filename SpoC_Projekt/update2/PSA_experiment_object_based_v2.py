@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 data = np.loadtxt("SpoC_Datensatz.txt")
 T_DAUER = 1827
 
-branch_v = bc.find_idx_start(data) # Vektor mit möglichen Startasteroiden
+branch_v = bc.find_idx_start(data,0.001) # Vektor mit möglichen Startasteroiden
 beta = 1
 
 print("branch_v done")
@@ -20,25 +20,24 @@ beendete_Branches = []
 while True:
     current_time = datetime.now()
     if current_time == end_time:
+        beendete_Branches = np.concatenate((beendete_Branches, branch_v), axis=0)
         break
-    for i in range(500):
 
-        v_done, top_beta = bc.beam_search(branch_v,beta)
+    v_done, top_beta = bc.beam_search(branch_v,beta)
     
-        # for branch in top_beta:
-        #     ERG_a, ERG_t_m, ERG_t_arr = branch.get_result()
-        #     if (ERG_t_m, ERG_t_arr) >= T_DAUER:
-        #         v_done.append(branch)
-        #         top_beta.pop(branch)
+    # for branch in top_beta:
+    #     ERG_a, ERG_t_m, ERG_t_arr = branch.get_result()
+    #     if (ERG_t_m, ERG_t_arr) >= T_DAUER:
+    #         v_done.append(branch)
+    #         top_beta.pop(branch)
 
-        if v_done != []:
-            beendete_Branches = np.concatenate((beendete_Branches, v_done), axis=0)
-        if top_beta == []: break
+    if v_done != []:
+        beendete_Branches = np.concatenate((beendete_Branches, v_done), axis=0)
+    if top_beta == []: break
 
-        branch_v = top_beta
-        print(branch_v)
+    branch_v = top_beta
 
-print(beendete_Branches)
+print(len(beendete_Branches))
 
 # Chosing the best path
 branch = []

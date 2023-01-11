@@ -371,6 +371,7 @@ def beam_search(branch_v, beta, analysis="step", method="Fuzzy"):
         branch_expand = np.concatenate((branch_expand, branch_expand_), axis=0)
         # score = np.concatenate((score, score_), axis=0)
 
+    print("branch_expand length: ", len(branch_expand))
     # Nach Score sortierte Index-Reihenfolge erstellen
     if len(branch_expand) > beta: # Kontrollieren, ob branch_expand lang genug, um beta-Beste zu finden
         idx = np.argpartition(score, -beta)[-beta:]     # performance is better than with argsort(), returns an array with indices
@@ -381,6 +382,8 @@ def beam_search(branch_v, beta, analysis="step", method="Fuzzy"):
     top_beta = []
     for line in idx:
         top_beta.append(branch_expand[line])
+
+    print("beam search done")
 
     return v_done, top_beta
 
