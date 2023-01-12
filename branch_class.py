@@ -115,7 +115,7 @@ class Branch:
         # sorted_material_types = [self.bestand[:3].index(value) for value in sorted_materials]
         # ToDo: Softe Grenze mit Berech Sprit zwischen 0.2 und 0.4, oder so, ansonsten gar kein Sprit?
         # Fallunterscheidung
-        if self.visited[-1]['t_arr'] > Branch.T_DAUER-80:   # Letzer Asteroid
+        if self.visited[-1]['t_arr'] > Branch.T_DAUER-100:   # Letzer Asteroid
             cluster_iteration = [[sorted_material_types[0]], [sorted_material_types[1], sorted_material_types[2], 3]]
         else:
             if self.sprit_bei_start < 0.3:       # Tanken fast leer
@@ -221,7 +221,7 @@ class Branch:
         # Prüfen, ob noch ein Schritt notwendig
         if Branch.T_DAUER-30 < self.visited[-1]['t_arr']:  # ToDo: Warum klappt es nicht mit -40?
             print("Letzter Asteroid")
-            self.visited[-1]['t_m'] = 60.0
+            self.visited[-1]['t_m'] = Branch.T_DAUER-self.visited[-1]['t_arr']
             raise StopIteration
         # Update von Asteroid 1
         self._update_current_asteroid()
