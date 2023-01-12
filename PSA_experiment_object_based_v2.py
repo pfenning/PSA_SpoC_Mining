@@ -49,26 +49,7 @@ for branch in beendete_Branches:
     branch.print_summary()
 # print("beendete_Branches: ", beendete_Branches , len(beendete_Branches))
 
-# # Chosing the best path
-# final_branch = beendete_Branches[np.argmin([branch.get_guetemass() for branch in beendete_Branches])]
-#
-# # Lösungvektoren erzeugen
-# final_branch.print()
-# ERG_a, ERG_t_m, ERG_t_arr = final_branch.get_result()
-#
-#
-# #################################################
-# # Lösungszeitplan erstellen
-# #################################################
-# from from_website import SpoC_Kontrolle as SpoC
-#
-# x = SpoC.convert_to_chromosome(ERG_t_arr + ERG_t_m + ERG_a)
-# print(SpoC.udp.pretty(x))
-#
-# from from_website.submisson_helper import create_submission
-# create_submission("spoc-mining","mine-the-belt",x,"TUDa_GoldRush_submission_file_"+ minutes +"minutes_" +".json","TUDa_GoldRush","submission_description")
-from from_website import SpoC_Kontrolle as SpoC
-from from_website.submisson_helper import create_submission
+
 i = 1
 score = []
 for final_branch in beendete_Branches:

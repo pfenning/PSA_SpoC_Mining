@@ -22,7 +22,6 @@ def verfuegbarkeit(data):
     Berechnet die ursprüngliche Verfügbarkeit der Materialien
     """
     material = data[:,-1]
-<<<<<<< Updated upstream
     mass = data[:,-2]
     gesamt = np.sum(mass)
     verf = [0, 0, 0, 0]
@@ -36,33 +35,6 @@ def verfuegbarkeit(data):
         elif material[i] == 3:
             verf[3] += mass[i]
     # print(verf)
-=======
-    masse = data[:,-2]
-    gesamt = np.sum(masse)
-    verf = [0,0,0,0]
-    summe0=0
-    summe1=0
-    summe2=0
-    summe3=0
-    for i in range(0,len(material)):
-        if material[i] == 0: 
-            masse0 = masse[i]
-            summe0 += masse0
-            verf[0]=summe0
-        elif material[i] == 1: 
-            masse1 = masse[i]
-            summe1 += masse1
-            verf[1]=summe1
-        elif material[i] == 2: 
-            masse2 = masse[i]
-            summe2 += masse2
-            verf[2]=summe2
-        elif material[i] == 3: 
-            masse3 = masse[i]
-            summe3 += masse3
-            verf[3]=summe3
-    min_verf = min(verf)
->>>>>>> Stashed changes
     verf_norm = verf/gesamt
     return np.array(verf_norm), 0.1*min(verf[:3])
 #
