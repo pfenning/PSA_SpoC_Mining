@@ -425,6 +425,7 @@ def find_idx_start(data, intervall=0.01, method='mean semimajor'):
     '''
     #### Auswahl des Start-Materials. Das kann durch Verfügbarkeit bestimmt werden! Optimalerweise max. Material --> Verf-Funktion benutzen
     start_branches = []
+<<<<<<< Updated upstream
     # Erstellen des Vektors der möglichen Start-Asteroiden
     if method=='mean semimajor':
         mitte_semimajor = np.mean(data[:,1])
@@ -437,6 +438,11 @@ def find_idx_start(data, intervall=0.01, method='mean semimajor'):
         # 6 (0,0 aber 1!) # 2 (0,77) #8836 (0,43) # 3869 (0,0) # 9953 (0,0 ) #3622 (1,46)
         for id in start_ids:
             start_branches.append(Branch(id))
+=======
+    for line in data:
+        if (line[-1] == 0) and ((mitte_semimajor-grenze) <= line[1] < (mitte_semimajor+grenze)):
+            start_branches.append(Branch(int(line[0])))
+>>>>>>> Stashed changes
     
     return start_branches
 

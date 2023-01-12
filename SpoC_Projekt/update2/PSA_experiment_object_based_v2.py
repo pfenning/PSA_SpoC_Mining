@@ -5,14 +5,24 @@ import branch_class as bc
 from branch_class import Branch
 from datetime import datetime, timedelta
 
+from from_website import SpoC_Kontrolle as SpoC
+from from_website.submisson_helper import create_submission
+
+
 data = np.loadtxt("SpoC_Datensatz.txt")
 
 T_DAUER = 1827
+minutes = 10
+beta = 3
 
 # branch_v = bc.find_idx_start(data,0.001) # Vektor mit möglichen Startasteroiden
 branch_v = bc.find_idx_start(data, method='examples')
 minutes = 8
 beta = 4
+starting_branch = np.argpartition(starting_score, -4)[-4:]
+branch_v = []
+for line in starting_branch:
+    branch_v.append(starting_branches[line])
 
 print("branch_v done")
 
@@ -69,6 +79,7 @@ if len(score) > 10:
 else:
     best_branch = range(len(beendete_Branches))
 
+i=1
 for solution in best_branch:
     branch = beendete_Branches[solution]
     # branch.print()
@@ -77,5 +88,5 @@ for solution in best_branch:
     x = SpoC.convert_to_chromosome(ERG_t_arr + ERG_t_m + ERG_a)
     print(SpoC.udp.pretty(x))
 
-    create_submission("spoc-mining","mine-the-belt",x,"TUDa_GoldRush_submission_file_"+ str(minutes) +"minutes_" + "str(i)" +".json","TUDa_GoldRush","submission_description")
+    create_submission("spoc-mining","mine-the-belt",x,"TUDa_GoldRush_submission_file_"+ str(minutes) +"minutes_" + str(i) +".json","TUDa_GoldRush","submission_description")
     i += 1
