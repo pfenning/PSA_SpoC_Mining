@@ -128,7 +128,7 @@ def clustering(knn, asteroids_kp, asteroid_1_idx, radius=4000):
 # ToDo: Zeitraum der Flugzeit neu definieren (z.B. auf 5-46 in 4er Schritten)
 #       - Reicht Auflösung? Sonst: nach gefundenem Minimum nochmal einen halben Schritt in jede Richtung machen
 def time_optimize(asteroid1, asteroid1_mas, asteroid1_mat,
-                  asteroid2, t_arr, t_opt, propellant=1.0, print_result=False):
+                  asteroid2, t_arr, t_opt, limit=1.0, print_result=False):
     """
     Zeitoptimierung von Delta V mit 2 Levels. Erst Flugzeit, dann Startzeit
 
@@ -138,7 +138,7 @@ def time_optimize(asteroid1, asteroid1_mas, asteroid1_mat,
 
     Übergabe: Asteroid 1 und 2, optimaler Startpunkt, optimale Abbauzeit auf aktuellem Asteroiden
     Rückgabe: optimaler Startpunkt, optimale Flugzeit, optimiertes DV
-    :param propellant: Maximal erlaubter Tank
+    :param limit: Maximal erlaubter Tank
     :param asteroid1_mas: Masse von Asteroid 1
     :param asteroid1_mat: Material von Asteroid 1
     :param asteroid1: Startasteroid
@@ -151,11 +151,7 @@ def time_optimize(asteroid1, asteroid1_mas, asteroid1_mat,
     dv_t_flug = []
     dv_t_start = []
     t_start = t_arr+t_opt
-    # Limit nach abbau, es werden mindestens 70 % abgebaut
-    if asteroid1_mat == 3:
-        limit = get_abbau_menge(propellant, asteroid1_mas, asteroid1_mat, 0.7*t_opt)
-    else:
-        limit = propellant
+
     ###################################################
     # Variation der Flugzeit, Startpunkt fest
     ###################################################

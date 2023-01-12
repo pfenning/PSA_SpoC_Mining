@@ -72,6 +72,7 @@ class Branch:
         # Jedes Branch-Objekt hat eigene Visited-Asteroiden-Liste
         self.not_visited = copy.deepcopy(Branch.dict_asteroids)
         self.bestand = [0.0, 0.0, 0.0, 1.0]
+        self.sprit_bei_start = 1.0;
         self.asteroid_1_id = self.visited[0]['id']
         self.asteroid_1_kp, self.asteroid_1_mas, self.asteroid_1_mat = self.not_visited[self.asteroid_1_id]
         self.t_opt = 0.0
@@ -117,9 +118,9 @@ class Branch:
         if self.visited[-1]['t_arr'] > Branch.T_DAUER-80:   # Letzer Asteroid
             cluster_iteration = [[sorted_material_types[0]], [sorted_material_types[1], sorted_material_types[2], 3]]
         else:
-            if self.bestand[3] < 0.3:       # Tanken nötig
+            if self.sprit_bei_start < 0.3:       # Tanken fast leer
                 cluster_iteration = [[3]]
-            elif self.bestand[3] < 0.6:     # Tank halbvoll
+            elif self.sprit_bei_start < 0.6:     # Tank halbvoll
                 if 3 * sorted_materials[0] < sorted_materials[1] and 3 * sorted_materials[1] < sorted_materials[2]:
                     # geringste Verfügbarkeit, mittlere, häufigstes oder Sprit
                     cluster_iteration = [[sorted_material_types[0]],
@@ -191,11 +192,21 @@ class Branch:
         return neighb_id
 
     def _control_cluster_materials(self, neighb_id, materials):
-        cluster_materials = []
         for asteroid_id in neighb_id:
             if self.dict_asteroids[asteroid_id][-1] not in materials:
                 return False
         return True
+
+    def _calc_sprit_bei_start(self):
+        """
+        Berechnet den Sprit beim Start von Asteroid 1
+        :return:
+        """
+        # Limit nach abbau, es werden mindestens 70 % abgebaut
+        if self.asteroid_1_mat == 3:
+            self.sprit_bei_start = psa.get_abbau_menge(self.bestand[-1], self.asteroid_1_mas, self.asteroid_1_mat, 0.7 * self.t_opt)
+        else:
+            self.sprit_bei_start = self.bestand[-1]
 
     def get_next_possible_steps(self):
         """
@@ -208,7 +219,7 @@ class Branch:
                   'dv': DV für Schritt}
         """
         # Prüfen, ob noch ein Schritt notwendig
-        if Branch.T_DAUER < self.visited[-1]['t_arr']:  # ToDo: Warum klappt es nicht mit -40?
+        if Branch.T_DAUER-30 < self.visited[-1]['t_arr']:  # ToDo: Warum klappt es nicht mit -40?
             print("Letzter Asteroid")
             self.visited[-1]['t_m'] = 60.0
             raise StopIteration
@@ -217,15 +228,19 @@ class Branch:
         # Speicher für mögliche Schritte
         possible_steps = []
         masses = []
+        # ToDo: Sprit bei Start approximieren/nach unten abschätzen
+        self._calc_sprit_bei_start()
         # Cluster-Fall bestimmen
         cluster_iteration = self._get_cluster_case()
         # Durch Fälle iterieren, bis possible_steps nicht leer & Massen > 0.5, oder Cluster_Iteration fertig
         for materials in cluster_iteration:
+            # Cluster bilden für die Materialien aus materials
             neighbour_ids = self._get_cluster_by_material(materials)
             # Iteration durch Nachbar. Hinzufügen zu Menge, wenn erreichbar
             for asteroid_2_id in neighbour_ids:
                 asteroid_2_kp, asteroid_2_mas, asteroid_2_mat = self.not_visited[asteroid_2_id]
 
+                # Prüfen, dass Clusterbildung korrekt verlaufen ist
                 assert asteroid_2_mat in materials, f"Asteroid 2 besitzt ein Material, das nicht gesucht wird"
 
                 t_m_opt_, t_flug_min_dv_, dv_min_ = psa.time_optimize(self.asteroid_1_kp,
@@ -234,23 +249,13 @@ class Branch:
                                                                       asteroid_2_kp,
                                                                       t_arr=self.visited[-1]['t_arr'],
                                                                       t_opt=self.t_opt,
-                                                                      propellant=self.bestand[-1])
+                                                                      limit=self.sprit_bei_start)
                 # Bewertung nur durchführen, wenn Asteroid auch erreichbar
-                if self.asteroid_1_mat == 3:
-                    limit = psa.get_abbau_menge(self.bestand[-1],
-                                                self.asteroid_1_mas,
-                                                self.asteroid_1_mat,
-                                                t_m_opt_)
-                else:
-                    limit = self.bestand[-1]
-
-                # print(f"Limit für Wechsel ist:{limit}")
-
-                if (dv_min_ / Branch.DV_per_propellant) < limit:
+                if (dv_min_ / Branch.DV_per_propellant) < self.sprit_bei_start:
                     # Bewertung des Asteroids und des Wechsels
                     score = Branch.my_system.calculate_score(  # ToDo: Über Normierung des delta_v sprechen
                         # Tank nach Flug → dv muss normiert werden
-                        t_n=(limit - (dv_min_ / Branch.DV_per_propellant)),
+                        t_n=(self.sprit_bei_start - (dv_min_ / Branch.DV_per_propellant)),
                         delta_v=(dv_min_ / 4000),  # Diese Normierung in Ordnung? - Dachte ganz sinnvoll
                         bes=psa.norm_bestand(self.bestand, asteroid_2_mat, Branch.norm_material),
                         verf=self.verf[asteroid_2_mat],
@@ -268,7 +273,7 @@ class Branch:
                     masses.append(asteroid_2_mas)
             # Wenn possible_steps nicht mehr leer & Masse der möglichen Zielasteroiden größer 0.5
             # → Mögliche Schritte gefunden, kann weiter gehen
-            if len(possible_steps) is not 0:
+            if len(possible_steps) != 0:
                 if max(masses) > 0.5:
                     break
         return possible_steps
@@ -425,7 +430,6 @@ def find_idx_start(data, intervall=0.01, method='mean semimajor'):
     '''
     #### Auswahl des Start-Materials. Das kann durch Verfügbarkeit bestimmt werden! Optimalerweise max. Material --> Verf-Funktion benutzen
     start_branches = []
-<<<<<<< Updated upstream
     # Erstellen des Vektors der möglichen Start-Asteroiden
     if method=='mean semimajor':
         mitte_semimajor = np.mean(data[:,1])
@@ -438,12 +442,7 @@ def find_idx_start(data, intervall=0.01, method='mean semimajor'):
         # 6 (0,0 aber 1!) # 2 (0,77) #8836 (0,43) # 3869 (0,0) # 9953 (0,0 ) #3622 (1,46)
         for id in start_ids:
             start_branches.append(Branch(id))
-=======
-    for line in data:
-        if (line[-1] == 0) and ((mitte_semimajor-grenze) <= line[1] < (mitte_semimajor+grenze)):
-            start_branches.append(Branch(int(line[0])))
->>>>>>> Stashed changes
-    
+
     return start_branches
 
 
