@@ -35,7 +35,7 @@ def find_min_material(data):
         elif material[i] == 3:
             verf[3] += mass[i]
     min_mat = np.argmin(verf)
-    print(min_mat)
+    return min_mat
 
 def verfuegbarkeit(data):
     """
