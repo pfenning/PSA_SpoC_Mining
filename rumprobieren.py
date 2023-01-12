@@ -1,80 +1,17 @@
 import numpy as np
 import copy
+import PSA_functions_v5
 
-# a = [10,1,2,3]
-# b1 = [4,5,6]
-# b2 = [7,8,9]
-# b3 = [10,11,12]
+data = np.loadtxt("SpoC_Datensatz.txt")
 
-# c=[]
-# i = 0
-# while i < len(a):
-#     if i == 0: b=b1
-#     elif i==1: b=b2
-#     elif i==2: b=b3
-#     help = [a[i], b]
-
-#     c.append([a[i], b])
-#     i+=1
+# den zweiten Asteroiden finden, aus minimaler Verfügbarkeit und maximaler Masse
 
 
-# beta = 5
-# v_done = []
+min_mat_mass = []
+for i in range(0,len(data)):
+    if data[i,-1] == 1:
+        min_mat_mass.append(data[i,-2])
 
-# a = ['a','b','c','d','e','f','g']
-# next_possible_steps = np.array([0.5, 0.2])#,0.2,0.8] # next possible steps
-# branch_expand = np.array([0.5,0.2,0.4,0.1,0.5, 0.2])#,0.2,0.8] # branch expand schon nach auffüllen
+second_asteroid = np.argpartition(min_mat_mass, -1)[-1:]
 
-# branch_expand = np.concatenate((branch_expand, next_possible_steps), axis=0)
-
-# print(branch_expand)
-
-# nr_poss_steps = len(next_possible_steps)
-# idx_start = len(branch_expand) - len(next_possible_steps)
-
-# branch = 0.5
-
-# last_added_branches = branch_expand[-nr_poss_steps:]
-# for check in last_added_branches : # die zuletzt hinzugefügten branchens
-#     print(check)
-#     idx = np.where(branch_expand==check)
-#     print(idx[0])
-#     branch_expand.pop(idx[0])
-    # if check == branch:
-    #     v_done.append(check)
-    #     branch_expand.pop(check)
-    #     idx_start = len(branch_expand) - nr_poss_steps
-    #     idx = np.where(branch_expand==check)
-
-# print(idx_start)
-
-
-beendete_Branches = [5,0,1,11,2,3,10,13,5]
-
-score = []
-for final_branch in beendete_Branches:
-    print(final_branch)
-    score.append(final_branch)
-
-
-print(score)
-idx = np.argpartition(score, -1)[-1:]
-
-
-print(idx)
-
-
-
-
-
-
-
-
-# Ausgesonderte Probe, ob Branch beendet!
-        # # Probe, ob Pfad beendet:   Wenn ja, dann aus branch_expand und aus score rauslöschen!! (Index benutzen)
-        # for check in branch_expand_ : # die zuletzt hinzugefügten branchens
-        #     if check == branch:
-        #         v_done.append(check)
-        #         branch_expand_.pop(check)
-        #         idx = np.where(branch_expand_==check)
-        #         score_.pop()
+print(second_asteroid, min_mat_mass[second_asteroid[0]])
