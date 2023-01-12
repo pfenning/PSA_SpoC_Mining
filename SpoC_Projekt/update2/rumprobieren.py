@@ -49,17 +49,19 @@ import copy
 # print(idx_start)
 
 
-beendete_Branches = [5,0,1,11,2,3,10,13, 5]
+beendete_Branches = [5,0,1,11,2,3,10,13,5]
 
-branch = []
 score = []
-bla = []
 for final_branch in beendete_Branches:
-    if branch == [] and score == [] and bla == []: branch.append(final_branch), score.append(final_branch)
-    elif final_branch >= np.max(branch): branch = [final_branch]
+    print(final_branch)
+    score.append(final_branch)
 
-print(branch[0])
 
+print(score)
+idx = np.argpartition(score, -1)[-1:]
+
+
+print(idx)
 
 
 
