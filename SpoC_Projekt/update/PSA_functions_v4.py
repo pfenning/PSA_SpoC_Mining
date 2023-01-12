@@ -22,7 +22,6 @@ def verfuegbarkeit(data):
     Berechnet die ursprüngliche Verfügbarkeit der Materialien
     """
     material = data[:,-1]
-<<<<<<< Updated upstream
     mass = data[:,-2]
     gesamt = np.sum(mass)
     verf = [0, 0, 0, 0]
@@ -36,33 +35,6 @@ def verfuegbarkeit(data):
         elif material[i] == 3:
             verf[3] += mass[i]
     # print(verf)
-=======
-    masse = data[:,-2]
-    gesamt = np.sum(masse)
-    verf = [0,0,0,0]
-    summe0=0
-    summe1=0
-    summe2=0
-    summe3=0
-    for i in range(0,len(material)):
-        if material[i] == 0: 
-            masse0 = masse[i]
-            summe0 += masse0
-            verf[0]=summe0
-        elif material[i] == 1: 
-            masse1 = masse[i]
-            summe1 += masse1
-            verf[1]=summe1
-        elif material[i] == 2: 
-            masse2 = masse[i]
-            summe2 += masse2
-            verf[2]=summe2
-        elif material[i] == 3: 
-            masse3 = masse[i]
-            summe3 += masse3
-            verf[3]=summe3
-    min_verf = min(verf)
->>>>>>> Stashed changes
     verf_norm = verf/gesamt
     return np.array(verf_norm), 0.1*min(verf[:3])
 #
@@ -156,7 +128,7 @@ def clustering(knn, asteroids_kp, asteroid_1_idx, radius=4000):
 # ToDo: Zeitraum der Flugzeit neu definieren (z.B. auf 5-46 in 4er Schritten)
 #       - Reicht Auflösung? Sonst: nach gefundenem Minimum nochmal einen halben Schritt in jede Richtung machen
 def time_optimize(asteroid1, asteroid1_mas, asteroid1_mat,
-                  asteroid2, t_arr, t_opt, propellant=1.0, print_result=False):
+                  asteroid2, t_arr, t_opt, limit=1.0, print_result=False):
     """
     Zeitoptimierung von Delta V mit 2 Levels. Erst Flugzeit, dann Startzeit
 
@@ -166,7 +138,7 @@ def time_optimize(asteroid1, asteroid1_mas, asteroid1_mat,
 
     Übergabe: Asteroid 1 und 2, optimaler Startpunkt, optimale Abbauzeit auf aktuellem Asteroiden
     Rückgabe: optimaler Startpunkt, optimale Flugzeit, optimiertes DV
-    :param propellant: Maximal erlaubter Tank
+    :param limit: Maximal erlaubter Tank
     :param asteroid1_mas: Masse von Asteroid 1
     :param asteroid1_mat: Material von Asteroid 1
     :param asteroid1: Startasteroid
@@ -179,11 +151,7 @@ def time_optimize(asteroid1, asteroid1_mas, asteroid1_mat,
     dv_t_flug = []
     dv_t_start = []
     t_start = t_arr+t_opt
-    # Limit nach abbau, es werden mindestens 70 % abgebaut
-    if asteroid1_mat == 3:
-        limit = get_abbau_menge(propellant, asteroid1_mas, asteroid1_mat, 0.7*t_opt)
-    else:
-        limit = propellant
+
     ###################################################
     # Variation der Flugzeit, Startpunkt fest
     ###################################################
