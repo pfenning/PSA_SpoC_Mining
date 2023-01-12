@@ -58,8 +58,8 @@ class TestFunctions(unittest.TestCase):
         pass
 
     def test_time_optimize(self):
-        asteroid1_id = 8816
-        asteroid2_id = 9090
+        asteroid1_id = 8836
+        asteroid2_id = 3774
         asteroid1, asteroid1_mas, asteroid1_mat = TestFunctions.dict_asteroids[asteroid1_id]
         asteroid2 = TestFunctions.dict_asteroids[asteroid2_id][0]
         t_m_min_dv, t_flug_min_dv, dv_min \
@@ -68,11 +68,11 @@ class TestFunctions(unittest.TestCase):
                                 t_arr=0.0, t_opt=asteroid1_mas*TestFunctions.TIME_TO_MINE_FULLY, propellant=1.0)
         print(f"Verweilzeit:{t_m_min_dv}, Flugzeit: {t_flug_min_dv}, DV:{dv_min}")
 
-    def test_verfuegbarkeit2(self):
-        verf = psa.verfuegbarkeit2(mass=list(TestFunctions.dict_asteroids.values())[-2],
-                                   material=list(TestFunctions.dict_asteroids.values())[-1])
+    def test_verfuegbarkeit(self):
+        verf, norm_material = psa.verfuegbarkeit(data=TestFunctions.data)
         # Für den späteren Einsatz: (mass=Branch.dict_asteroids[-2], material=Branch.dict_asteroids[-1])
-        print(psa.verfuegbarkeit(verf))
+        print(f"Verfügbarkeit: {verf}")
+        print(f"Maximales Gütemaß:{norm_material}")
         for expect, got in zip(verf, [0.42020501, 0.02968144, 0.45186633, 0.09824722]):
-            self.assertAlmostEquals(expect,got,5)
+            self.assertAlmostEqual(expect,got,5)
 

@@ -3,7 +3,7 @@ import pykep as pk
 from pykep import phasing
 import copy
 from _Extra._Mathias.fuzzy_system import FuzzySystem
-import PSA_functions_v3 as psa
+import PSA_functions_v4 as psa
 
 
 
@@ -28,7 +28,6 @@ class Branch:
     # Lists to be created
     asteroids_kp = []
     dict_asteroids = dict()     # "Beispiel Dictionary für neue Objekte"
-
     # Loading data as keplerian elements (planets) in an "array"
     data = np.loadtxt("SpoC_Datensatz.txt")
     for line in data:
@@ -51,18 +50,15 @@ class Branch:
         asteroids_kp.append(p)
         dict_asteroids[int(line[0])] = [p, line[-2], int(line[-1])]  # Key = ID, Liste mit [Kaplerian, Masse, Material]
     # Putzen - wahrscheinlich nicht notwendig
+    del p
 
     #########
     # GÜTE
     #########
-    #verf = np.array([0.03, 0.4, 0.42, 0.15])  # ToDo: Verfügbarkeit berechnen
-    
-    verf = psa.verfuegbarkeit(data)
-    print(verf)
+    verf, norm_material = psa.verfuegbarkeit(data)
+    # print(f"Verfügbarkeit der Materialien:{verf}")
+    # print(f"Bestmögliches Gütemass:{norm_material}")
     my_system = FuzzySystem(verf.min(), verf.max(), resolution=0.02)
-
-    del p
-    del data
 
     ################
     # Branch Objekt
@@ -118,20 +114,46 @@ class Branch:
         # sorted_material_types = [self.bestand[:3].index(value) for value in sorted_materials]
         # ToDo: Softe Grenze mit Berech Sprit zwischen 0.2 und 0.4, oder so, ansonsten gar kein Sprit?
         # Fallunterscheidung
-        if self.bestand[3] < 0.4 and self.visited[-1]['t_arr'] < 1750:
-            # Sprit, ansonsten irgendein Rohstoff
-            cluster_iteration = [[3]]
-        elif 3*sorted_materials[0] < sorted_materials[1] and 3*sorted_materials[1] < sorted_materials[2]:
-            # geringste Verfügbarkeit, mittlere, häufigstes oder Sprit
-            cluster_iteration = [[sorted_material_types[0]], [sorted_material_types[1]], [sorted_material_types[2], 3]]
-        elif 3*sorted_materials[0] < sorted_materials[1]:
-            # geringste Verfügbarkeit, ansonsten Rest
+        if self.visited[-1]['t_arr'] > Branch.T_DAUER-80:   # Letzer Asteroid
             cluster_iteration = [[sorted_material_types[0]], [sorted_material_types[1], sorted_material_types[2], 3]]
-        elif 3*sorted_materials[1] < sorted_materials[2]:
-            # beiden geringsten, ansonsten Rest
-            cluster_iteration = [sorted_material_types[:2], [sorted_material_types[2], 3]]
         else:
-            cluster_iteration = [range(4)]
+            if self.bestand[3] < 0.3:       # Tanken nötig
+                cluster_iteration = [[3]]
+            elif self.bestand[3] < 0.6:     # Tank halbvoll
+                if 3 * sorted_materials[0] < sorted_materials[1] and 3 * sorted_materials[1] < sorted_materials[2]:
+                    # geringste Verfügbarkeit, mittlere, häufigstes oder Sprit
+                    cluster_iteration = [[sorted_material_types[0]],
+                                         [sorted_material_types[1]],
+                                         [sorted_material_types[2], 3]]
+                elif 3 * sorted_materials[0] < sorted_materials[1]:
+                    # geringste Verfügbarkeit, ansonsten Rest
+                    cluster_iteration = [[sorted_material_types[0]],
+                                         [sorted_material_types[1], sorted_material_types[2], 3]]
+                elif 3 * sorted_materials[1] < sorted_materials[2]:
+                    # beiden geringsten, ansonsten Rest
+                    cluster_iteration = [sorted_material_types[:2],
+                                         [sorted_material_types[2], 3]]
+                else:
+                    cluster_iteration = [range(4)]
+            else:                           # Tank noch voll
+                if 3 * sorted_materials[0] < sorted_materials[1] and 3 * sorted_materials[1] < sorted_materials[2]:
+                    # geringste Verfügbarkeit, mittlere, häufigstes oder Sprit
+                    cluster_iteration = [[sorted_material_types[0]],
+                                         [sorted_material_types[1]],
+                                         [sorted_material_types[2]],
+                                         [3]]
+                elif 3 * sorted_materials[0] < sorted_materials[1]:
+                    # geringste Verfügbarkeit, ansonsten Rest
+                    cluster_iteration = [[sorted_material_types[0]],
+                                         [sorted_material_types[1], sorted_material_types[2]],
+                                         [3]]
+                elif 3 * sorted_materials[1] < sorted_materials[2]:
+                    # beiden geringsten, ansonsten Rest
+                    cluster_iteration = [sorted_material_types[:2],
+                                         [sorted_material_types[2]],
+                                         [3]]
+                else:
+                    cluster_iteration = [range(3), [3]]
 
         return cluster_iteration
 
@@ -149,7 +171,7 @@ class Branch:
         candidates = [self.not_visited[asteroid_id][0] for asteroid_id in candidates_id]
 
         if not candidates:
-            print(f"Keine Asteroiden mit Materialien {materials} mehr vorhanden.")
+            print(f"Keine Asteroiden mit den Materialien {materials} mehr vorhanden.")
             return []
         knn = phasing.knn(candidates, self.visited[-1]['t_arr'] + self.t_opt, 'orbital', T=30)
         # neighb_inds = psa.clustering(knn, Branch.asteroids_kp, self.asteroid_1_id, radius)
@@ -186,7 +208,7 @@ class Branch:
                   'dv': DV für Schritt}
         """
         # Prüfen, ob noch ein Schritt notwendig
-        if Branch.T_DAUER-40 < self.visited[-1]['t_arr']:
+        if Branch.T_DAUER < self.visited[-1]['t_arr']:  # ToDo: Warum klappt es nicht mit -40?
             print("Letzter Asteroid")
             self.visited[-1]['t_m'] = 60.0
             raise StopIteration
@@ -230,7 +252,7 @@ class Branch:
                         # Tank nach Flug → dv muss normiert werden
                         t_n=(limit - (dv_min_ / Branch.DV_per_propellant)),
                         delta_v=(dv_min_ / 4000),  # Diese Normierung in Ordnung? - Dachte ganz sinnvoll
-                        bes=psa.norm_bestand(self.bestand, asteroid_2_mat),
+                        bes=psa.norm_bestand(self.bestand, asteroid_2_mat, Branch.norm_material),
                         verf=self.verf[asteroid_2_mat],
                         mas=asteroid_2_mas)
                     # Alle Daten für Schritt speichern
@@ -328,8 +350,14 @@ class Branch:
         # print(self.visited)
         res_list = [[out for out in step.values()] for step in self.visited]
         for a, t_m, t_arr, _, _ in res_list:
-            print(f'ASteroid ID:{a}, Ankunftszeit:{t_arr:.0f}, Verweildauer:{t_m:.0f}')
+            print(f'Asteroid ID:{a}, Ankunftszeit:{t_arr:.0f}, Verweildauer:{t_m:.0f}')
 
+    def print_summary(self):
+        print("Zusammenfassung des Pfads:")
+        print(f"Startasteroid:{self.visited[0]['id']}, "
+              f"Anzahl gemachter Schritte:{len(self.visited)},"
+              f"Mittlerer Step-Score:{self.get_branch_score()},"
+              f"Gütemaß:{self.get_guetemass()}")
 
 
 
@@ -363,7 +391,7 @@ def beam_search(branch_v, beta, analysis="step", method="Fuzzy"):
                 branch_expand_.append(copy.deepcopy(branch))
                 branch_expand_[-1].new_step(step['t_m'], step['step'], step['dv'])
                 # ToDo: Methodenauswahl für Score-Berechnung
-                if analysis == "branch":
+                if analysis == 'branch':
                     score.append(branch_expand_[-1].get_branch_score())
                 else:
                     score.append(branch_expand_[-1].get_score()) # hier soll übergeben werden, welche Methode ausgewählt wird
@@ -372,23 +400,23 @@ def beam_search(branch_v, beta, analysis="step", method="Fuzzy"):
         # score = np.concatenate((score, score_), axis=0)
 
     print("branch_expand length: ", len(branch_expand))
-    # Nach Score sortierte Index-Reihenfolge erstellen
-    if len(branch_expand) > beta: # Kontrollieren, ob branch_expand lang genug, um beta-Beste zu finden
-        idx = np.argpartition(score, -beta)[-beta:]     # performance is better than with argsort(), returns an array with indices
-    else:
-        beta_new = len(branch_expand)
-        idx = np.argpartition(score, -beta_new)[-beta_new:]
-    # Beta beste ausgeben lassen
+
+    # Beste Branches auswählen
     top_beta = []
-    for line in idx:
-        top_beta.append(branch_expand[line])
+    # Nach Score sortierte Index-Reihenfolge erstellen
+    if beta < len(branch_expand): # Kontrollieren, ob branch_expand lang genug, um beta-Beste zu finden
+        idx = np.argpartition(score, -beta)[-beta:]     # performance is better than with argsort(), returns an array with indices
+        for line in idx:
+            top_beta.append(branch_expand[line])
+    else:
+        top_beta = branch_expand
 
     print("beam search done, top-beta length: ", len(top_beta))
 
     return v_done, top_beta
 
 
-def find_idx_start(data, intervall=0.01):
+def find_idx_start(data, intervall=0.01, method='mean semimajor'):
     '''
         Hier wird aus dem Datensatz ein Vektor mit möglichen Startasteroiden gebildet.
         Return:
@@ -396,14 +424,19 @@ def find_idx_start(data, intervall=0.01):
                 start_branches:     Vektor mit branches der Start-Asteroiden
     '''
     #### Auswahl des Start-Materials. Das kann durch Verfügbarkeit bestimmt werden! Optimalerweise max. Material --> Verf-Funktion benutzen
-
-    # Erstellen des Vektors der möglichen Start-Asteroiden
-    mitte_semimajor = np.mean(data[:,1])
-    grenze = intervall * mitte_semimajor
     start_branches = []
-    for line in data:
-        if (line[-1] == 3) and ((mitte_semimajor-grenze) <= line[1] < (mitte_semimajor+grenze)):
-            start_branches.append(Branch(int(line[0])))
+    # Erstellen des Vektors der möglichen Start-Asteroiden
+    if method=='mean semimajor':
+        mitte_semimajor = np.mean(data[:,1])
+        grenze = intervall * mitte_semimajor
+        for line in data:
+            if (line[-1] == 3) and ((mitte_semimajor-grenze) <= line[1] < (mitte_semimajor+grenze)):
+                start_branches.append(Branch(int(line[0])))
+    elif method == 'examples':
+        start_ids = [3622]
+        # 6 (0,0 aber 1!) # 2 (0,77) #8836 (0,43) # 3869 (0,0) # 9953 (0,0 ) #3622 (1,46)
+        for id in start_ids:
+            start_branches.append(Branch(id))
     
     return start_branches
 

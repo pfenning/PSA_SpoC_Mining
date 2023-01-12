@@ -17,44 +17,12 @@ MU_TRAPPIST = G * MS                            # Mu of the Trappist-1 star
 DV_per_propellant = 10000                       # DV per propellant [m/s]
 TIME_TO_MINE_FULLY = 30                         # Maximum time to fully mine an asteroid
 
-
 def verfuegbarkeit(data):
     """
     Berechnet die ursprüngliche Verfügbarkeit der Materialien
     """
     material = data[:,-1]
-    masse = data[:,-2]
-    gesamt = np.sum(masse)
-    verf = [0, 0, 0, 0]
-    summe0=0
-    summe1=0
-    summe2=0
-    summe3=0
-    for i in range(0,len(material)):
-        if material[i] == 0:
-            masse0 = masse[i]
-            summe0 += masse0
-            verf[0]=summe0
-        elif material[i] == 1:
-            masse1 = masse[i]
-            summe1 += masse1
-            verf[1]=summe1
-        elif material[i] == 2:
-            masse2 = masse[i]
-            summe2 += masse2
-            verf[2]=summe2
-        elif material[i] == 3:
-            masse3 = masse[i]
-            summe3 += masse3
-            verf[3]=summe3
-    verf_norm = verf/gesamt
-    return np.array(verf_norm)
-    return 0
-
-def verfuegbarkeit2(mass, material):
-    """
-    Berechnet die ursprüngliche Verfügbarkeit der Materialien
-    """
+    mass = data[:,-2]
     gesamt = np.sum(mass)
     verf = [0, 0, 0, 0]
     for i in range(0,len(material)):
@@ -66,24 +34,46 @@ def verfuegbarkeit2(mass, material):
             verf[2] += mass[i]
         elif material[i] == 3:
             verf[3] += mass[i]
+    # print(verf)
     verf_norm = verf/gesamt
-    return np.array(verf_norm)
+    return np.array(verf_norm), 0.1*min(verf[:3])
+#
+# def verfuegbarkeit2(mass, material):
+#     """
+#     Berechnet die ursprüngliche Verfügbarkeit der Materialien
+#     """
+#     gesamt = np.sum(mass)
+#     verf = [0, 0, 0, 0]
+#     for i in range(0,len(material)):
+#         if material[i] == 0:
+#             verf[0] += mass[i]
+#         elif material[i] == 1:
+#             verf[1] += mass[i]
+#         elif material[i] == 2:
+#             verf[2] += mass[i]
+#         elif material[i] == 3:
+#             verf[3] += mass[i]
+#     verf_norm = verf/gesamt
+#     return np.array(verf_norm)
 
-def norm_bestand(bestand, material):
+def norm_bestand(bestand, material,norm_material):
     """
     Gibt "normierten" Bestand zurück.
     Für Rohstoffe: 1/max(Rohstoffe)
     Für Tank: Tank
     :param bestand: Aktueller bestand der 3 Rohstoffe und des Tanks
     :param material: zu normierendes Material
+    :param norm_material: Normierung für Bestand der Materialien
     :return: "normierter" Bestand
     """
     if material == 3:
         return bestand[3]
-    elif max(bestand[:2]) == 0:
-        return 1
+    elif max(bestand[:3]) == 0:
+        return 0
     else:
-        return bestand[material]/max(bestand[:2])
+        return bestand[material]/max(bestand[:3])
+    # else:
+    #     return bestand[material]/norm_material
 
 
 def get_dv(asteroid1, asteroid2, t_start, t_flug, print_result=False):
@@ -138,7 +128,7 @@ def clustering(knn, asteroids_kp, asteroid_1_idx, radius=4000):
 # ToDo: Zeitraum der Flugzeit neu definieren (z.B. auf 5-46 in 4er Schritten)
 #       - Reicht Auflösung? Sonst: nach gefundenem Minimum nochmal einen halben Schritt in jede Richtung machen
 def time_optimize(asteroid1, asteroid1_mas, asteroid1_mat,
-                  asteroid2, t_arr, t_opt, propellant=10000, print_result=False):
+                  asteroid2, t_arr, t_opt, propellant=1.0, print_result=False):
     """
     Zeitoptimierung von Delta V mit 2 Levels. Erst Flugzeit, dann Startzeit
 
@@ -180,11 +170,13 @@ def time_optimize(asteroid1, asteroid1_mas, asteroid1_mat,
         t_flug_min_dv = t_flug_1[dv_t_flug.index(min(dv_t_flug))]
     else:                       # Ansonsten Gewichtung
         results_t_flug = []
-        for i in range(0, len(t_flug_1)):
+        t_flug_of_results = []
+        for i in range(len(t_flug_1)):
             # "Normierung" für ähnliche Skalierung
             # Zahlenfindung: Siehe MathTests.py
             if dv_t_flug[i] / DV_per_propellant <= limit:    # Nur hinzufügen, wenn erreichbar
                 results_t_flug.append([t_flug_1[i] / 30, dv_t_flug[i] / 2000])
+                t_flug_of_results.append(t_flug_1[i])
         weights = np.array([0.3, 0.7])
         rank_t_flug = []
         for sol in results_t_flug:
@@ -192,7 +184,7 @@ def time_optimize(asteroid1, asteroid1_mas, asteroid1_mat,
 
         index_min = rank_t_flug.index(min(rank_t_flug))
         # index_min = dv_t_flug.index(min(dv_t_flug))
-        t_flug_min_dv = t_flug_1[index_min]
+        t_flug_min_dv = t_flug_of_results[index_min]
 
     ###################################################
     # Variation des Startpunktes bei gegebener Flugzeit
@@ -214,14 +206,21 @@ def time_optimize(asteroid1, asteroid1_mas, asteroid1_mat,
     # Minimum heraussuchen
     if limit < min(dv_t_start)/DV_per_propellant:     # Wenn am Limit: Einfaches Minimum
         index_min = dv_t_start.index(min(dv_t_start))
+        # Wertepaar für Index des Minimums
+        t_m_min_dv = t_opt + t_start_var[index_min]
+        dv_min = dv_t_start[index_min]
     else:                           # Ansonsten Gewichtung
         # Rangfolge bilden (da nicht unnötig lange Flugzeit gewählt werden sollte)
         results_t_start = []
+        t_start_var_of_results = []
+        dv_of_results = []
         for i in range(0, len(t_start_var)):
             # "Normierung" für ähnliche Skalierung - abs(t_var) da Betrag der Abweichung von t_opt relevant
             # nur t_start, DV (t_flug bereits zuvor gewählt)
             if dv_t_start[i] / DV_per_propellant <= limit:  # Nur hinzufügen, wenn erreichbar
                 results_t_start.append([abs(t_start_var[i] / 10), dv_t_start[i] / 1000])
+                t_start_var_of_results.append(t_start_var[i])
+                dv_of_results.append(dv_t_start[i])
 
         weights_neg_var = np.array([1.5, 0.7])
         weights_pos_var = np.array([0.3, 0.7])
@@ -235,10 +234,9 @@ def time_optimize(asteroid1, asteroid1_mas, asteroid1_mat,
             rank_t_start.append(sum(weights * results_t_start[i]))  # Bewertung aus gewichteter Summe
 
         index_min = rank_t_start.index(min(rank_t_start))
-
-    # Wertepaar für Index des Minimums
-    t_m_min_dv = t_opt + t_start_var[index_min]
-    dv_min = dv_t_start[index_min]
+        # Wertepaar für Index des Minimums
+        t_m_min_dv = t_opt + t_start_var_of_results[index_min]
+        dv_min = dv_of_results[index_min]
 
     return t_m_min_dv, t_flug_min_dv, dv_min
 

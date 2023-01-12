@@ -5,7 +5,7 @@ from branch_class import Branch
 import copy
 import random
 
-i_start = 3622 # 6 (0,0 aber 1!) # 2 (0,77) #8836 (0,43) # 3869 (0,0) # 9953 (0,0 ) #3622 (1,46)  # .. Für diesen Asteroiden super weg bisher gefunden! - Ursprünglich: 9953
+i_start = 3869 # 6 (0,0 aber 1!) # 2 (0,77) #8836 (0,43) # 3869 (0,0) # 9953 (0,0 ) #3622 (1,46)  # .. Für diesen Asteroiden super weg bisher gefunden! - Ursprünglich: 9953
 # i_start = random.randrange(0, 10000, 1)
 branch1 = Branch(i_start)
 print(f"Startasteroid:{i_start}")
