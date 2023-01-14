@@ -5,16 +5,19 @@ import branch_class as bc
 from branch_class import Branch
 from datetime import datetime, timedelta
 
+import random
+
 from from_website import SpoC_Kontrolle as SpoC
 from from_website.submisson_helper import create_submission
+
 
 
 data = np.loadtxt("SpoC_Datensatz.txt")
 
 T_DAUER = 1827
 minutes = 15
-beta = 20
-branch_v = bc.find_idx_start(data, method='examples')
+beta = 10
+# branch_v = bc.find_idx_start(data, method='examples')
 
 # # branch_v = bc.find_idx_start(data,0.001) # Vektor mit möglichen Startasteroiden
 # starting_branch = np.argpartition(starting_score, -4)[-4:]
@@ -22,32 +25,45 @@ branch_v = bc.find_idx_start(data, method='examples')
 # for line in starting_branch:
 #     branch_v.append(starting_branches[line])
 
+best_start_ids = random.choices(range(10000),k=100)
+
 print("branch_v done")
 
 end_time = datetime.now() + timedelta(minutes=minutes)
 print(datetime.now(), end_time)
 
 beendete_Branches = []
-while datetime.now() < end_time:
-    v_done, top_beta = bc.beam_search(branch_v,beta)    # analysis='branch'
-    if v_done:              # Fertige Lösungen gefunden
-        beendete_Branches = np.concatenate((beendete_Branches, v_done), axis=0)
-    if len(top_beta) == 0:  # Keine weiterzuführenden Lösungen gefunden
-        break
-    branch_v = top_beta
+for start_id in best_start_ids:
+    beendete_Branches_ = []
+    branch_v = [Branch(start_id)]
+    while datetime.now() < end_time:
+        v_done, top_beta = bc.beam_search(branch_v,beta)    # analysis='branch'
+        if v_done:              # Fertige Lösungen gefunden
+            beendete_Branches_ = np.concatenate((beendete_Branches, v_done), axis=0)
+        if len(top_beta) == 0:  # Keine weiterzuführenden Lösungen gefunden
+            break
+        branch_v = top_beta
+    for branch in beendete_Branches_:
+        beendete_Branches.append(branch)
+        branch.print_summary()
+
+
 
 # print(len(branch_v))
 # print("beendete_Branches: ", beendete_Branches , len(beendete_Branches))
 
-if len(beendete_Branches) == 0:   # Keine fertigen Lösungen gefunden
-    beendete_Branches = branch_v
-    print("Keine fertigen Branches gefunden")
+# if len(beendete_Branches) == 0:   # Keine fertigen Lösungen gefunden
+#     beendete_Branches = branch_v
+#     print("Keine fertigen Branches gefunden")
 print("beendete Branches:")
 for branch in beendete_Branches:
     branch.print_summary()
 # print("beendete_Branches: ", beendete_Branches , len(beendete_Branches))
 
-# Chosing the best path
+# In Numpy Datei speichern
+np.save("beendete_branches.npy",beendete_Branches)
+
+# Choosing the best path
 final_branch = beendete_Branches[np.argmin([branch.get_guetemass() for branch in beendete_Branches])]
 
 # Lösungvektoren erzeugen

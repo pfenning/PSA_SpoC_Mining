@@ -185,7 +185,7 @@ class Branch:
         neighb_id = [candidates_id[index] for index in neighb_inds if candidates_id[index] != self.asteroid_1_id]
 
         # Testverfahren ToDo auskommentieren
-        print(f"Cluster wurde für die Materialien {materials} gebildet.")
+        # print(f"Cluster wurde für die Materialien {materials} gebildet.")
         assert self._control_cluster_materials(neighb_id, materials), \
             f"Expected: {materials}, Actual: {self._control_cluster_materials(neighb_id)}"
 
@@ -438,8 +438,8 @@ def find_idx_start(data, intervall=0.01, method='mean semimajor'):
             if (line[-1] == 3) and ((mitte_semimajor-grenze) <= line[1] < (mitte_semimajor+grenze)):
                 start_branches.append(Branch(int(line[0])))
     elif method == 'examples':
-        start_ids = [3622]
-        # 6 (0,0 aber 1!) # 2 (0,77) #8836 (0,43) # 3869 (0,0) # 9953 (0,0 ) #3622 (1,46)
+        start_ids = [5384]
+        # 3622 -> 2.38, 5384 -> 4.23
         for id in start_ids:
             start_branches.append(Branch(id))
 
