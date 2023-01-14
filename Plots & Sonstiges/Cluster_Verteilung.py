@@ -12,7 +12,7 @@ from math import pi
 from spoc_constants import data, asteroids
 
 ##########
-# Tests
+# Plots
 #########
 
 # Analyse der Keplerparameter auf Cluster:
