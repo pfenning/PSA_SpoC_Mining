@@ -275,7 +275,7 @@ class Seed:
 #       Keine Optimierung notwendig
 # ToDo: Wird der Bestand, da als Referenz übergeben, auch bei den anderen Verändert? Wäre schlecht -> Deepcopy
 class ExpandBranch(Seed):
-    def __int__(self, origin_branch, last_t_m, dv, asteroid_id, t_arr, step_score):
+    def __init__(self, origin_branch, last_t_m, dv, asteroid_id, t_arr, step_score):
         """
         Objekt, zum Speichern des Expand-Schrittes im Beam-Search-Algorithmus.
         Speichert nur eine Referenz des zu erweiternden Branches, sowie den möglichen Expand-Schritt.
@@ -301,6 +301,8 @@ class ExpandBranch(Seed):
         # Abbauzeit und Branch-Score bestimmen
         self.t_opt = SpoC.get_t_opt(self.asteroid_id)
         self.branch_score_yet = self.calc_branch_score()
+
+
 
     def is_visited(self, asteroid_id):
         """
@@ -439,13 +441,12 @@ def beam_search(branch_v, beta, analysis="step", method="Fuzzy"):
         else:
             for step in next_possible_steps:
                 # step = {'last_t_m', 'dv', 'asteroid_2_id', 't_arr', 'step_score'}
-                branch_expand_.append(ExpandBranch())
-                # origin_branch=branch,
-                #                                                    last_t_m=step['last_t_m'],
-                #                                                    dv=step['dv'],
-                #                                                    asteroid_id=step['asteroid_2_id'],
-                #                                                    t_arr=step['t_arr'],
-                #                                                    step_score=step['step_score'])
+                branch_expand_.append(ExpandBranch(origin_branch=branch,
+                                                   last_t_m=step['last_t_m'],
+                                                   dv=step['dv'],
+                                                   asteroid_id=step['asteroid_2_id'],
+                                                   t_arr=step['t_arr'],
+                                                   step_score=step['step_score']))
                 # ToDo: Methodenauswahl für Score-Berechnung:
                 #  hier soll übergeben werden, welche Methode ausgewählt wird
                 if analysis == 'branch':
