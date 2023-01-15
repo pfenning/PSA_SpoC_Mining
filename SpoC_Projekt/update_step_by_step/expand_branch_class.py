@@ -1,3 +1,5 @@
+import random
+
 import numpy as np
 from pykep import phasing
 import copy
@@ -19,10 +21,14 @@ def calc_candidate_ids(branch, materials):
     if isinstance(materials, int):
         materials = [materials]
 
-    return [asteroid_id for asteroid_id, values in dict_asteroids if values[-1] in materials and not branch.is_visited()]
+    return [asteroid_id for asteroid_id, values in zip(dict_asteroids.keys(), dict_asteroids.values())
+            if values[-1] in materials and not branch.is_visited(asteroid_id)]
 
 
 class Seed:
+    # Konstanten initialisieren
+    if dict_asteroids == {}:
+        SpoC.initialize()
     ##############################
     # Methoden und Objektattribute
     ##############################
@@ -40,19 +46,15 @@ class Seed:
         self.bestand = [0.0, 0.0, 0.0, 1.0]
         self.t_opt = 0.0
 
+    def __str__(self):
+        return f"Startasteroid:{self.asteroid_id}"
+
     def get_step_count(self):
         """
         Initialer Asteroid => Step-Count  = 0
         :return: 0
         """
         return 0
-
-    def get_score(self):
-        """
-        Gibt den Score des Expand-Schritts zurück
-        :return: Score des Expand-Schritts
-        """
-        return self.step_score
 
     def get_branch_score(self):
         """
@@ -68,13 +70,6 @@ class Seed:
         :return: Boolean, ob besucht oder nicht besucht
         """
         return asteroid_id == self.asteroid_id
-
-    def get_guetemass(self):
-        """
-        Gibt aktuelles Gütemaß, also -(min(Bestand)) zurück
-        :return: Gütemaß
-        """
-        return -min(self.bestand[:3])
 
     def get_result_vectors(self):
         """
@@ -219,7 +214,7 @@ class Seed:
         # Speicher für mögliche Schritte
         possible_steps = []
         masses = []
-        # ToDo: Sprit bei Start approximieren/nach unten abschätzen
+        # Sprit bei Start approximieren/nach oben abschätzen
         sprit_bei_start = self._calc_sprit_bei_start()
         # Cluster-Fall bestimmen
         cluster_iteration = self._get_cluster_case(sprit_bei_start)
@@ -285,7 +280,8 @@ class ExpandBranch(Seed):
         :param step_score: Bewertung des Schritts zum Ziel-Asteroiden
         :return: Objekt, dass Schritt zu Ziel-Asteroiden beschreibt
         """
-        super(Seed).__init__(asteroid_id)
+        super().__init__(asteroid_id)
+        # super(Seed).__init__(asteroid_id)
         # Ursprungspfad
         self.origin_branch = origin_branch
         # Abbauzeit auf VORHERIGEM Asteroiden (muss, da Abzweigungen vom letzten Pfad sich in t_m unterscheiden können
@@ -302,7 +298,11 @@ class ExpandBranch(Seed):
         self.t_opt = SpoC.get_t_opt(self.asteroid_id)
         self.branch_score_yet = self.calc_branch_score()
 
-
+    def __str__(self):
+        print(self.origin_branch)
+        return f"Abbauzeit auf Asteroiden {self.last_t_m:.0f}, \n" \
+               f"Neuer Asteroid: {self.asteroid_id}, Material: {SpoC.get_asteroid_material(self.asteroid_id)}, \n" \
+               f"Bestand: {self.bestand}"
 
     def is_visited(self, asteroid_id):
         """
@@ -318,11 +318,11 @@ class ExpandBranch(Seed):
         :param dv: Spritverbrauch bei Flug zu aktuellem Asteroiden
         :return
         """
-        # Abbau der Rohstoffe auf letztem Asteroiden
+        # Abbau der Rohstoffe auf LETZTEM Asteroiden
         SpoC.abbau(self.bestand,
-                   SpoC.get_asteroid_mass(self.asteroid_id),
-                    SpoC.get_asteroid_material(self.asteroid_id),
-                    self.last_t_m)
+                   SpoC.get_asteroid_mass(self.origin_branch.asteroid_id),
+                   SpoC.get_asteroid_material(self.origin_branch.asteroid_id),
+                   self.last_t_m)
         # Spritverbrauch bei Flug
         self.bestand[3] -= dv/DV_per_propellant
 
@@ -331,31 +331,47 @@ class ExpandBranch(Seed):
         Gibt an, auf wievielter Schritt das ist.
         :return: Schritt-Anzahl
         """
-        return self.origin_branch.get_step_count() + 1
+        return 1 + self.origin_branch.get_step_count()
 
     def calc_branch_score(self):
         """
         Gibt den Branch-Score, also den Mittelwert der Step-Scores, für den erweiterten Branch zurück
         :return: Branch-Score des erweiterten Branches
         """
-        return (self.origin_branch.get_step_count() * self.origin_branch.get_branch_score() + self.get_score()) \
-            /self.branch_score_yet
+        assert self.get_step_count()>0, "Step-Count wird falsch bestimmt"
+        return (self.origin_branch.get_step_count() * self.origin_branch.get_branch_score() + self.step_score) \
+            /self.get_step_count()
 
-    def print_last_step(self):
-        print(f"=================== Neuer Schritt =================== \n"
-              f"Abbauzeit auf letztem Assteroiden:{self.last_t_m:.0f} Tage, \n"
-              f"Neuer Asteroid:\n"
-              f"ID {self.asteroid_id}, "
-              f"Ankunftstag: {self.t_arr:.0f}, ",
-              f"Material:{SpoC.get_asteroid_material(self.asteroid_id)}", "\n",
-              f"Bestand bei Ankunft am neuen Asteroiden:", self.bestand)
+    # def print_last_step(self):
+    #     print(f"=================== Neuer Schritt =================== \n"
+    #           f"Abbauzeit auf letztem Assteroiden:{self.last_t_m:.0f} Tage, \n"
+    #           f"Neuer Asteroid:\n"
+    #           f"ID {self.asteroid_id}, "
+    #           f"Ankunftstag: {self.t_arr:.0f}, ",
+    #           f"Material:{SpoC.get_asteroid_material(self.asteroid_id)}", "\n",
+    #           f"Bestand bei Ankunft am neuen Asteroiden:", self.bestand)
+
+    def get_guetemass(self):
+        """
+        Gibt aktuelles Gütemaß, also -(min(Bestand)) zurück.
+        Gütemass wird entweder für kompletten Abbau des akutellen Asteroiden,
+        oder Abbau, bis Zeit abgelaufen
+        :return: Gütemaß
+        """
+        bestand = copy.deepcopy(self.bestand)
+        SpoC.abbau(bestand,
+                   SpoC.get_asteroid_mass(self.asteroid_id),
+                   SpoC.get_asteroid_material(self.asteroid_id),
+                   T_DAUER - self.t_arr)
+        return bestand
+
 
     def get_result_vectors(self):
         """
         Gibt Lösungsvektoren bis zum aktuellen Stand zurück. Für t_m ist das nur bis zum letzten Asteroiden
         :return: res_a, res_t_arr, res_t_m
         """
-        res_t_m, res_a, res_t_arr = self.origin_branch.get_result_vectors(self)
+        res_t_m, res_a, res_t_arr = self.origin_branch.get_result_vectors()
         # Abbauzeit auf letztem Asteroid
         res_t_m.append(self.last_t_m)
         # Neue Asteroid-ID
@@ -370,7 +386,7 @@ class ExpandBranch(Seed):
         wählt letztes t_m so, dass Expedition nach T_DAUER aufhört, falls Spanne > 60 => Fehler?
         :return: Ergebnis, dass sich aus Abfolge der im Expand-Schritt referenzierten Objekte ergibt
         """
-        res_t_m, res_a, res_t_arr =  self.origin_branch.get_result_vectors(self)
+        res_t_m, res_a, res_t_arr =  self.get_result_vectors()
         # Letzte Abbauzeit bestimmen
         res_t_m.append(T_DAUER - res_t_arr[-1])
         if res_t_m[-1] > 60.0:
@@ -386,7 +402,7 @@ class ExpandBranch(Seed):
         Gibt aktuellen Schritt aus
         :return:
         """
-        print(f"Abbauzeit auf Asteroiden {self.last_t_m:.0f}, \n"
+        print(f"Abbauzeit auf Asteroid {self.origin_branch.asteroid_id}:{self.last_t_m:.0f}, \n"
               f"Neuer Asteroid: {self.asteroid_id}, Material: {SpoC.get_asteroid_material(self.asteroid_id)}, \n"
               f"Bestand: {self.bestand}")
 
@@ -452,7 +468,7 @@ def beam_search(branch_v, beta, analysis="step", method="Fuzzy"):
                 if analysis == 'branch':
                     score.append(branch_expand_[-1].get_branch_score())
                 else:
-                    score.append(branch_expand_[-1].get_score())
+                    score.append(branch_expand_[-1].step_score)
 
         branch_expand = np.concatenate((branch_expand, branch_expand_), axis=0)
         # score = np.concatenate((score, score_), axis=0)
@@ -490,8 +506,12 @@ def find_idx_start(data, intervall=0.01, method='mean semimajor'):
             if (line[-1] == 3) and ((mitte_semimajor-grenze) <= line[1] < (mitte_semimajor+grenze)):
                 start_branches.append(Seed(int(line[0])))
     elif method == 'examples':
-        start_ids = [5384]
+        start_ids = [3622, 5384]
         # 3622 -> 2.38, 5384 -> 4.23
+        for ID in start_ids:
+            start_branches.append(Seed(ID))
+    elif method == 'random':
+        start_ids = random.choices(range(10000),k=50)
         for ID in start_ids:
             start_branches.append(Seed(ID))
 

@@ -9,14 +9,16 @@ from from_website.submisson_helper import create_submission
 
 
 # Sätzlinge finden :)
-branch_v = find_idx_start(data, method='example') # Anhand von festen IDs
+# branch_v = find_idx_start(data, method='examples') # Anhand von festen IDs
 # branch_v = find_idx_start(data,0.001) # Anhand von anderen Methoden
+branch_v = find_idx_start(data, method='random') # Anhand von festen IDs
 
 print("Sätzlinge gepflanzt :D")
 
 # Zeitbegrenzung und beta festlegen
-beta = 20
-minutes = 15
+beta = 100
+minutes = 20
+start_time = datetime.now()
 end_time = datetime.now() + timedelta(minutes=minutes)
 print(datetime.now(), end_time)
 
@@ -40,6 +42,11 @@ for branch in beendete_Branches:
 
 # Chosing the best path
 final_branch = beendete_Branches[np.argmin([branch.get_guetemass() for branch in beendete_Branches])]
+
+# Zeitmessung
+finish_time = datetime.now()
+print(f"Dauer der Suche:{finish_time-start_time}")
+
 # Lösungvektoren erzeugen
 final_branch.print()
 ERG_a, ERG_t_m, ERG_t_arr = final_branch.get_result()

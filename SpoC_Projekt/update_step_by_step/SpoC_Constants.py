@@ -15,17 +15,16 @@ MU_TRAPPIST = G * MS  # Mu of the Trappist-1 star
 DV_per_propellant = 10000  # DV per propellant [m/s]
 TIME_TO_MINE_FULLY = 30  # Maximum time to fully mine an asteroid
 
+
+
 #################
 # ASTEROIDS:  Creating lists with indices of asteroids
 #################
 
-# Lists to be created
-asteroids_kp = []
-dict_asteroids = dict()  # "Beispiel Dictionary für neue Objekte"
 # Loading data as keplerian elements (planets) in an "array"
 data = np.loadtxt("SpoC_Datensatz.txt")
-for line in data:
-    p = pk.planet.keplerian(
+dict_asteroids ={int(line[0]):  # ID
+    [pk.planet.keplerian(       # Keplerian-Object
         T_START,
         (
             line[1],
@@ -33,18 +32,43 @@ for line in data:
             line[3],
             line[4],
             line[5],
-            line[6],
+            line[6]
         ),
         MU_TRAPPIST,
-        G * line[7],  # mass in planet is not used in UDP, instead separate array below
-        1,  # these variable are not relevant for this problem
-        1.1,  # these variable are not relevant for this problem
-        "Asteroid " + str(int(line[0])),
-    )
-    asteroids_kp.append(p)
-    dict_asteroids[int(line[0])] = [p, line[-2], int(line[-1])]  # Key = ID, Liste mit [Kaplerian, Masse, Material]
-# Putzen - wahrscheinlich nicht notwendig
-del p
+        G * line[7],    # mass in planet is not used in UDP, instead separate array below
+        1,              # these variable are not relevant for this problem
+        1.1,            # these variable are not relevant for this problem
+        "Asteroid " + str(int(line[0]))),
+        line[-2],               # Mass
+        int(line[-1])]          # Material
+    for line in data}
+
+
+# for i in range(10):
+#     print(dict_asteroids[i][1], dict_asteroids[i][2])
+# for state in zip(dict_asteroids.keys(),dict_asteroids.values()):
+#     print(state)
+
+# for line in data:
+#     p = pk.planet.keplerian(
+#         T_START,
+#         (
+#             line[1],
+#             line[2],
+#             line[3],
+#             line[4],
+#             line[5],
+#             line[6],
+#         ),
+#         MU_TRAPPIST,
+#         G * line[7],  # mass in planet is not used in UDP, instead separate array below
+#         1,  # these variable are not relevant for this problem
+#         1.1,  # these variable are not relevant for this problem
+#         "Asteroid " + str(int(line[0])),
+#     )
+#     asteroids_kp.append(p)
+#     dict_asteroids[int(line[0])] = [p, line[-2], int(line[-1])]  # Key = ID, Liste mit [Kaplerian, Masse, Material]
+
 
 def verfuegbarkeit():
     """
@@ -66,7 +90,6 @@ def verfuegbarkeit():
     # print(verf)
     verf_norm = verf/gesamt
     return np.array(verf_norm), 0.1*min(verf[:3])
-
 
 #########
 # GÜTE
@@ -299,6 +322,8 @@ def abbau(bestand, mass, material, t_m):
     :param t_m: Aufenthaltsdauer auf Planet
     :return:
     """
+    if t_m<0:
+        return
     bestand[material] = get_abbau_menge(bestand[material], mass, material, t_m)
 
 

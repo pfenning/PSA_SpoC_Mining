@@ -41,7 +41,7 @@ def _transform(x, x_min=0, x_max=1):
 
 
 class FuzzySystem:
-    def __init__(self, verf_min, verf_max, resolution=0.01):
+    def __init__(self, verf_min, verf_max, resolution=0.01, load_map=False):
         """
         Erzeugt das Fuzzy-System zur Bewertung von Asteroidenwechseln
         verf_min:
@@ -172,22 +172,34 @@ class FuzzySystem:
             self.verf_min = verf_min
             self.verf_max = verf_max
 
-        # Fields
+        # Auflösung
         self.resolution = resolution
-        self.sprit_data = []
-        self.material_data = []
-        self.main_data = []
-        self.out_sub_1_map = []
-        self.out_sub_2_map = []
-        self.score_map = []
-        # size = len(np.linspace(0, 1, _item_count(self.resolution)))
-        # self.out_sub_1_map = np.zeros([size, size])
-        # self.out_sub_2_map = np.zeros([size, size])
-        # self.score_map = np.zeros([size, size, size])
-        # Interpolations-Objekte
-        self.main = None
-        self.sub2 = None
-        self.sub1 = None
+        # Achsen der Kennfelder
+        self.t_n_map = np.linspace(0, 1, _item_count(self.resolution))
+        self.delt_map = np.linspace(0, 1, _item_count(self.resolution))
+        self.verf_map = np.linspace(0, 1, _item_count(self.resolution))
+        self.bes_map = np.linspace(0, 1, _item_count(self.resolution))
+        self.mas_map = np.linspace(0, 1, _item_count(self.resolution))
+        self.sprit_map = np.linspace(0, 1, _item_count(self.resolution))
+        self.rele_map = np.linspace(0, 1, _item_count(self.resolution))
+        # Kennfelder
+        size = len(np.linspace(0, 1, _item_count(self.resolution)))
+        self.out_sub_1_map = np.zeros([size, size])
+        self.out_sub_2_map = np.zeros([size, size])
+        self.score_map = np.zeros([size, size, size])
+        # self.sprit_data = []
+        # self.material_data = []
+        # self.main_data = []
+        # self.out_sub_1_map = []
+        # self.out_sub_2_map = []
+        # self.score_map = []
+        # # Interpolations-Objekte
+        # self.main = None
+        # self.sub2 = None
+        # self.sub1 = None
+
+        if load_map:
+            self.load_maps_from_npy()
 
     def calculate_score(self, t_n, delta_v, bes, verf, mas):
         """
@@ -229,52 +241,53 @@ class FuzzySystem:
             Auflösung des Kennfelds, wenn nichts übergeben = Auflösung des Systems
         :return:
         """
-        t_n_map = np.linspace(0, 1, _item_count(self.resolution))
-        delt_map = np.linspace(0, 1, _item_count(self.resolution))
-        verf_map = np.linspace(0, 1, _item_count(self.resolution))
-        bes_map = np.linspace(0, 1, _item_count(self.resolution))
-        mas_map = np.linspace(0, 1, _item_count(self.resolution))
-        sprit_map = np.linspace(0, 1, _item_count(self.resolution))
-        rele_map = np.linspace(0, 1, _item_count(self.resolution))
         #####################
         # Subsystem 1 - Sprit
         #####################
         # Map füllen
-        for m in range(len(t_n_map)):
-            for n in range(len(delt_map)):
+        for m in range(len(self.t_n_map)):
+            for n in range(len(self.delt_map)):
                 # ToDo: Noch eine bessere Lösung finden - Unschön, genauso unschön ist: flush_after_run=item_count**
-                self.sub_sys.input['Tank nach Wechsel'] = t_n_map[m]
-                self.sub_sys.input['Spritverbrauch'] = delt_map[n]
+                self.sub_sys.input['Tank nach Wechsel'] = self.t_n_map[m]
+                self.sub_sys.input['Spritverbrauch'] = self.delt_map[n]
                 self.sub_sys.compute()
-                self.sprit_data.append([t_n_map[m], delt_map[n]])
-                self.out_sub_1_map.append(self.sub_sys.output['Ausgang Subsystem 1'])
-                # self.out_sub_1_map[m, n] =
+                # self.sprit_data.append([t_n_map[m], delt_map[n]])
+                # self.out_sub_1_map.append(self.sub_sys.output['Ausgang Subsystem 1'])
+                self.out_sub_1_map[m, n] = self.sub_sys.output['Ausgang Subsystem 1']
+        print("Kennfeld für Sprit fertig")
         ########################
         # Subsystem 2 - Material
         ########################
         # Map füllen
-        for m in range(len(bes_map)):
-            for n in range(len(verf_map)):
+        for m in range(len(self.bes_map)):
+            for n in range(len(self.verf_map)):
                 # ToDo: Noch eine bessere Lösung finden - Unschön, genauso unschön ist: flush_after_run=item_count**
-                self.sub_sys_2.input['Bestand des Materials'] = bes_map[m]
-                self.sub_sys_2.input['Verfügbarkeit des Materials'] = verf_map[n]
+                self.sub_sys_2.input['Bestand des Materials'] = self.bes_map[m]
+                self.sub_sys_2.input['Verfügbarkeit des Materials'] = self.verf_map[n]
                 self.sub_sys_2.compute()
-                self.material_data.append([bes_map[m], verf_map[n]])
-                self.out_sub_2_map.append(self.sub_sys_2.output['Ausgang Subsystem 2'])
-                # self.out_sub_2_map[m, n] = self.sub_sys_2.output['Ausgang Subsystem 2']
+                # self.material_data.append([bes_map[m], verf_map[n]])
+                # self.out_sub_2_map.append(self.sub_sys_2.output['Ausgang Subsystem 2'])
+                self.out_sub_2_map[m, n] = self.sub_sys_2.output['Ausgang Subsystem 2']
+        print("Kennfeld für Material fertig")
         #############
         # Hauptsystem
         #############
         # Map füllen
-        for m in range(len(mas_map)):
-            for n in range(len(sprit_map)):
-                for k in range(len(rele_map)):
-                    self.score.input['Masse'] = mas_map[m]
-                    self.score.input['Güte vom Spritverbrauch'] = sprit_map[n]
-                    self.score.input['Relevanz des Materials'] = rele_map[k]
+        for m in range(len(self.mas_map)):
+            for n in range(len(self.sprit_map)):
+                for k in range(len(self.rele_map)):
+                    self.score.input['Masse'] = self.mas_map[m]
+                    self.score.input['Güte vom Spritverbrauch'] = self.sprit_map[n]
+                    self.score.input['Relevanz des Materials'] = self.rele_map[k]
                     self.score.compute()
-                    self.main_data.append([mas_map[m], sprit_map[n], rele_map[k]])
-                    self.score_map.append(self.score.output['Güte des Asteroids'])
+                    # self.main_data.append([mas_map[m], sprit_map[n], rele_map[k]])
+                    # self.score_map.append(self.score.output['Güte des Asteroids'])
+                    self.score_map[m, n, k] = self.score.output['Güte des Asteroids']
+        print("Hauptkennfeld fertig")
+        ############
+        # Speichern
+        ############
+        self.save_maps_to_npy()
 
     def calculate_score_by_map(self, t_n, delta_v, bes, verf, mas):
         """
@@ -286,33 +299,30 @@ class FuzzySystem:
         :param mas: Masse des Zielasteroiden
         :return: Bewertung des Asteroidenwechsels
         """
-        # ToDo: griddata verwenden für Interpolation
-        # ToDo: self.out_sub_1_map.reshape(1)
-        #
-        sprit = self.sub1(t_n, delta_v)
-        rele = self.sub2(bes, verf)
-        return self.main(mas, sprit, rele)
-        # sprit = griddata(self.sprit_data, self.out_sub_1_map, (t_n, delta_v))
-        # rele = griddata(self.material_data, self.out_sub_2_map, (bes, verf))
-        # return griddata(self.main_data, self.score_map, (mas, sprit, rele))
+        # Skalierung der Verfügbarkeit
+        verf = _transform(verf, self.verf_min, self.verf_max)
 
-    def initialize_map_calculation(self, calculate_new=False):
-        """
-        Erzeugt die Map, oder lädt sie aus dem Speicher, und initialisiert Interpolations-Objekte
-        :param calculate_new:
-        :return:
-        """
-        if calculate_new:
-            self.creat_score_map()
-            self.save_maps_to_npy()
-        else:
-            self.load_maps_from_npy()
-        # Interpolations-Objekt erzeugen
-        self.sub1 = LinearNDInterpolator(self.sprit_data, self.out_sub_1_map)
-        self.sub2 = LinearNDInterpolator(self.material_data, self.out_sub_2_map)
-        self.main = LinearNDInterpolator(self.main_data, self.score_map)
+        # Inputs an Auflösung anpassen
+        t_n = _fit_to_resolution(t_n, self.resolution)
+        delta_v = _fit_to_resolution(delta_v, self.resolution)
+        bes = _fit_to_resolution(bes, self.resolution)
+        verf = _fit_to_resolution(verf, self.resolution)
+        mas = _fit_to_resolution(mas, self.resolution)
 
+        # Subystem 1 - Sprit
+        ind_t_n = np.argwhere(self.t_n_map == t_n)[0][0]
+        ind_delt = np.argwhere(self.delt_map == delta_v)[0][0]
+        sprit = _fit_to_resolution(self.out_sub_1_map[ind_t_n, ind_delt], self.resolution)
+        # Subsystem 2 - Material
+        ind_bes = np.argwhere(self.bes_map == bes)[0][0]
+        ind_verf = np.argwhere(self.verf_map == verf)[0][0]
+        rele = _fit_to_resolution(self.out_sub_1_map[ind_bes, ind_verf], self.resolution)
+        # Hauptsystem
+        ind_mas = np.argwhere(self.mas_map == mas)[0][0]
+        ind_sprit = np.argwhere(self.sprit_map == sprit)[0][0]
+        ind_rele = np.argwhere(self.rele_map == rele)[0][0]
 
+        return self.score_map[ind_mas, ind_sprit, ind_rele]
 
     def save_maps_to_npy(self):
         """
@@ -323,9 +333,9 @@ class FuzzySystem:
         :return:
         """
         if self.out_sub_1_map is not None and self.out_sub_2_map is not None and self.score_map is not None:
-            np.save('sprit_data.npy', self.sprit_data)
-            np.save('material_data.npy', self.material_data)
-            np.save('main_data.npy', self.main_data)
+            # np.save('sprit_data.npy', self.sprit_data)
+            # np.save('material_data.npy', self.material_data)
+            # np.save('main_data.npy', self.main_data)
             np.save('out_sub_1_map.npy', self.out_sub_1_map)
             np.save('out_sub_2_map.npy', self.out_sub_2_map)
             np.save('score_map.npy', self.score_map)
@@ -339,24 +349,20 @@ class FuzzySystem:
         :return:
         """
         try:
-            self.sprit_data = np.load('sprit_data.npy')
-            self.material_data = np.load('material_data.npy')
-            self.main_data = np.load('main_data.npy')
+            # self.sprit_data = np.load('sprit_data.npy')
+            # self.material_data = np.load('material_data.npy')
+            # self.main_data = np.load('main_data.npy')
             self.out_sub_1_map = np.load('out_sub_1_map.npy')
             self.out_sub_2_map = np.load('out_sub_2_map.npy')
             self.score_map = np.load('score_map.npy')
         except FileNotFoundError:
             raise FileNotFoundError("Kennfelder noch nicht erzeugt, oder Dateien gelöscht")
 
+
     def plot(self):
         """
         Plottet Fuzzy-Kennfelder anhand der erstellten Maps
         :return:
-        """
-        """Testformat:
-            Subsysteme einzeln,
-            daraus Wertebereiche Bestimmen
-            Hauptsystem für die gegebenen Wertebereiche
         """
         fig = plt.figure(figsize=(12, 18))
 
