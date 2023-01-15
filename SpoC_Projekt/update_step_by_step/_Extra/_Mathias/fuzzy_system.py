@@ -39,6 +39,10 @@ def _item_count(resolution, lower=0, upper=1):
 def _transform(x, x_min=0, x_max=1):
     return (x-x_min)/(x_max-x_min)
 
+def _get_index(num, vector):
+    return np.argwhere(num == vector)[0][0]
+
+
 
 class FuzzySystem:
     def __init__(self, verf_min, verf_max, resolution=0.01, load_map=False):
@@ -174,14 +178,15 @@ class FuzzySystem:
 
         # Auflösung
         self.resolution = resolution
+        self.vector = np.linspace(0, 1, _item_count(self.resolution))
         # Achsen der Kennfelder
-        self.t_n_map = np.linspace(0, 1, _item_count(self.resolution))
-        self.delt_map = np.linspace(0, 1, _item_count(self.resolution))
-        self.verf_map = np.linspace(0, 1, _item_count(self.resolution))
-        self.bes_map = np.linspace(0, 1, _item_count(self.resolution))
-        self.mas_map = np.linspace(0, 1, _item_count(self.resolution))
-        self.sprit_map = np.linspace(0, 1, _item_count(self.resolution))
-        self.rele_map = np.linspace(0, 1, _item_count(self.resolution))
+        self.t_n_map = self.vector
+        self.delt_map = self.vector
+        self.verf_map = self.vector
+        self.bes_map = self.vector
+        self.mas_map = self.vector
+        self.sprit_map = self.vector
+        self.rele_map = self.vector
         # Kennfelder
         size = len(np.linspace(0, 1, _item_count(self.resolution)))
         self.out_sub_1_map = np.zeros([size, size])
@@ -303,26 +308,38 @@ class FuzzySystem:
         verf = _transform(verf, self.verf_min, self.verf_max)
 
         # Inputs an Auflösung anpassen
-        t_n = _fit_to_resolution(t_n, self.resolution)
-        delta_v = _fit_to_resolution(delta_v, self.resolution)
-        bes = _fit_to_resolution(bes, self.resolution)
-        verf = _fit_to_resolution(verf, self.resolution)
-        mas = _fit_to_resolution(mas, self.resolution)
+        if self.resolution == 0.01:
+            # Subystem 1 - Sprit
+            sprit = self.out_sub_1_map[int(round(t_n,2)*100), int(round(delta_v,2)*100)]
+            # Subsystem 2 - Material
+            rele = self.out_sub_1_map[int(round(bes,2)*100), int(round(verf,2)*100)]
+            # Hauptsystem
+            return  self.score_map[int(round(mas,2)*100), int(round(sprit,2)*100), int(round(rele,2)*100)]
+        else:
+            t_n = _fit_to_resolution(t_n, self.resolution)
+            delta_v = _fit_to_resolution(delta_v, self.resolution)
+            bes = _fit_to_resolution(bes, self.resolution)
+            verf = _fit_to_resolution(verf, self.resolution)
+            mas = _fit_to_resolution(mas, self.resolution)
 
-        # Subystem 1 - Sprit
-        ind_t_n = np.argwhere(self.t_n_map == t_n)[0][0]
-        ind_delt = np.argwhere(self.delt_map == delta_v)[0][0]
-        sprit = _fit_to_resolution(self.out_sub_1_map[ind_t_n, ind_delt], self.resolution)
-        # Subsystem 2 - Material
-        ind_bes = np.argwhere(self.bes_map == bes)[0][0]
-        ind_verf = np.argwhere(self.verf_map == verf)[0][0]
-        rele = _fit_to_resolution(self.out_sub_1_map[ind_bes, ind_verf], self.resolution)
-        # Hauptsystem
-        ind_mas = np.argwhere(self.mas_map == mas)[0][0]
-        ind_sprit = np.argwhere(self.sprit_map == sprit)[0][0]
-        ind_rele = np.argwhere(self.rele_map == rele)[0][0]
+            # Subystem 1 - Sprit
+            ind_t_n = np.argwhere(self.t_n_map == t_n)[0][0]
+            ind_delt = np.argwhere(self.delt_map == delta_v)[0][0]
+            sprit = _fit_to_resolution(self.out_sub_1_map[ind_t_n, ind_delt], self.resolution)
+            # Subsystem 2 - Material
+            ind_bes = np.argwhere(self.bes_map == bes)[0][0]
+            ind_verf = np.argwhere(self.verf_map == verf)[0][0]
+            rele = _fit_to_resolution(self.out_sub_1_map[ind_bes, ind_verf], self.resolution)
+            # Hauptsystem
+            ind_mas = np.argwhere(self.mas_map == mas)[0][0]
+            ind_sprit = np.argwhere(self.sprit_map == sprit)[0][0]
+            ind_rele = np.argwhere(self.rele_map == rele)[0][0]
 
-        return self.score_map[ind_mas, ind_sprit, ind_rele]
+            return self.score_map[ind_mas, ind_sprit, ind_rele]
+
+
+
+
 
     def save_maps_to_npy(self):
         """
