@@ -4,7 +4,7 @@ import time
 # Timer "starten"
 time0 = time.perf_counter()
 
-my_system = FuzzySystem(0.03, 0.4, resolution=0.05)
+my_system = FuzzySystem(0.03, 0.4, resolution=0.02)
 time1 = time.perf_counter()
 time_Variante1 = time1-time0
 
@@ -18,8 +18,7 @@ time2 = time.perf_counter()
 time_Variante2 = time2-time1
 
 # Berechnung mit Kennfeld (noch viel zu langsame Berechnung von Kennfeld)
-my_system.creat_score_map()
-my_system.save_maps_to_npy()
+my_system.initialize_map_calculation(calculate_new=True)
 # my_system.load_maps_from_npy()
 time3 = time.perf_counter()
 time_Variante3 = time3-time2
