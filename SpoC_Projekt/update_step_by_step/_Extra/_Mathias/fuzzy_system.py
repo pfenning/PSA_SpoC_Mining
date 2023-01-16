@@ -50,7 +50,7 @@ def _get_index(num, vector):
 
 
 class FuzzySystem:
-    def __init__(self, verf_min, verf_max, resolution=0.01, load_map=False, sprit_max=0.37):
+    def __init__(self, verf_min, verf_max, resolution=0.01, load_map=False, sprit_max=0.3):
         """
         Erzeugt das Fuzzy-System zur Bewertung von Asteroidenwechseln
         verf_min:

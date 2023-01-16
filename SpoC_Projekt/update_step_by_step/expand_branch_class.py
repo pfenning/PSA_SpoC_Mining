@@ -5,7 +5,7 @@ from pykep import phasing
 import copy
 import SpoC_Constants as SpoC
 
-from SpoC_Constants import dict_asteroids, DV_per_propellant, T_DAUER
+from SpoC_Constants import dict_asteroids, DV_per_propellant, T_DAUER, T_START, verf
 
 ##############################################
 # Statische Funktionen für die Branch-Klassen
@@ -86,8 +86,10 @@ class Seed:
         print(f"Startasteroid:{self.asteroid_id}")
 
     ################################# Bestimmen der neuen möglichen Schritte #################################
-    def _sort_material_types(self):
-        sort_items = enumerate(self.bestand[:3])
+    def _sort_material_types(self, vector=None):
+        if vector is None:
+            vector = self.bestand[:3]
+        sort_items = enumerate(vector)
         sorted_material = sorted(sort_items, key=lambda item: item[1])
         sorted_material_types = []
         sorted_materials = []
@@ -96,7 +98,7 @@ class Seed:
             sorted_materials.append(x)
         return sorted_material_types, sorted_materials
 
-    def _get_cluster_case(self, sprit_bei_start):
+    def _get_cluster_case(self, sprit_bei_start, bevorzugen=2):
         """
         Bestimmt den Cluster-Case
         :param: sprit_bei_start: Füllstand des Tanks beim Start zum neuen Asteroiden
@@ -105,40 +107,42 @@ class Seed:
         # Materialtypen nach Bestand sortieren (ohne Sprit)
         sorted_material_types, sorted_materials = self._sort_material_types()
         # Fallunterscheidung
-        if self.t_arr > T_DAUER-70:   # letzer Asteroid
+        if self.t_arr > T_DAUER-60:   # letzer Asteroid
             cluster_iteration = [[sorted_material_types[0]], [sorted_material_types[1], sorted_material_types[2], 3]]
         else:
-            if sprit_bei_start < 0.3:       # Tanken fast leer
+            if sprit_bei_start < 0.2:       # Tanken fast leer
                 cluster_iteration = [[3]]
-            elif sprit_bei_start < 0.6:     # Tank halbvoll
-                if 3 * sorted_materials[0] < sorted_materials[1] and 3 * sorted_materials[1] < sorted_materials[2]:
+            elif sprit_bei_start < 0.4:     # Tank halbvoll
+                if bevorzugen * sorted_materials[0] < sorted_materials[1] \
+                        and bevorzugen * sorted_materials[1] < sorted_materials[2]:
                     # geringste Verfügbarkeit, mittlere, häufigstes oder Sprit
                     cluster_iteration = [[sorted_material_types[0]],
                                          [sorted_material_types[1]],
                                          [sorted_material_types[2], 3]]
-                elif 3 * sorted_materials[0] < sorted_materials[1]:
+                elif bevorzugen * sorted_materials[0] < sorted_materials[1]:
                     # geringste Verfügbarkeit, ansonsten Rest
                     cluster_iteration = [[sorted_material_types[0]],
                                          [sorted_material_types[1], sorted_material_types[2], 3]]
-                elif 3 * sorted_materials[1] < sorted_materials[2]:
+                elif bevorzugen * sorted_materials[1] < sorted_materials[2]:
                     # beiden geringsten, ansonsten Rest
                     cluster_iteration = [sorted_material_types[:2],
                                          [sorted_material_types[2], 3]]
                 else:
-                    cluster_iteration = [range(4)]
+                    cluster_iteration = [range(3), [3]]
             else:                           # Tank noch voll
-                if 3 * sorted_materials[0] < sorted_materials[1] and 3 * sorted_materials[1] < sorted_materials[2]:
+                if bevorzugen * sorted_materials[0] < sorted_materials[1] \
+                        and bevorzugen * sorted_materials[1] < sorted_materials[2]:
                     # geringste Verfügbarkeit, mittlere, häufigstes oder Sprit
                     cluster_iteration = [[sorted_material_types[0]],
                                          [sorted_material_types[1]],
                                          [sorted_material_types[2]],
                                          [3]]
-                elif 3 * sorted_materials[0] < sorted_materials[1]:
+                elif bevorzugen * sorted_materials[0] < sorted_materials[1]:
                     # geringste Verfügbarkeit, ansonsten Rest
                     cluster_iteration = [[sorted_material_types[0]],
                                          [sorted_material_types[1], sorted_material_types[2]],
                                          [3]]
-                elif 3 * sorted_materials[1] < sorted_materials[2]:
+                elif bevorzugen * sorted_materials[1] < sorted_materials[2]:
                     # beiden geringsten, ansonsten Rest
                     cluster_iteration = [sorted_material_types[:2],
                                          [sorted_material_types[2]],
@@ -148,11 +152,12 @@ class Seed:
 
         return cluster_iteration
 
-    def _get_cluster_by_material(self, materials, radius=5000):
+    def _get_cluster_by_material(self, materials, radius=3000, t_flug=15):
         """
         Erstellt Cluster für aktuellen Asteroiden aus allen Asteroiden, die übergebene Materialien besitzen
         :param materials: int oder list of ints - Liste von Materialien, die geclustert werden sollen
         :param radius: Cluster-Radius
+        :param t_flug: mittlere Flugzeit für Clusterbildung
         :return: Asteroid-IDs der Nachbarasteroiden
         """
         candidates_id = calc_candidate_ids(self, materials)
@@ -161,7 +166,7 @@ class Seed:
         if not candidates:
             print(f"Keine Asteroiden mit den Materialien {materials} mehr vorhanden.")
             return []
-        knn = phasing.knn(candidates, self.t_arr + self.t_opt, 'orbital', T=30) # ToDo T lässt sich auch anders wählen
+        knn = phasing.knn(candidates, T_START.mjd2000 + self.t_arr + self.t_opt, 'orbital', T=t_flug) # ToDo T lässt sich auch anders wählen
         _, neighb_idx, _ = knn.find_neighbours(SpoC.get_asteroid(self.asteroid_id),
                                                              query_type='ball', r=radius)
         neighb_idx = list(neighb_idx)
@@ -196,6 +201,19 @@ class Seed:
         else:
             return self.bestand[-1]
 
+    def _current_material_is_needed(self):
+        return False
+        # current_material = SpoC.get_asteroid_material(self.asteroid_id)
+        # # Sprit Asteroid
+        # if current_material == 3:
+        #     return False # Wird in Time-Optimize gelöst
+        # # Material Asteroid
+        # rar_material = self._sort_material_types(verf)[0][0]
+        # if current_material == rar_material or (1.5*self.bestand[current_material] < max(self.bestand[:3])):
+        #     return True
+        # else:
+        #     return False
+
     def get_next_possible_steps(self):
         """
         Bestimmt die Menge von Asteroiden, die für Expand-Schritt verwendet werden sollen.
@@ -209,6 +227,8 @@ class Seed:
             print("Letzter Asteroid")
             # self.visited[-1]['t_m'] = Branch.T_DAUER-self.visited[-1]['t_arr']
             raise StopIteration
+        # Prüfen, ob Material des aktuellen Asteroiden wichtig ist
+        needed = self._current_material_is_needed()
         # Speicher für mögliche Schritte
         possible_steps = []
         masses = []
@@ -226,12 +246,13 @@ class Seed:
                 assert SpoC.get_asteroid_material(asteroid_2_id) in materials, f"Asteroid 2 besitzt ein Material, das nicht gesucht wird"
 
                 t_m_opt_, t_flug_min_dv_, dv_min_ = SpoC.time_optimize(SpoC.get_asteroid(self.asteroid_id),
-                                                                      SpoC.get_asteroid_mass(self.asteroid_id),
-                                                                      SpoC.get_asteroid_material(self.asteroid_id),
-                                                                      SpoC.get_asteroid(asteroid_2_id),
-                                                                      t_arr=self.t_arr,
-                                                                      t_opt=self.t_opt,
-                                                                      limit=sprit_bei_start)
+                                                                       SpoC.get_asteroid_mass(self.asteroid_id),
+                                                                       SpoC.get_asteroid_material(self.asteroid_id),
+                                                                       SpoC.get_asteroid(asteroid_2_id),
+                                                                       t_arr=self.t_arr,
+                                                                       t_opt=self.t_opt,
+                                                                       limit=sprit_bei_start,
+                                                                       needed=needed)
                 # Bewertung nur durchführen, wenn Asteroid auch erreichbar
                 if (dv_min_ / DV_per_propellant) < sprit_bei_start:
                     if self.fuzzy:
@@ -509,7 +530,7 @@ def beam_search(branch_v, beta, analysis="step", fuzzy = True):
 
     return v_done, top_beta
 
-def find_idx_start(data, intervall=0.01, method='mean semimajor', fuzzy=True):
+def find_idx_start(data, intervall=0.01, method='mean semimajor', fuzzy=True, k=15):
     '''
         Hier wird aus dem Datensatz ein Vektor mit möglichen Startasteroiden gebildet.
         Return:
@@ -526,12 +547,12 @@ def find_idx_start(data, intervall=0.01, method='mean semimajor', fuzzy=True):
             if (line[-1] == 3) and ((mitte_semimajor-grenze) <= line[1] < (mitte_semimajor+grenze)):
                 start_branches.append(Seed(int(line[0]), fuzzy=fuzzy))
     elif method == 'examples':
-        start_ids = [3622, 5384, 2257, 925]
+        start_ids = [3622] # [3622, 5384, 2257, 925]
         # 3622 -> 2.38, 5384 -> 4.23, 2257 -> 4.4
         for ID in start_ids:
             start_branches.append(Seed(ID))
     elif method == 'random':
-        start_ids = random.choices(range(10000),k=50)
+        start_ids = random.choices(range(10000),k=k)
         for ID in start_ids:
             start_branches.append(Seed(ID,fuzzy=fuzzy))
     elif method == 'test':

@@ -204,16 +204,19 @@ def clustering(knn, asteroids_kp, asteroid_1_idx, radius=4000):
 # ToDo: Zeitraum der Flugzeit neu definieren (z.B. auf 5-46 in 4er Schritten)
 #       - Reicht Auflösung? Sonst: nach gefundenem Minimum nochmal einen halben Schritt in jede Richtung machen
 def time_optimize(asteroid1, asteroid1_mas, asteroid1_mat,
-                  asteroid2, t_arr, t_opt, limit=1.0, print_result=False):
+                  asteroid2, t_arr, t_opt, limit=1.0, print_result=False,
+                  needed=False):
     """
     Zeitoptimierung von Delta V mit 2 Levels. Erst Flugzeit, dann Startzeit
 
     Unterschied zu v1:
-    Betrachteter Startpunkt bewegt sich bis zu 60 Tage
+    Betrachteter Startpunkt bewegt sich bis zu 60 Tage.
+    Wenn Material dringend benötigt wird, wird mit Abflug gewartet, bis es komplett abgebaut wurde
     Auswahl des Minimums über Gewichtung der Größen Flugzeit, Abbauzeit, Spritverbrauch
 
     Übergabe: Asteroid 1 und 2, optimaler Startpunkt, optimale Abbauzeit auf aktuellem Asteroiden
     Rückgabe: optimaler Startpunkt, optimale Flugzeit, optimiertes DV
+    :param needed: Wichtigkeit des Materials
     :param limit: Maximal erlaubter Tank
     :param asteroid1_mas: Masse von Asteroid 1
     :param asteroid1_mat: Material von Asteroid 1
@@ -232,7 +235,7 @@ def time_optimize(asteroid1, asteroid1_mas, asteroid1_mat,
     # Variation der Flugzeit, Startpunkt fest
     ###################################################
     # Mit der Suche wird am Tag begonnen, an dem der Start-Asteroid vollständig abgebaut ist.
-    t_flug_1 = range(5, 46, 4)
+    t_flug_1 = range(2,30,2)
 
     for t in t_flug_1:
         dv_t_flug.append(get_dv(asteroid1, asteroid2, t_start, t))
@@ -262,7 +265,11 @@ def time_optimize(asteroid1, asteroid1_mas, asteroid1_mat,
     # Variation des Startpunktes bei gegebener Flugzeit
     # vor optimalem Starttag
     ###################################################
-    t_start_relativ_var = [-0.3, -0.2, -0.1, -0.05]
+    # Material wird gebraucht => Nicht früher fliegen
+    if needed:
+        t_start_relativ_var = []
+    else:
+        t_start_relativ_var = [-0.3, -0.2, -0.1, -0.05]
     t_start_var = []
     for rel in t_start_relativ_var:
         t_start_var.append(rel * t_opt)

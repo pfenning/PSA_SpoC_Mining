@@ -9,15 +9,15 @@ from from_website.submisson_helper import create_submission
 
 
 # Sätzlinge finden :)
-branch_v = find_idx_start(data, method='examples') # Anhand von festen IDs
-# branch_v = find_idx_start(data,0.001) # Anhand von anderen Methoden
-# branch_v = find_idx_start(data, method='random') # Anhand von festen IDs
-# branch_v = find_idx_start(data, method='test') # Anhand von festen IDs
+branch_start = find_idx_start(data, method='examples') # Anhand von festen IDs
+# branch_start = find_idx_start(data,0.001) # Anhand von anderen Methoden
+# branch_start = find_idx_start(data, method='random',k=15) # Anhand von festen IDs
+# branch_start = find_idx_start(data, method='test') # Anhand von festen IDs
 
 print("Sätzlinge gepflanzt :D")
 
 # Zeitbegrenzung und beta festlegen
-beta = 100
+beta = 40
 minutes = 20
 start_time = datetime.now()
 end_time = datetime.now() + timedelta(minutes=minutes)
@@ -26,13 +26,15 @@ print(datetime.now(), end_time)
 # Beam-Search-Tree erstellen
 method = ['branch']
 beendete_Branches = []
-while datetime.now() < end_time:
-    v_done, top_beta = beam_search(branch_v, beta, analysis=method, fuzzy=True)    # analysis='branch'
-    if v_done:              # Fertige Lösungen gefunden
-        beendete_Branches = np.concatenate((beendete_Branches, v_done), axis=0)
-    branch_v = top_beta
-    if len(top_beta) == 0:
-        break
+for branch_v in branch_start:
+    branch_v = [branch_v]
+    while datetime.now() < end_time:
+        v_done, top_beta = beam_search(branch_v, beta, analysis=method, fuzzy=True)    # analysis='branch'
+        if v_done:              # Fertige Lösungen gefunden
+            beendete_Branches = np.concatenate((beendete_Branches, v_done), axis=0)
+        branch_v = top_beta
+        if len(top_beta) == 0:
+            break
 
 
 # Beste beendete Pfade ausgeben

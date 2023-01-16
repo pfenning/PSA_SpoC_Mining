@@ -1,7 +1,7 @@
 import numpy as np
 import unittest
 from expand_branch_class import Seed, ExpandBranch, find_idx_start
-from SpoC_Constants import T_DAUER, dict_asteroids, data, DV_per_propellant
+from SpoC_Constants import T_DAUER, dict_asteroids, data, DV_per_propellant, get_asteroid_material
 
 
 class TestBranchClass(unittest.TestCase):
@@ -66,6 +66,26 @@ class TestBranchClass(unittest.TestCase):
 
         # Noch testen: Ob auch wirklich alle enthalten?
         # ToDo: Test, dass keine visited dabei
+
+    def test_needed(self):
+        seeds = []
+        test_ids = range(5)
+        for test_id in test_ids:
+            seeds.append(Seed(test_id))
+        for branch in seeds:
+            if get_asteroid_material(branch.asteroid_id)==1:
+                self.assertTrue(branch._current_material_is_needed(),
+                                f"Material {get_asteroid_material(branch.asteroid_id)} ist selten!")
+            else:
+                self.assertFalse(branch._current_material_is_needed(),
+                                 f"Material {get_asteroid_material(branch.asteroid_id)} ist nicht selten!")
+            branch.bestand = [1, 4, 2, 0.3]
+            if get_asteroid_material(branch.asteroid_id) in [0, 1]:
+                self.assertTrue(branch._current_material_is_needed(),
+                                f"Material {get_asteroid_material(branch.asteroid_id)} wird nicht gebraucht!")
+            else:
+                self.assertFalse(branch._current_material_is_needed(),
+                                 f"Material {get_asteroid_material(branch.asteroid_id)} wird gebraucht!")
 
     def test_get_next_possible_steps(self):
         branch = Branch(i_start=0)
