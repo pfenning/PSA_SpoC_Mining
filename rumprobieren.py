@@ -5,6 +5,17 @@ import copy
 import PSA_functions_v5 as psa
 import branch_class_v2 as bc
 
+
+
+
+# START-ASTEROID noch zusätzlich nach folgendem auswählen:
+# ^1
+
+
+
+
+
+
 T_START = pk.epoch_from_iso_string("30190302T000000")  # Start and end epochs
 T_END = pk.epoch_from_iso_string("30240302T000000")
 T_DAUER = 1827
