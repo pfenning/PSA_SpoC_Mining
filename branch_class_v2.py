@@ -3,7 +3,7 @@ import pykep as pk
 from pykep import phasing
 import copy
 from _Extra._Mathias.fuzzy_system import FuzzySystem
-import PSA_functions_v4 as psa
+import PSA_functions_v5 as psa
 
 
 
@@ -429,6 +429,7 @@ def find_idx_start(data, intervall=0.01, method='mean semimajor'):
                 start_branches:     Vektor mit branches der Start-Asteroiden
     '''
     #### Auswahl des Start-Materials. Das kann durch Verfügbarkeit bestimmt werden! Optimalerweise max. Material --> Verf-Funktion benutzen
+    start_candidates = []
     start_branches = []
     # Erstellen des Vektors der möglichen Start-Asteroiden
     if method=='mean semimajor':
@@ -436,14 +437,16 @@ def find_idx_start(data, intervall=0.01, method='mean semimajor'):
         grenze = intervall * mitte_semimajor
         for line in data:
             if (line[-1] == 3) and ((mitte_semimajor-grenze) <= line[1] < (mitte_semimajor+grenze)):
+                start_candidates.append((int(line[0])))
                 start_branches.append(Branch(int(line[0])))
     elif method == 'examples':
         start_ids = [3622]
         # 6 (0,0 aber 1!) # 2 (0,77) #8836 (0,43) # 3869 (0,0) # 9953 (0,0 ) #3622 (1,46)
         for id in start_ids:
+            start_candidates.append(id)
             start_branches.append(Branch(id))
 
-    return start_branches
+    return start_candidates, start_branches
 
 
 

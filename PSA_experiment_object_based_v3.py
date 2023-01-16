@@ -1,6 +1,6 @@
 import numpy as np
 
-import PSA_functions_v4 as psa
+import PSA_functions_v5 as psa
 import branch_class_v2 as bc
 from branch_class_v2 import Branch
 from datetime import datetime, timedelta
@@ -14,7 +14,7 @@ data = np.loadtxt("SpoC_Datensatz.txt")
 T_DAUER = 1827
 minutes = 10
 beta = 3
-branch_v = bc.find_idx_start(data, method='examples')
+start_candidates, branch_v = bc.find_idx_start(data, method='examples')
 
 # # branch_v = bc.find_idx_start(data,0.001) # Vektor mit möglichen Startasteroiden
 # starting_branch = np.argpartition(starting_score, -4)[-4:]

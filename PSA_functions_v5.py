@@ -45,7 +45,7 @@ def verfuegbarkeit(data):
     verf = find_min_material(data)
     gesamt = np.sum(mass)
     verf_norm = verf/gesamt
-    return np.array(verf_norm), 0.1*min(verf[:3])
+    return np.array(verf_norm), min(verf[:3]) # 0.1*
 #
 # def verfuegbarkeit2(mass, material):
 #     """
@@ -131,7 +131,7 @@ def clustering(knn, asteroids_kp, asteroid_1_idx, radius=4000):
     #     neighb_inds.remove(asteroid_1_idx)
     # except ValueError:
     #     pass
-    return neighb_inds
+    return neighb_inds, neighb_dis
 
 
 # ToDo: Zeitraum der Flugzeit neu definieren (z.B. auf 5-46 in 4er Schritten)
