@@ -32,7 +32,7 @@ class Seed:
     ##############################
     # Methoden und Objektattribute
     ##############################
-    def __init__(self, asteroid_id):
+    def __init__(self, asteroid_id, fuzzy=True):
         """
         Objekt zum Speichern des ersten ASteroids
         :type asteroid_id:         int
@@ -45,6 +45,7 @@ class Seed:
         self.branch_score_yet = 0.0
         self.bestand = [0.0, 0.0, 0.0, 1.0]
         self.t_opt = 0.0
+        self.fuzzy=fuzzy
 
     def __str__(self):
         return f"Startasteroid:{self.asteroid_id}"
@@ -236,14 +237,17 @@ class Seed:
                                                                       limit=sprit_bei_start)
                 # Bewertung nur durchführen, wenn Asteroid auch erreichbar
                 if (dv_min_ / DV_per_propellant) < sprit_bei_start:
-                    # Bewertung des Asteroids und des Wechsels
-                    score = SpoC.my_system.calculate_score(  # ToDo: Über Normierung des delta_v sprechen
-                        # Tank nach Flug → dv muss normiert werden
-                        t_n=(sprit_bei_start - (dv_min_/DV_per_propellant)),
-                        delta_v=(dv_min_/3000),  # Diese Normierung in Ordnung? - Dachte ganz sinnvoll
-                        bes=SpoC.norm_bestand(self.bestand, SpoC.get_asteroid_material(asteroid_2_id)), # , Branch.norm_material
-                        verf=SpoC.verf[SpoC.get_asteroid_material(asteroid_2_id)],
-                        mas=SpoC.get_asteroid_mass(asteroid_2_id))
+                    if self.fuzzy:
+                        # Bewertung des Asteroids und des Wechsels
+                        score = SpoC.my_system.calculate_score(  # ToDo: Über Normierung des delta_v sprechen
+                            # Tank nach Flug → dv muss normiert werden
+                            t_n=(sprit_bei_start - (dv_min_/DV_per_propellant)),
+                            delta_v=(dv_min_/3000),  # Diese Normierung in Ordnung? - Dachte ganz sinnvoll
+                            bes=SpoC.norm_bestand(self.bestand, SpoC.get_asteroid_material(asteroid_2_id)), # , Branch.norm_material
+                            verf=SpoC.verf[SpoC.get_asteroid_material(asteroid_2_id)],
+                            mas=SpoC.get_asteroid_mass(asteroid_2_id))
+                    else:
+                        score = 0.0
                     # Alle Daten für Schritt speichern
                     possible_steps.append(
                         {'last_t_m': t_m_opt_,
@@ -270,7 +274,7 @@ class Seed:
 #       Keine Optimierung notwendig
 # ToDo: Wird der Bestand, da als Referenz übergeben, auch bei den anderen Verändert? Wäre schlecht -> Deepcopy
 class ExpandBranch(Seed):
-    def __init__(self, origin_branch, last_t_m, dv, asteroid_id, t_arr, step_score):
+    def __init__(self, origin_branch, last_t_m, dv, asteroid_id, t_arr, step_score, fuzzy=True):
         """
         Objekt, zum Speichern des Expand-Schrittes im Beam-Search-Algorithmus.
         Speichert nur eine Referenz des zu erweiternden Branches, sowie den möglichen Expand-Schritt.
@@ -280,7 +284,7 @@ class ExpandBranch(Seed):
         :param step_score: Bewertung des Schritts zum Ziel-Asteroiden
         :return: Objekt, dass Schritt zu Ziel-Asteroiden beschreibt
         """
-        super().__init__(asteroid_id)
+        super().__init__(asteroid_id, fuzzy)
         # super(Seed).__init__(asteroid_id)
         # Ursprungspfad
         self.origin_branch = origin_branch
@@ -292,11 +296,26 @@ class ExpandBranch(Seed):
         self.mine_and_travel(dv)
         # Parameter nach Schritt
         self.t_arr = t_arr
-        self.step_score = step_score
+        if fuzzy:
+            self.step_score = step_score
+        else:
+            self.step_score = self.calc_score(dv)
 
         # Abbauzeit und Branch-Score bestimmen
         self.t_opt = SpoC.get_t_opt(self.asteroid_id)
         self.branch_score_yet = self.calc_branch_score()
+
+    def fh(self):
+        return min(SpoC.get_asteroid_mass(self.asteroid_id), 1.0-self.bestand[-1])
+
+    def calc_score(self, dv):
+        # print("Ich wurde verwendet :D!")
+        tof = self.t_arr - (self.last_t_m + self.origin_branch.t_arr)
+        if SpoC.get_asteroid_material(self.asteroid_id) == 3:
+            return -(tof + 30*self.fh())/(self.fh()-dv)
+        else:
+            return -(tof + self.t_opt + 80*dv)/SpoC.get_asteroid_mass(self.asteroid_id)
+
 
     def __str__(self):
         print(self.origin_branch)
@@ -429,7 +448,7 @@ class ExpandBranch(Seed):
 ######################################################
 # Funktionen zur Ausführung von Beam-Search und Start
 ######################################################
-def beam_search(branch_v, beta, analysis="step", method="Fuzzy"):
+def beam_search(branch_v, beta, analysis="step", fuzzy = True):
     """
     Übergeben wird ein Vektor, der die beta-Besten Branches beinhaltet aus dem vorherigen Iterationsschritt.
     Führt ausgehend davon die neuen möglichen Schritte aus und gibt davon die beta besten zurück.
@@ -462,7 +481,7 @@ def beam_search(branch_v, beta, analysis="step", method="Fuzzy"):
                                                    dv=step['dv'],
                                                    asteroid_id=step['asteroid_2_id'],
                                                    t_arr=step['t_arr'],
-                                                   step_score=step['step_score']))
+                                                   step_score=step['step_score'], fuzzy=fuzzy))
                 # ToDo: Methodenauswahl für Score-Berechnung:
                 #  hier soll übergeben werden, welche Methode ausgewählt wird
                 if analysis == 'branch':
@@ -489,7 +508,7 @@ def beam_search(branch_v, beta, analysis="step", method="Fuzzy"):
 
     return v_done, top_beta
 
-def find_idx_start(data, intervall=0.01, method='mean semimajor'):
+def find_idx_start(data, intervall=0.01, method='mean semimajor', fuzzy=True):
     '''
         Hier wird aus dem Datensatz ein Vektor mit möglichen Startasteroiden gebildet.
         Return:
@@ -504,16 +523,16 @@ def find_idx_start(data, intervall=0.01, method='mean semimajor'):
         grenze = intervall * mitte_semimajor
         for line in data:
             if (line[-1] == 3) and ((mitte_semimajor-grenze) <= line[1] < (mitte_semimajor+grenze)):
-                start_branches.append(Seed(int(line[0])))
+                start_branches.append(Seed(int(line[0]), fuzzy=fuzzy))
     elif method == 'examples':
-        start_ids = [3622, 5384, 2257]
+        start_ids = [3622, 5384, 2257, 925]
         # 3622 -> 2.38, 5384 -> 4.23, 2257 -> 4.4
         for ID in start_ids:
             start_branches.append(Seed(ID))
     elif method == 'random':
         start_ids = random.choices(range(10000),k=50)
         for ID in start_ids:
-            start_branches.append(Seed(ID))
+            start_branches.append(Seed(ID,fuzzy=fuzzy))
     elif method == 'test':
         import pykep as pk
         data = np.loadtxt("SpoC_Datensatz.txt")
@@ -560,7 +579,7 @@ def find_idx_start(data, intervall=0.01, method='mean semimajor'):
         # 1) den ZWEITEN Asteroiden finden, aus minimaler Verfügbarkeit und maximaler Masse
         ast_2_idx_v = []
         min_mat_mass = []
-        min_mat = SpoC.find_min_material(data)
+        min_mat = find_min_material(data)
         for i in range(0, len(data)):
             if data[i, -1] == min_mat:
                 min_mat_mass.append(data[i, -2])
@@ -574,7 +593,7 @@ def find_idx_start(data, intervall=0.01, method='mean semimajor'):
         # 2) Cluster um zweiten Asteroiden bilden, ERSTEN Asteroiden auswählen mit minimalem Abstand!!
         knn = phasing.knn(asteroids_kp, t_opt, 'orbital',
                           T=15)  # wie wähle ich t_arr und t_opt?  # visited[-1]['t_arr'] + t_opt
-        neighb_ind, neighb_dis = SpoC.clustering(knn, asteroids_kp, asteroid_2_idx)
+        neighb_ind = SpoC.clustering(knn, asteroids_kp, asteroid_2_idx)
         # Den zweiten Ast.-Idx rausschmeißen
         if asteroid_2_idx in neighb_ind: neighb_ind.pop(neighb_ind.index(asteroid_2_idx))
 
@@ -621,15 +640,33 @@ def find_idx_start(data, intervall=0.01, method='mean semimajor'):
         dv = dv_min_
 
         # 4) Branch erstellen
-        asteroid1 = Seed(asteroid_1_idx)
+        asteroid1 = Seed(asteroid_1_idx,fuzzy=fuzzy)
         start_branches.append(
             ExpandBranch(asteroid1,
                          asteroid_id=asteroid_2_idx,
                          last_t_m=0.0, dv=dv_min_,
                          t_arr=t_m_opt_ + t_flug_min_dv_,
-                         step_score=0.0))
+                         step_score=0.0,fuzzy=fuzzy))
         print(start_branches[0])
 
 
     return start_branches
 
+def find_min_material(data):
+    """
+    Berechnet die ursprüngliche Verfügbarkeit der Materialien
+    """
+    material = data[:,-1]
+    mass = data[:,-2]
+    verf = [0, 0, 0, 0]
+    for i in range(0,len(material)):
+        if material[i] == 0:
+            verf[0] += mass[i]
+        elif material[i] == 1:
+            verf[1] += mass[i]
+        elif material[i] == 2:
+            verf[2] += mass[i]
+        elif material[i] == 3:
+            verf[3] += mass[i]
+    min_mat = np.argmin(verf)
+    return min_mat

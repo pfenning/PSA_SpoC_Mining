@@ -25,6 +25,10 @@ class TestFuzzy(unittest.TestCase):
         for i, a in array:
             self.assertEqual(i, _get_index(a,vector))
 
+    def test_compute(self):
+        my_system = FuzzySystem(0.03, 0.4, resolution=0.01, load_map=True)
+
+
     def test_quantization_for_map(self):
         my_system = FuzzySystem(0.03, 0.4, resolution=0.01,load_map=True)
         t_n_list = random.choices(np.linspace(0,1,74), k=50)
