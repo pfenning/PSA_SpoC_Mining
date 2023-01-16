@@ -14,6 +14,7 @@ MS = 8.98266512e-2 * SM  # Mass of the Trappist-1 star
 MU_TRAPPIST = G * MS  # Mu of the Trappist-1 star
 DV_per_propellant = 10000  # DV per propellant [m/s]
 TIME_TO_MINE_FULLY = 30  # Maximum time to fully mine an asteroid
+t_opt = 0.0
 
 data = np.loadtxt("SpoC_Datensatz.txt")
 asteroids_kp = []
@@ -36,9 +37,7 @@ for line in data:
         )
     asteroids_kp.append(p)
 
-print(asteroids_kp)
-
-entire_ids = asteroids_kp[:,0]
+# entire_ids = asteroids_kp[:,0]
 
 '''
 Vorgabe des ersten und zweiten Asteroiden!!
@@ -57,23 +56,61 @@ for i in range(0,len(data)):
 second_asteroid = np.argpartition(min_mat_mass, -1)[-1:] # Vektor mit Index
 asteroid_2_idx = int(ast_2_idx_v[second_asteroid[0]])
 asteroid_2_masse = min_mat_mass[second_asteroid[0]]
-# print(asteroid_2_idx, asteroid_2_masse)
-entire_ids.pop(asteroid_2_idx)
+print(asteroid_2_idx, asteroid_2_masse)
+# entire_ids.pop(asteroid_2_idx)
 
 # 2) Cluster um zweiten Asteroiden bilden, ERSTEN Asteroiden auswählen mit minimalem Abstand!! 
-#       ==> Zeitoptimierung für Auswahl egal, aber: beeinflusst man dadurch die Zeitoptimierung?
-#       find_nearest_neighbors von ast_2 ausgehend & dann den Ast. mit der kleinesten Distanz auswählen
+knn = phasing.knn(asteroids_kp, t_opt, 'orbital', T=15) # wie wähle ich t_arr und t_opt?  # visited[-1]['t_arr'] + t_opt 
+neighb_ind, neighb_dis = psa.clustering(knn, asteroids_kp, asteroid_2_idx)
+# Den zweiten Ast.-Idx rausschmeißen
+if asteroid_2_idx in neighb_ind: neighb_ind.pop(neighb_ind.index(asteroid_2_idx))
+
+# print(neighb_ind) # die neighb_dis ist immer "None" !!!!! DAS KÖNNTE AUSWAHL VERBESSERN
+
+possible_steps = []
+for mat in neighb_ind:
+    # print(mat)
+    # print(data[mat,-1])
+    if data[mat,-1] == 3: possible_steps.append(mat)
+
+# print(possible_steps)
+
+# 3) FALSCH HERUM BRANCH LAUFEN LASSEN
+infos_poss_steps = []
+DVs = []
+for ast_1 in possible_steps:
+    asteroid_1_kp = asteroids_kp[ast_1]
+    asteroid_1_mas = data[ast_1,-2]
+    asteroid_1_mat = data[ast_1,-1]
+    asteroid_2_kp = asteroids_kp[asteroid_2_idx]
+    t_m_opt_, t_flug_min_dv_, dv_min_ = psa.time_optimize(asteroid_1_kp,
+                                                                      asteroid_1_mas,
+                                                                      asteroid_1_mat,
+                                                                      asteroid_2_kp,
+                                                                      t_arr=0.0,
+                                                                      t_opt=t_opt,
+                                                                      limit=1.0)
+    infos_poss_steps.append([t_m_opt_, t_flug_min_dv_, dv_min_])
+    DVs.append(dv_min_)
+
+idx_min_dv = DVs.index(min(DVs))
+asteroid_1_idx = possible_steps[idx_min_dv]
+
+t_m_opt_, t_flug_min_dv_, dv_min_ = infos_poss_steps[idx_min_dv][0], infos_poss_steps[idx_min_dv][1], infos_poss_steps[idx_min_dv][2]
+
+t_m = t_m_opt_
+step = {'id': asteroid_2_idx,
+        't_m': 0.0,
+        't_arr': t_m_opt_+t_flug_min_dv_,
+        'score last step': 0.0, #                                             score??
+        'branch score yet': 0.0}
+dv = dv_min_
 
 
-# candidates bekomme ich aus branch_class: find_start_idx --> macht doch keinen Sinn, weil diese evtl. viel zu weit weg vom zweiten Ast sind
-# candidates = [for id in data[:,0]] 
-# knn = phasing.knn(candidates, t_opt, 'orbital', T=30) # wie wähle ich t_arr und t_opt?  # visited[-1]['t_arr'] + t_opt 
-
-# neighb_ind, neighb_dis = psa.clustering(knn, asteroids_kp, asteroid_2_idx)
-
-
-# 3) Objekt Branch erstellen, nur mit zwei vorgegebenen Asteroiden: Erster und zweiter!!
+# 4) Branch erstellen
+asteroid1 = bc.Branch(asteroid_1_idx)
+asteroid1.new_step(t_m, step, dv)
+asteroid1.print_last_step()
 
 
 ## Kann man bestimmen, dass dieser Asteroid vollständig abgebaut wird und danach erst die Zeitoptimierung durchgeführt wird?
-
