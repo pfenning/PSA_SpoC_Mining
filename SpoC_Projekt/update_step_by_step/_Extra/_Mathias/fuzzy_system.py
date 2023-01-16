@@ -36,8 +36,13 @@ def _item_count(resolution, lower=0, upper=1):
     return int((upper-lower)/resolution)+1
 
 
-def _transform(x, x_min=0, x_max=1):
-    return (x-x_min)/(x_max-x_min)
+def _transform(x, x_min=0.0, x_max=1.0):
+    if x < x_min:
+        return x_min
+    elif x > x_max:
+        return x_max
+    else:
+        return (x-x_min)/(x_max-x_min)
 
 def _get_index(num, vector):
     return np.argwhere(num == vector)[0][0]
@@ -45,7 +50,7 @@ def _get_index(num, vector):
 
 
 class FuzzySystem:
-    def __init__(self, verf_min, verf_max, resolution=0.01, load_map=False):
+    def __init__(self, verf_min, verf_max, resolution=0.01, load_map=False, sprit_max=0.37):
         """
         Erzeugt das Fuzzy-System zur Bewertung von Asteroidenwechseln
         verf_min:
@@ -86,9 +91,10 @@ class FuzzySystem:
         self.out.automf(7)
         # Subsystem 1 - Sprit
         self.t_n.automf(3)
-        self.delt['lo'] = fuzz.trapmf(self.delt.universe, [0, 0, 0.1, 0.23])
-        self.delt['md'] = fuzz.trimf(self.delt.universe, [0.1, 0.23, 0.37])
-        self.delt['hi'] = fuzz.trapmf(self.delt.universe, [0.23, 0.37, 1, 1])
+        # self.delt['lo'] = fuzz.trapmf(self.delt.universe, [0, 0, 0.1, 0.23])
+        # self.delt['md'] = fuzz.trimf(self.delt.universe, [0.1, 0.23, 0.37])
+        # self.delt['hi'] = fuzz.trapmf(self.delt.universe, [0.23, 0.37, 1, 1])
+        self.delt.automf(3, names=['lo', 'md', 'hi'])   # Test mit Skalierung - Siehe Boundaries
         self.out_sub.automf(7)
         # Subsystem 2 - Material
         self.verf['lo'] = fuzz.trimf(self.verf.universe, [0, 0, 1])
@@ -167,7 +173,7 @@ class FuzzySystem:
         self.score = ctrl.ControlSystemSimulation(self.space_ctrl, cache=False)     # ToDo: Cache -> schöner lösen
 
         # Boundaries
-        # ToDo: Falls Varianz zu gering ist, Grenzen auf 0 und 1 setzen,
+        # Falls Varianz zu gering ist, Grenzen auf 0 und 1 setzen,
         #  sonst Materialverfügbarkeit ungleich behandelt, obwohl sie etwa gleich
         if verf_max/verf_min < 2:
             self.verf_min = 0
@@ -175,6 +181,8 @@ class FuzzySystem:
         else:
             self.verf_min = verf_min
             self.verf_max = verf_max
+        # Sprit Grenzen (Darüber hinausgehendes ist erlaubt)
+        self.sprit_max = sprit_max
 
         # Auflösung
         self.resolution = resolution
@@ -206,7 +214,7 @@ class FuzzySystem:
         if load_map:
             self.load_maps_from_npy()
 
-    def calculate_score(self, t_n, delta_v, bes, verf, mas):
+    def calculate_score(self, t_n, delta_v, bes, verf, mas, return_all=False):
         """
         Bewertung bestimmen für gegebenen Asteroidenwechsel
         :param t_n: Tank nach dem Wechsel
@@ -214,10 +222,12 @@ class FuzzySystem:
         :param bes: Bestand des Materials vom Zielasteroiden
         :param verf: Verfügbarkeit des Materials vom Zielasteroid
         :param mas: Masse des Zielasteroiden
+        :param return_all: Rückgabe der Zwischenergebnisse
         :return: Bewertung des Asteroidenwechsels
         """
-        # Skalierung der Verfügbarkeit
+        # Skalierung der Verfügbarkeit & des Spritverbrauchs
         verf = _transform(verf, self.verf_min, self.verf_max)
+        delta_v = _transform(delta_v, x_max=self.sprit_max)
 
         # Subsystem 1 - Sprit
         self.sub_sys.input['Tank nach Wechsel'] = t_n
@@ -235,8 +245,10 @@ class FuzzySystem:
         self.score.input['Güte vom Spritverbrauch'] = sprit
         self.score.input['Relevanz des Materials'] = rele
         self.score.compute()
-        
-        return self.score.output['Güte des Asteroids']
+        if return_all:
+            return sprit, rele, self.score.output['Güte des Asteroids']
+        else:
+            return self.score.output['Güte des Asteroids']
 
     def creat_score_map(self):
         """
@@ -294,7 +306,7 @@ class FuzzySystem:
         ############
         self.save_maps_to_npy()
 
-    def calculate_score_by_map(self, t_n, delta_v, bes, verf, mas):
+    def calculate_score_by_map(self, t_n, delta_v, bes, verf, mas, return_all=False):
         """
         Bewertung mittels Kennfeld bestimmen für gegebenen Asteroidenwechsel
         :param t_n: Tank nach dem Wechsel
@@ -302,10 +314,12 @@ class FuzzySystem:
         :param bes: Bestand des Materials vom Zielasteroiden
         :param verf: Verfügbarkeit des Materials vom Zielasteroid
         :param mas: Masse des Zielasteroiden
+        :param return_all: Rückgabe der Zwischenergebnisse
         :return: Bewertung des Asteroidenwechsels
         """
-        # Skalierung der Verfügbarkeit
+        # Skalierung der Verfügbarkeit und Sprit-Verbrauch
         verf = _transform(verf, self.verf_min, self.verf_max)
+        delta_v = _transform(delta_v, x_max=self.sprit_max)
 
         # Inputs an Auflösung anpassen
         if self.resolution == 0.01:
@@ -314,7 +328,11 @@ class FuzzySystem:
             # Subsystem 2 - Material
             rele = self.out_sub_1_map[int(round(bes,2)*100), int(round(verf,2)*100)]
             # Hauptsystem
-            return  self.score_map[int(round(mas,2)*100), int(round(sprit,2)*100), int(round(rele,2)*100)]
+            if return_all:
+                return sprit, rele, \
+                    self.score_map[int(round(mas,2)*100), int(round(sprit,2)*100), int(round(rele,2)*100)]
+            else:
+                return self.score_map[int(round(mas,2)*100), int(round(sprit,2)*100), int(round(rele,2)*100)]
         else:
             t_n = _fit_to_resolution(t_n, self.resolution)
             delta_v = _fit_to_resolution(delta_v, self.resolution)
@@ -335,7 +353,11 @@ class FuzzySystem:
             ind_sprit = np.argwhere(self.sprit_map == sprit)[0][0]
             ind_rele = np.argwhere(self.rele_map == rele)[0][0]
 
-            return self.score_map[ind_mas, ind_sprit, ind_rele]
+            if return_all:
+                return sprit, rele, self.score_map[ind_mas, ind_sprit, ind_rele]
+            else:
+                return self.score_map[ind_mas, ind_sprit, ind_rele]
+
 
 
 

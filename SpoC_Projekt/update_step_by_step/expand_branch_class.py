@@ -506,8 +506,8 @@ def find_idx_start(data, intervall=0.01, method='mean semimajor'):
             if (line[-1] == 3) and ((mitte_semimajor-grenze) <= line[1] < (mitte_semimajor+grenze)):
                 start_branches.append(Seed(int(line[0])))
     elif method == 'examples':
-        start_ids = [3622, 5384]
-        # 3622 -> 2.38, 5384 -> 4.23
+        start_ids = [3622, 5384, 2257]
+        # 3622 -> 2.38, 5384 -> 4.23, 2257 -> 4.4
         for ID in start_ids:
             start_branches.append(Seed(ID))
     elif method == 'random':

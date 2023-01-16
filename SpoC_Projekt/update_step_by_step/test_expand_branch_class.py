@@ -127,7 +127,6 @@ class TestBranchClass(unittest.TestCase):
     def test_find_best(self):
         # Einfacher Test, ob bester Branch ausgewählt wird
         # ToDo: Scheint aber beim richtigen Durchlauf nicht immer der Fall zu sein
-        # ToDo:
         branch = []
         branch.append(Seed(0))
         my_fantasy_trip = [

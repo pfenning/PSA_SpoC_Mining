@@ -97,7 +97,7 @@ def verfuegbarkeit():
 verf, norm_material = verfuegbarkeit()
 # print(f"Verfügbarkeit der Materialien:{verf}")
 # print(f"Bestmögliches Gütemass:{norm_material}")
-my_system = FuzzySystem(verf.min(), verf.max(), resolution=0.02)
+my_system = FuzzySystem(verf.min(), verf.max(), resolution=0.01)
 
 
 def get_t_opt(asteroid_id):
