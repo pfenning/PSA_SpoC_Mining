@@ -17,7 +17,7 @@ branch_v = find_idx_start(data, method='examples') # Anhand von festen IDs
 print("Sätzlinge gepflanzt :D")
 
 # Zeitbegrenzung und beta festlegen
-beta = 40
+beta = 100
 minutes = 20
 start_time = datetime.now()
 end_time = datetime.now() + timedelta(minutes=minutes)

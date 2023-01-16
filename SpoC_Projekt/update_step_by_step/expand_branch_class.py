@@ -26,9 +26,6 @@ def calc_candidate_ids(branch, materials):
 
 
 class Seed:
-    # Konstanten initialisieren
-    if dict_asteroids == {}:
-        SpoC.initialize()
     ##############################
     # Methoden und Objektattribute
     ##############################
@@ -108,7 +105,7 @@ class Seed:
         # Materialtypen nach Bestand sortieren (ohne Sprit)
         sorted_material_types, sorted_materials = self._sort_material_types()
         # Fallunterscheidung
-        if self.t_arr > T_DAUER-100:   # Letzer Asteroid
+        if self.t_arr > T_DAUER-70:   # letzer Asteroid
             cluster_iteration = [[sorted_material_types[0]], [sorted_material_types[1], sorted_material_types[2], 3]]
         else:
             if sprit_bei_start < 0.3:       # Tanken fast leer
@@ -208,7 +205,7 @@ class Seed:
         :return: Liste von Dictionaries mit der Form {'last_t_m', 'dv', 'asteroid_2_id', 't_arr', 'step_score'}
         """
         # Prüfen, ob noch ein Schritt notwendig
-        if T_DAUER-30 < self.t_arr:  # ToDo: Warum klappt es nicht mit -40?
+        if T_DAUER-45 < self.t_arr:
             print("Letzter Asteroid")
             # self.visited[-1]['t_m'] = Branch.T_DAUER-self.visited[-1]['t_arr']
             raise StopIteration
@@ -382,7 +379,7 @@ class ExpandBranch(Seed):
                    SpoC.get_asteroid_mass(self.asteroid_id),
                    SpoC.get_asteroid_material(self.asteroid_id),
                    T_DAUER - self.t_arr)
-        return bestand
+        return -min(bestand[:3])
 
 
     def get_result_vectors(self):
@@ -407,7 +404,10 @@ class ExpandBranch(Seed):
         """
         res_t_m, res_a, res_t_arr =  self.get_result_vectors()
         # Letzte Abbauzeit bestimmen
-        res_t_m.append(T_DAUER - res_t_arr[-1])
+        res_t_m.append(T_DAUER - res_t_arr[-1] if T_DAUER - res_t_arr[-1] > 0 else 2.0)
+
+        assert res_t_m[-1] > 0, "Letzte Abbauzeit wurde kleiner 0 gewählt!"
+
         if res_t_m[-1] > 60.0:
             print("Auf letztem Asteroid gestrandet")
 
@@ -433,7 +433,8 @@ class ExpandBranch(Seed):
         print("Zusammenfassung des Pfads:")
         print(f"Startasteroid:{self.get_start_asteroid()},"
               f"Mittlerer Step-Score:{self.get_branch_score()},"
-              f"Gütemaß:{self.get_guetemass()}")
+              f"Gütemaß:{self.get_guetemass()},\n"
+              f"Bestand:{self.bestand}")
 
     def print(self):
         """
