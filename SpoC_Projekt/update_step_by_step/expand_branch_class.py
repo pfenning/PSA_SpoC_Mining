@@ -249,8 +249,8 @@ class Seed:
             # Iteration durch Nachbar. Hinzufügen zu Menge, wenn erreichbar
             for asteroid_2_id in neighbour_ids:
                 # Prüfen, dass Clusterbildung korrekt verlaufen ist
-                assert SpoC.get_asteroid_material(asteroid_2_id) in materials, f"Asteroid 2 besitzt ein Material, das nicht gesucht wird"
-
+                assert SpoC.get_asteroid_material(asteroid_2_id) in materials, \
+                    f"Asteroid 2 besitzt ein Material, das nicht gesucht wird"
                 t_m_opt_, t_flug_min_dv_, dv_min_ = SpoC.time_optimize(SpoC.get_asteroid(self.asteroid_id),
                                                                        SpoC.get_asteroid_mass(self.asteroid_id),
                                                                        SpoC.get_asteroid_material(self.asteroid_id),
@@ -478,7 +478,7 @@ class ExpandBranch(Seed):
 ######################################################
 # Funktionen zur Ausführung von Beam-Search und Start
 ######################################################
-def beam_search(branch_v, beta, analysis="step", fuzzy = True):
+def beam_search(branch_v, beta, analysis="step", fuzzy=True):
     """
     Übergeben wird ein Vektor, der die beta-Besten Branches beinhaltet aus dem vorherigen Iterationsschritt.
     Führt ausgehend davon die neuen möglichen Schritte aus und gibt davon die beta besten zurück.
@@ -555,7 +555,7 @@ def find_idx_start(data, intervall=0.01, method='mean semimajor', fuzzy=True, k=
             if (line[-1] == 3) and ((mitte_semimajor-grenze) <= line[1] < (mitte_semimajor+grenze)):
                 start_branches.append(Seed(int(line[0]), fuzzy=fuzzy))
     elif method == 'examples':
-        start_ids = [3622] # [3622, 5384, 2257, 925]
+        start_ids = [2257] # [3622, 5384, 2257, 925]
         # 3622 -> 2.38, 5384 -> 4.23, 2257 -> 4.4
         for ID in start_ids:
             start_branches.append(Seed(ID))

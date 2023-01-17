@@ -98,10 +98,10 @@ class TestBranchClass(unittest.TestCase):
     def test_branch_creation(self):
         branch_v = find_idx_start(data=data,
                                   method='examples')
-        expanded = []
-        score = []
         branch = branch_v[0]
         for i in range(50):
+            score = []
+            expanded = []
             try:
                 possible_steps = branch.get_next_possible_steps()
             except StopIteration:
@@ -111,14 +111,14 @@ class TestBranchClass(unittest.TestCase):
                     print("Keine weiteren Schritte gefunden")
                     break
                 for step in possible_steps:
-                    expanded.append((ExpandBranch(origin_branch=branch,
+                    expanded.append(ExpandBranch(origin_branch=branch,
                                                   last_t_m=step['last_t_m'],
                                                   dv=step['dv'],
                                                   asteroid_id=step['asteroid_2_id'],
                                                   t_arr=step['t_arr'],
-                                                  step_score=step['step_score'])))
+                                                  step_score=step['step_score']))
                     score.append(expanded[-1].step_score)
-                branch = expanded[np.argmin(score)]
+                branch = expanded[np.argmax(score)]
                 # print(new_step.get_step_count())
         print(branch)
 
