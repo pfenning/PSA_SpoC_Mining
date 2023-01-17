@@ -98,7 +98,7 @@ class Seed:
             sorted_materials.append(x)
         return sorted_material_types, sorted_materials
 
-    def _get_cluster_case(self, sprit_bei_start, bevorzugen=2):
+    def _get_cluster_case(self, sprit_bei_start, bevorzugen=1.5):
         """
         Bestimmt den Cluster-Case
         :param: sprit_bei_start: Füllstand des Tanks beim Start zum neuen Asteroiden
