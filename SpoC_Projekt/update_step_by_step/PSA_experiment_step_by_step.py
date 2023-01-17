@@ -9,15 +9,15 @@ from from_website.submisson_helper import create_submission
 
 
 # Sätzlinge finden :)
-branch_start = find_idx_start(data, method='examples') # Anhand von festen IDs
+# branch_start = find_idx_start(data, method='examples') # Anhand von festen IDs
 # branch_start = find_idx_start(data,0.001) # Anhand von anderen Methoden
-# branch_start = find_idx_start(data, method='random',k=15) # Anhand von festen IDs
+branch_start = find_idx_start(data, method='random',k=30) # Anhand von festen IDs
 # branch_start = find_idx_start(data, method='test') # Anhand von festen IDs
 
 print("Sätzlinge gepflanzt :D")
 
 # Zeitbegrenzung und beta festlegen
-beta = 40
+beta = 80
 minutes = 20
 start_time = datetime.now()
 end_time = datetime.now() + timedelta(minutes=minutes)

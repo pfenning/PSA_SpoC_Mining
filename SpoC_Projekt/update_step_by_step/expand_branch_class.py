@@ -202,17 +202,17 @@ class Seed:
             return self.bestand[-1]
 
     def _current_material_is_needed(self):
-        return False
-        # current_material = SpoC.get_asteroid_material(self.asteroid_id)
-        # # Sprit Asteroid
-        # if current_material == 3:
-        #     return False # Wird in Time-Optimize gelöst
-        # # Material Asteroid
-        # rar_material = self._sort_material_types(verf)[0][0]
-        # if current_material == rar_material or (1.5*self.bestand[current_material] < max(self.bestand[:3])):
-        #     return True
-        # else:
-        #     return False
+        # return False
+        current_material = SpoC.get_asteroid_material(self.asteroid_id)
+        # Sprit Asteroid
+        if current_material == 3:
+            return False # Wird in Time-Optimize gelöst
+        # Material Asteroid
+        rar_material = self._sort_material_types(verf)[0][0]
+        if current_material == rar_material or (1.5*self.bestand[current_material] < max(self.bestand[:3])):
+            return True
+        else:
+            return False
 
     def get_next_possible_steps(self):
         """
@@ -238,8 +238,14 @@ class Seed:
         cluster_iteration = self._get_cluster_case(sprit_bei_start)
         # Durch Fälle iterieren, bis possible_steps nicht leer & Massen > 0.5, oder Cluster_Iteration fertig
         for materials in cluster_iteration:
+            if len(materials)==1:
+                t_flug = 20
+                radius = 4000
+            else:
+                t_flug = 15
+                radius = 3000
             # Cluster bilden für die Materialien aus materials
-            neighbour_ids = self._get_cluster_by_material(materials)
+            neighbour_ids = self._get_cluster_by_material(materials, radius, t_flug)
             # Iteration durch Nachbar. Hinzufügen zu Menge, wenn erreichbar
             for asteroid_2_id in neighbour_ids:
                 # Prüfen, dass Clusterbildung korrekt verlaufen ist
@@ -320,7 +326,9 @@ class ExpandBranch(Seed):
             self.step_score = self.calc_score(dv)
 
         # Abbauzeit und Branch-Score bestimmen
-        self.t_opt = SpoC.get_t_opt(self.asteroid_id)
+        self.t_opt = SpoC.get_t_opt(self.asteroid_id,
+                                    prop_needed=(1.0 - self.bestand[3] if SpoC.get_asteroid_material(asteroid_id)==3
+                                                 else None))
         self.branch_score_yet = self.calc_branch_score()
 
     def fh(self):

@@ -27,6 +27,16 @@ class TestFunctions(unittest.TestCase):
         # Test, ob Spritverbrauch richtig berechnet wird
         pass
 
+    def test_get_t_opt(self):
+        # Kein Tank
+        self.assertAlmostEqual(SpoC.get_t_opt(asteroid_id=0), 9.218574858087470458e-01*TIME_TO_MINE_FULLY, 3)
+        # Tank Asteroid, leerer Tank
+        self.assertAlmostEqual(SpoC.get_t_opt(asteroid_id=1, prop_needed=1.0),
+                               6.581097263312279955e-01 * TIME_TO_MINE_FULLY, 3)
+        # Tank Asteroid, voller Tank
+        self.assertAlmostEqual(SpoC.get_t_opt(asteroid_id=1, prop_needed=0.3),
+                               0.3 * TIME_TO_MINE_FULLY, 3)
+
     def test_time_optimize(self):
         asteroid1_id = 8836
         asteroid2_id = 3774
@@ -52,7 +62,7 @@ class TestFunctions(unittest.TestCase):
         timer1 = time.perf_counter_ns()
         candidates = [SpoC.get_asteroid(asteroid_id) for asteroid_id in range(5,9985)]
         knn = phasing.knn(candidates, 0, 'orbital', T=30)
-        _, neighb_idx, _ = knn.find_neighbours(SpoC.get_asteroid(self.asteroid_id)
+        _, neighb_idx, _ = knn.find_neighbours(SpoC.get_asteroid(self.asteroid_id))
         timer2 = time.perf_counter_ns()
         print(f"Zeit bei gesamter Betrachtung:{timer2 - timer1}")
 

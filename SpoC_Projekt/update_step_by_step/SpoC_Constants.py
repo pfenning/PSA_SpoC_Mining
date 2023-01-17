@@ -100,13 +100,19 @@ verf, norm_material = verfuegbarkeit()
 my_system = FuzzySystem(verf.min(), verf.max(), resolution=0.01)
 
 
-def get_t_opt(asteroid_id):
+def get_t_opt(asteroid_id, prop_needed=None):
     """
-    Bestimmt die Abbauzeit, um die gesamte Asteroidenmasse abzubauen
+    Bestimmt die Abbauzeit, um die gesamte Asteroidenmasse abzubauen.
+    Für Tank-Asteroiden wird die Zeit bestimmt, die benötigt wird, um Tank abzubauen, falls diese geringer ist
+    als die Standard-Abbauzeit
+    :param prop_needed: fehlender Treibstoff
     :param asteroid_id: abzubauender Asteroiden
     :return: Abbauzeit
     """
-    return dict_asteroids[asteroid_id][-2]*TIME_TO_MINE_FULLY
+    if prop_needed is None or get_asteroid_mass(asteroid_id) < prop_needed:
+        return get_asteroid_mass(asteroid_id)*TIME_TO_MINE_FULLY
+    else:
+        return prop_needed*TIME_TO_MINE_FULLY
 
 def get_asteroid(asteroid_id):
     """

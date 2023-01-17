@@ -1,7 +1,7 @@
 import numpy as np
 import unittest
 from expand_branch_class import Seed, ExpandBranch, find_idx_start
-from SpoC_Constants import T_DAUER, dict_asteroids, data, DV_per_propellant, get_asteroid_material
+from SpoC_Constants import T_DAUER, dict_asteroids, data, DV_per_propellant, get_asteroid_material,TIME_TO_MINE_FULLY
 
 
 class TestBranchClass(unittest.TestCase):
@@ -117,7 +117,7 @@ class TestBranchClass(unittest.TestCase):
                                                   asteroid_id=step['asteroid_2_id'],
                                                   t_arr=step['t_arr'],
                                                   step_score=step['step_score'])))
-                    score.append(expanded[-1].get_score())
+                    score.append(expanded[-1].step_score)
                 branch = expanded[np.argmin(score)]
                 # print(new_step.get_step_count())
         print(branch)
@@ -134,7 +134,19 @@ class TestBranchClass(unittest.TestCase):
         print(branch[-1])
         print(branch[-1].get_result())
 
-
+    def test_t_opt_propellant(self):
+        branch = Seed(0)
+        # Tank-Asteroid, voller Tank
+        expand = ExpandBranch(dv=3000, origin_branch=branch, last_t_m=0.0, asteroid_id=1, t_arr=30,step_score=0.1)
+        self.assertAlmostEqual(expand.t_opt, 0.3*TIME_TO_MINE_FULLY,
+                               2, f"Erwartete optimale Abbauzeit:{9}, Tatsächlich:{expand.t_opt}")
+        # Tank-Asteroid, Leerer Tank
+        expand2 = ExpandBranch(dv=9000, origin_branch=branch, asteroid_id=1, last_t_m=10, t_arr=60, step_score=0.1)
+        self.assertAlmostEqual(expand2.t_opt, 6.581097263312279955e-01*TIME_TO_MINE_FULLY,
+                               2, f"Erwartete optimale Abbauzeit:{9.963}, Tatsächlich:{expand2.t_opt}")
+        expand3 = ExpandBranch(dv=4000, origin_branch=branch, asteroid_id=2, last_t_m=10, t_arr=90, step_score=0.1)
+        self.assertAlmostEqual(expand3.t_opt, 9.647825584014467770e-01*TIME_TO_MINE_FULLY,
+                               2, f"Erwartete optimale Abbauzeit:{28.943}, Tatsächlich:{expand3.t_opt}")
 
     def test_find_idx_start(self):
         branch_v = find_idx_start(data=data,
