@@ -31,7 +31,7 @@ class TestBranchClass(unittest.TestCase):
         # Mission fast beendet
         self._test_iteration(expected_iteration=[[1], [0, 2, 3]],
                              bestand=[1, 0, 2, 0.3],
-                             t_arr=T_DAUER - 80,
+                             t_arr=T_DAUER - 40,
                              sprit_bei_start=0.1)
         # Sprit fast leer
         self._test_iteration(expected_iteration=[[3]],
@@ -39,7 +39,7 @@ class TestBranchClass(unittest.TestCase):
                              t_arr=200,
                              sprit_bei_start=0.1)
         # ein Rohstoff wenig, Rest viel
-        self._test_iteration(expected_iteration=[[1], [0, 2, 3]],
+        self._test_iteration(expected_iteration=[[1], [0, 2], [3]],
                              bestand=[3, 0.5, 3, 0.5],
                              t_arr=200,
                              sprit_bei_start=0.5)

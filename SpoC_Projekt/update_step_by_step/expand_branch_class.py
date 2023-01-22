@@ -98,7 +98,7 @@ class Seed:
             sorted_materials.append(x)
         return sorted_material_types, sorted_materials
 
-    def _get_cluster_case(self, sprit_bei_start, bevorzugen=1.5):
+    def _get_cluster_case(self, sprit_bei_start, bevorzugen=1.7):
         """
         Bestimmt den Cluster-Case
         :param: sprit_bei_start: Füllstand des Tanks beim Start zum neuen Asteroiden
@@ -107,8 +107,10 @@ class Seed:
         # Materialtypen nach Bestand sortieren (ohne Sprit)
         sorted_material_types, sorted_materials = self._sort_material_types()
         # Fallunterscheidung
-        if self.t_arr > T_DAUER-60:   # letzer Asteroid
+        if self.t_arr > T_DAUER-45:   # letzer Asteroid
             cluster_iteration = [[sorted_material_types[0]], [sorted_material_types[1], sorted_material_types[2], 3]]
+        elif self.t_arr > T_DAUER-100 and sprit_bei_start > 0.4: # Vorletzter Asteroid
+            cluster_iteration = [[sorted_material_types[0], sorted_material_types[1]], [sorted_material_types[2]], [3]]
         else:
             if sprit_bei_start < 0.2:       # Tanken fast leer
                 cluster_iteration = [[3]]
@@ -116,7 +118,7 @@ class Seed:
                 if bevorzugen * sorted_materials[0] < sorted_materials[1] \
                         and bevorzugen * sorted_materials[1] < sorted_materials[2]:
                     # geringste Verfügbarkeit, mittlere, häufigstes oder Sprit
-                    cluster_iteration = [[sorted_material_types[0], material_most_needed],
+                    cluster_iteration = [[sorted_material_types[0]],
                                          [sorted_material_types[1]],
                                          [sorted_material_types[2], 3]]
                 elif bevorzugen * sorted_materials[0] < sorted_materials[1]:
@@ -127,9 +129,16 @@ class Seed:
                     # beiden geringsten, ansonsten Rest
                     cluster_iteration = [sorted_material_types[:2],
                                          [sorted_material_types[2], 3]]
+                elif bevorzugen * sorted_materials[0] < sorted_materials[2]:
+                    cluster_iteration = [[sorted_material_types[0]],
+                                         [sorted_material_types[1], sorted_material_types[2], 3]]
                 else:
                     cluster_iteration = [range(3), [3]]
             else:                           # Tank noch voll
+                # if sorted_material_types[0] == material_most_needed:    # Sprit vorhanden → seltenstes Material suchen
+                #     cluster_iteration = [[material_most_needed],
+                #                          sorted_material_types[1:],
+                #                          [3]]
                 if bevorzugen * sorted_materials[0] < sorted_materials[1] \
                         and bevorzugen * sorted_materials[1] < sorted_materials[2]:
                     # geringste Verfügbarkeit, mittlere, häufigstes oder Sprit
@@ -146,6 +155,10 @@ class Seed:
                     # beiden geringsten, ansonsten Rest
                     cluster_iteration = [sorted_material_types[:2],
                                          [sorted_material_types[2]],
+                                         [3]]
+                elif bevorzugen * sorted_materials[0] < sorted_materials[2]:
+                    cluster_iteration = [[sorted_material_types[0]],
+                                         [sorted_material_types[1], sorted_material_types[2]],
                                          [3]]
                 else:
                     cluster_iteration = [range(3), [3]]
@@ -286,6 +299,8 @@ class Seed:
             if len(possible_steps) != 0:
                 if max(masses) > 0.5:
                     break
+                else:
+                    print(f"Für Materialien {materials} wurden nicht ausreichend Lösungen gefunden. Es wird weitergesucht.")
         return possible_steps
 
 

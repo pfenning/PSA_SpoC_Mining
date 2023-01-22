@@ -22,8 +22,9 @@ print("Sätzlinge gepflanzt :D")
 
 # Zeitbegrenzung und beta festlegen
 # beta_input = [400, 400, 300, 300, 200, 200, 100]
-beta_input = [100]
-# beta_input = [50, 50, 40, 40, 30]
+# beta_input = [100]
+# beta_input = [100, 80, 50, 50, 40]
+beta_input = [50, 30, 30, 20]
 if isinstance(beta_input, int):
     beta_input = [beta_input]*50
 elif len(beta_input) < 50:
