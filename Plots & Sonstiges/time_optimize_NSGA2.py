@@ -53,7 +53,7 @@ class TimeOptimizeWithNSGA2(ElementwiseProblem):
 
     def _evaluate(self, x, out, *args, **kwargs):
         """
-        x: [t_start, T], NumPy Array, int, float
+        t_flug: [t_start, T], NumPy Array, int, float
             t_start: Starttag des Wechsels (mjd_2000)
             T: Flugzeit
         out: Dictionary, output is written to

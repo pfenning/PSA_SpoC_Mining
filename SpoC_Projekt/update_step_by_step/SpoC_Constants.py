@@ -89,12 +89,12 @@ def verfuegbarkeit():
             verf[3] += mass[i]
     # print(verf)
     verf_norm = verf/gesamt
-    return np.array(verf_norm), 0.1*min(verf[:3])
+    return np.array(verf_norm), np.argmin(verf_norm)
 
 #########
 # GÜTE
 #########
-verf, norm_material = verfuegbarkeit()
+verf, material_most_needed = verfuegbarkeit()
 # print(f"Verfügbarkeit der Materialien:{verf}")
 # print(f"Bestmögliches Gütemass:{norm_material}")
 my_system = FuzzySystem(verf.min(), verf.max(), resolution=0.01)
@@ -210,7 +210,7 @@ def clustering(knn, asteroids_kp, asteroid_1_idx, radius=4000):
 # ToDo: Zeitraum der Flugzeit neu definieren (z.B. auf 5-46 in 4er Schritten)
 #       - Reicht Auflösung? Sonst: nach gefundenem Minimum nochmal einen halben Schritt in jede Richtung machen
 def time_optimize(asteroid1, asteroid1_mas, asteroid1_mat,
-                  asteroid2, t_arr, t_opt, limit=1.0, print_result=True,
+                  asteroid2, t_arr, t_opt, limit=1.0, print_result=False,
                   needed=False):
     """
     Zeitoptimierung von Delta V mit 2 Levels. Erst Flugzeit, dann Startzeit
@@ -240,6 +240,9 @@ def time_optimize(asteroid1, asteroid1_mas, asteroid1_mat,
     ###################################################
     # Variation der Flugzeit, Startpunkt fest
     ###################################################
+    if print_result:  # ToDo: Test    print_result
+        print("==== Auswahl der Flugzeit ====")
+        print(" T |  DV  | Score")
     # Mit der Suche wird am Tag begonnen, an dem der Start-Asteroid vollständig abgebaut ist.
     t_flug_1 = range(2,30,2)
 
@@ -250,30 +253,22 @@ def time_optimize(asteroid1, asteroid1_mas, asteroid1_mat,
     if min(dv_t_flug)/DV_per_propellant > limit:  # Wenn bereits am Limit: Minimum nehmen
         t_flug_min_dv = t_flug_1[np.argmin(dv_t_flug)]
     else:                       # Ansonsten Gewichtung
-        results_t_flug = []
         t_flug_of_results = []
+        rank_t_flug = []
+        weights = np.array([1.0, -0.765])
         if print_result: dv_of_results = []  #ToDo: Test
         for i in range(len(t_flug_1)):
             # "Normierung" für ähnliche Skalierung
             # Zahlenfindung: Siehe MathTests.py
             if dv_t_flug[i] / DV_per_propellant <= limit:    # Nur hinzufügen, wenn erreichbar
-                results_t_flug.append([t_flug_1[i] / 20, dv_t_flug[i] / 3000])
                 t_flug_of_results.append(t_flug_1[i])
-                if print_result:            #ToDo: Test
-                    dv_of_results.append(dv_t_flug[i])
+                rank_t_flug.append(1-t_flug_1[i]/(26+t_flug_1[i]) + 0.1*(2-(dv_t_flug[i]/2100)))
+                if print_result:            # ToDo:Test
+                    print(f"{t_flug_1[i]} | {dv_t_flug[i]:.0f} | {rank_t_flug[-1]:.2f}")
 
-        weights = np.array([0.4, 0.6])
-        rank_t_flug = []
-        for sol in results_t_flug:
-            rank_t_flug.append(sum(weights * sol))  # Bewertung aus gewichteter Summe
+        t_flug_min_dv = t_flug_of_results[np.argmax(rank_t_flug)]
 
-        t_flug_min_dv = t_flug_of_results[np.argmin(rank_t_flug)]
-
-        if False:                    #ToDo: Test    print_result
-            print("==== Auswahl der Flugzeit ====")
-            print(" T |  DV  | Score")
-            for index, rank in enumerate(rank_t_flug):
-                print(f"{t_flug_of_results[index]} | {dv_of_results[index]:.0f} | {rank:.2f}")
+        if print_result:                    #ToDo: Test    print_result
             print(f"Gewählte Flugzeit:{t_flug_min_dv}")
 
 

@@ -99,8 +99,8 @@ create_submission("spoc-mining","mine-the-belt",x,"TUDa_GoldRush_submission_file
 #     # branch.print()
 #     ERG_a, ERG_t_m, ERG_t_arr = branch.get_result()
 #
-#     x = SpoC.convert_to_chromosome(ERG_t_arr + ERG_t_m + ERG_a)
-#     print(SpoC.udp.pretty(x))
+#     t_flug = SpoC.convert_to_chromosome(ERG_t_arr + ERG_t_m + ERG_a)
+#     print(SpoC.udp.pretty(t_flug))
 #
-#     create_submission("spoc-mining","mine-the-belt",x,"TUDa_GoldRush_submission_file_"+ str(minutes) +"minutes_" + str(i) +".json","TUDa_GoldRush","submission_description")
+#     create_submission("spoc-mining","mine-the-belt",t_flug,"TUDa_GoldRush_submission_file_"+ str(minutes) +"minutes_" + str(i) +".json","TUDa_GoldRush","submission_description")
 #     i += 1

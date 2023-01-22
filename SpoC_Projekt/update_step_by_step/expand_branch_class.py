@@ -5,7 +5,7 @@ from pykep import phasing
 import copy
 import SpoC_Constants as SpoC
 
-from SpoC_Constants import dict_asteroids, DV_per_propellant, T_DAUER, T_START, verf
+from SpoC_Constants import dict_asteroids, DV_per_propellant, T_DAUER, T_START, verf, material_most_needed
 
 ##############################################
 # Statische Funktionen für die Branch-Klassen
@@ -116,7 +116,7 @@ class Seed:
                 if bevorzugen * sorted_materials[0] < sorted_materials[1] \
                         and bevorzugen * sorted_materials[1] < sorted_materials[2]:
                     # geringste Verfügbarkeit, mittlere, häufigstes oder Sprit
-                    cluster_iteration = [[sorted_material_types[0]],
+                    cluster_iteration = [[sorted_material_types[0], material_most_needed],
                                          [sorted_material_types[1]],
                                          [sorted_material_types[2], 3]]
                 elif bevorzugen * sorted_materials[0] < sorted_materials[1]:
@@ -410,6 +410,9 @@ class ExpandBranch(Seed):
                    T_DAUER - self.t_arr)
         return -min(bestand[:3])
 
+    def get_score_by_branch_and_guete(self, norm_guete=8):
+        return self.get_branch_score() - self.get_guetemass()/norm_guete
+
 
     def get_result_vectors(self):
         """
@@ -516,6 +519,8 @@ def beam_search(branch_v, beta, analysis="step", fuzzy=True):
                 #  hier soll übergeben werden, welche Methode ausgewählt wird
                 if analysis == 'branch':
                     score.append(branch_expand_[-1].get_branch_score())
+                elif analysis == 'branch and guete':
+                    score.append(branch_expand_[-1].get_score_by_branch_and_guete())
                 else:
                     score.append(branch_expand_[-1].step_score)
 
@@ -555,14 +560,16 @@ def find_idx_start(data, intervall=0.01, method='mean semimajor', fuzzy=True, k=
             if (line[-1] == 3) and ((mitte_semimajor-grenze) <= line[1] < (mitte_semimajor+grenze)):
                 start_branches.append(Seed(int(line[0]), fuzzy=fuzzy))
     elif method == 'examples':
-        start_ids = [2257] # [3622, 5384, 2257, 925]
-        # 3622 -> 2.38, 5384 -> 4.23, 2257 -> 4.4
+        start_ids = [1446] # [1446, 3622, 5384, 2257, 925]
+        # 3622 -> 2.38, 5384 -> 4.23, 2257 -> 4.4, 1446 -> 7.99
         for ID in start_ids:
             start_branches.append(Seed(ID))
     elif method == 'random':
         start_ids = random.choices(range(10000),k=k)
         for ID in start_ids:
             start_branches.append(Seed(ID,fuzzy=fuzzy))
+    elif method == 'all':
+        start_branches = np.reshape([Seed(asteroid_id) for asteroid_id in range(10000)],(int(10000/50),50))
     elif method == 'test':
         import pykep as pk
         data = np.loadtxt("SpoC_Datensatz.txt")
