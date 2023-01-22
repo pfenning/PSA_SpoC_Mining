@@ -1,58 +1,93 @@
+import time
+
 import numpy as np
 from datetime import datetime, timedelta
 
 from SpoC_Constants import T_DAUER, data
-from expand_branch_class import beam_search, find_idx_start
+from expand_branch_class import beam_search, find_idx_start, Seed
 
 from from_website import SpoC_Kontrolle
 from from_website.submisson_helper import create_submission
 
 
 # Sätzlinge finden :)
-branch_v = find_idx_start(data, method='examples') # Anhand von festen IDs
-# branch_v = find_idx_start(data,0.001) # Anhand von anderen Methoden
-# branch_v = find_idx_start(data, method='random') # Anhand von festen IDs
-# branch_v = find_idx_start(data, method='test') # Anhand von festen IDs
+branch_start = find_idx_start(data, method='examples') # Anhand von festen IDs
+# branch_start = find_idx_start(data,0.001) # Anhand von anderen Methoden
+# branch_start = find_idx_start(data, method='random',k=50) # Anhand von festen IDs
+# branch_start = np.reshape(branch_start, (10,5)) # ToDo: Testen
+# branch_start = find_idx_start(data, method='test') # Anhand von festen IDs
+# branch_start = find_idx_start(data, method='all') # Anhand von festen IDs
+# branch_start = find_idx_start(data, method='alles_clustern')
+# branch_start = np.reshape(branch_start, (5,10)) # ToDo: Testen
 
 print("Sätzlinge gepflanzt :D")
 
 # Zeitbegrenzung und beta festlegen
-beta = 100
-minutes = 20
-start_time = datetime.now()
-end_time = datetime.now() + timedelta(minutes=minutes)
-print(datetime.now(), end_time)
+# beta_input = [400, 400, 300, 300, 200, 200, 100]
+# beta_input = [100]
+# beta_input = [100, 90, 70, 50, 50]
+beta_input = [50, 30, 30, 20]
+if isinstance(beta_input, int):
+    beta_input = [beta_input]*50
+elif len(beta_input) < 50:
+    add = [beta_input[-1]]*(50-len(beta_input))
+    beta_input = np.concatenate([beta_input, [beta_input[-1]]*(50-len(beta_input))])
+
+# Zeitmessung
+time_start = time.perf_counter_ns()
 
 # Beam-Search-Tree erstellen
-method = ['branch']
+method = ['branch'] #  and guete
 beendete_Branches = []
-while datetime.now() < end_time:
-    v_done, top_beta = beam_search(branch_v, beta, analysis=method, fuzzy=True)    # analysis='branch'
-    if v_done:              # Fertige Lösungen gefunden
-        beendete_Branches = np.concatenate((beendete_Branches, v_done), axis=0)
-    branch_v = top_beta
-    if len(top_beta) == 0:
-        break
+final_guete = 0.0
+for branch_v in branch_start:
+    time_part_start = time.perf_counter()
+    if isinstance(branch_v, Seed):
+        branch_v = [branch_v]
+    # Beam-Search durchführen
+    for beta in beta_input:
+        v_done, top_beta = beam_search(branch_v, beta, analysis=method, fuzzy=True)    # analysis='branch'
+        if v_done:              # Fertige Lösungen gefunden
+            beendete_Branches = np.concatenate((beendete_Branches, v_done), axis=0)
+        branch_v = top_beta
+        if len(top_beta) == 0:
+            break
+    # Zwischenzeit ausgeben:
+    time_part_finish = time.perf_counter()
+    try:
+        finish_time = datetime.now()
+        print(f"Dauer der Suche eines Abschnitts:{time_part_finish - time_part_start}")
+    except NameError:
+        print("Zeitmessung konnte nicht durchgeführt werden")
+    # Bestes Zwischenergebnis speichern
+    best_branch_in_part = beendete_Branches[np.argmin([branch.get_guetemass() for branch in beendete_Branches])]
+    if best_branch_in_part.get_guetemass() < final_guete:
+        final_branch = best_branch_in_part
+        final_guete = final_branch.get_guetemass()
+        print("Aktueller Bestwert:")
+        final_branch.print_summary()
 
 
 # Beste beendete Pfade ausgeben
-if len(beendete_Branches) == 0:   # Keine fertigen Lösungen gefunden
-    beendete_Branches = branch_v
-    print("Keine fertigen Branches gefunden")
-print("============ beendete Branches: ============")
-for branch in beendete_Branches:
-    branch.print_summary()
+# print("============ beendete Branches: ============")
+# for branch in beendete_Branches:
+#     branch.print_summary()
 
 # Chosing the best path
 final_branch = beendete_Branches[np.argmin([branch.get_guetemass() for branch in beendete_Branches])]
 
 # Zeitmessung
-finish_time = datetime.now()
-print(f"Dauer der Suche:{finish_time-start_time}")
+try:
+    finish_time = time.perf_counter()
+    print(f"Dauer der Suche:{finish_time - time_start}")
+except NameError:
+    print("Zeitmessung konnte nicht durchgeführt werden")
+
 
 # Lösungvektoren erzeugen
 final_branch.print()
 ERG_a, ERG_t_m, ERG_t_arr = final_branch.get_result()
+# np.save("final_branch_a_tm_tarr", [ERG_a, ERG_t_m, ERG_t_arr])
 
 
 #################################################
@@ -62,7 +97,7 @@ ERG_a, ERG_t_m, ERG_t_arr = final_branch.get_result()
 x = SpoC_Kontrolle.convert_to_chromosome(ERG_t_arr + ERG_t_m + ERG_a)
 print(SpoC_Kontrolle.udp.pretty(x))
 
-create_submission("spoc-mining","mine-the-belt",x,"TUDa_GoldRush_submission_file_"+ str(minutes) +"minutes_" +".json","TUDa_GoldRush","submission_description")
+create_submission("spoc-mining","mine-the-belt",x,"TUDa_GoldRush_submission_file_" + "TEST" +".json","TUDa_GoldRush","submission_description")
 
 # from from_website import SpoC_Kontrolle as SpoC
 # from from_website.submisson_helper import create_submission
@@ -81,8 +116,8 @@ create_submission("spoc-mining","mine-the-belt",x,"TUDa_GoldRush_submission_file
 #     # branch.print()
 #     ERG_a, ERG_t_m, ERG_t_arr = branch.get_result()
 #
-#     x = SpoC.convert_to_chromosome(ERG_t_arr + ERG_t_m + ERG_a)
-#     print(SpoC.udp.pretty(x))
+#     t_flug = SpoC.convert_to_chromosome(ERG_t_arr + ERG_t_m + ERG_a)
+#     print(SpoC.udp.pretty(t_flug))
 #
-#     create_submission("spoc-mining","mine-the-belt",x,"TUDa_GoldRush_submission_file_"+ str(minutes) +"minutes_" + str(i) +".json","TUDa_GoldRush","submission_description")
+#     create_submission("spoc-mining","mine-the-belt",t_flug,"TUDa_GoldRush_submission_file_"+ str(minutes) +"minutes_" + str(i) +".json","TUDa_GoldRush","submission_description")
 #     i += 1

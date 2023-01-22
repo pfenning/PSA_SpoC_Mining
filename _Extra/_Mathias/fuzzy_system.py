@@ -50,7 +50,7 @@ def _get_index(num, vector):
 
 
 class FuzzySystem:
-    def __init__(self, verf_min, verf_max, resolution=0.01, load_map=False, sprit_max=0.37):
+    def __init__(self, verf_min, verf_max, resolution=0.01, load_map=False, sprit_min=0.0, sprit_max=0.3, verf_soften=0.1):
         """
         Erzeugt das Fuzzy-System zur Bewertung von Asteroidenwechseln
         verf_min:
@@ -179,9 +179,10 @@ class FuzzySystem:
             self.verf_min = 0
             self.verf_max = 1
         else:
-            self.verf_min = verf_min
-            self.verf_max = verf_max
+            self.verf_min = verf_min * (1.0 - verf_soften)
+            self.verf_max = verf_max * (1.0 + verf_soften)
         # Sprit Grenzen (Darüber hinausgehendes ist erlaubt)
+        self.sprit_min = sprit_min
         self.sprit_max = sprit_max
 
         # Auflösung
@@ -227,7 +228,7 @@ class FuzzySystem:
         """
         # Skalierung der Verfügbarkeit & des Spritverbrauchs
         verf = _transform(verf, self.verf_min, self.verf_max)
-        delta_v = _transform(delta_v, x_max=self.sprit_max)
+        delta_v = _transform(delta_v, x_min=self.sprit_min, x_max=self.sprit_max)
 
         # Subsystem 1 - Sprit
         self.sub_sys.input['Tank nach Wechsel'] = t_n
@@ -319,7 +320,7 @@ class FuzzySystem:
         """
         # Skalierung der Verfügbarkeit und Sprit-Verbrauch
         verf = _transform(verf, self.verf_min, self.verf_max)
-        delta_v = _transform(delta_v, x_max=self.sprit_max)
+        delta_v = _transform(delta_v, x_min=self.sprit_min, x_max=self.sprit_max)
 
         # Inputs an Auflösung anpassen
         if self.resolution == 0.01:

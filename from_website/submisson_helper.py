@@ -7,7 +7,7 @@ def create_submission(challenge_id, problem_id, x, fn_out = './submission.json',
 
         challenge_id: a string of the challenge identifier (found on the corresponding problem page)
         problem_id: a string of the problem identifier (found on the corresponding problem page)
-        x: for single-objective problems: a list of numbers determining the decision vector
+        t_flug: for single-objective problems: a list of numbers determining the decision vector
            for multi-objective problems: a list of list of numbers determining a population of decision vectors
 
         Optionally provide:
