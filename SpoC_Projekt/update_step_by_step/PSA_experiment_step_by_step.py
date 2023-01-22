@@ -17,13 +17,15 @@ branch_start = find_idx_start(data, method='examples') # Anhand von festen IDs
 # branch_start = np.reshape(branch_start, (10,5)) # ToDo: Testen
 # branch_start = find_idx_start(data, method='test') # Anhand von festen IDs
 # branch_start = find_idx_start(data, method='all') # Anhand von festen IDs
+# branch_start = find_idx_start(data, method='alles_clustern')
+# branch_start = np.reshape(branch_start, (5,10)) # ToDo: Testen
 
 print("Sätzlinge gepflanzt :D")
 
 # Zeitbegrenzung und beta festlegen
 # beta_input = [400, 400, 300, 300, 200, 200, 100]
 # beta_input = [100]
-# beta_input = [100, 80, 50, 50, 40]
+# beta_input = [100, 90, 70, 50, 50]
 beta_input = [50, 30, 30, 20]
 if isinstance(beta_input, int):
     beta_input = [beta_input]*50
@@ -67,9 +69,9 @@ for branch_v in branch_start:
 
 
 # Beste beendete Pfade ausgeben
-print("============ beendete Branches: ============")
-for branch in beendete_Branches:
-    branch.print_summary()
+# print("============ beendete Branches: ============")
+# for branch in beendete_Branches:
+#     branch.print_summary()
 
 # Chosing the best path
 final_branch = beendete_Branches[np.argmin([branch.get_guetemass() for branch in beendete_Branches])]

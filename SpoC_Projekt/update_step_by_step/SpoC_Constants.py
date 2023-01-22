@@ -210,7 +210,7 @@ def clustering(knn, asteroids_kp, asteroid_1_idx, radius=4000):
 # ToDo: Zeitraum der Flugzeit neu definieren (z.B. auf 5-46 in 4er Schritten)
 #       - Reicht Auflösung? Sonst: nach gefundenem Minimum nochmal einen halben Schritt in jede Richtung machen
 def time_optimize(asteroid1, asteroid1_mas, asteroid1_mat,
-                  asteroid2, t_arr, t_opt, limit=1.0, print_result=True,
+                  asteroid2, t_arr, t_opt, limit=1.0, print_result=False,
                   needed=False):
     """
     Zeitoptimierung von Delta V mit 2 Levels. Erst Flugzeit, dann Startzeit
@@ -262,7 +262,7 @@ def time_optimize(asteroid1, asteroid1_mas, asteroid1_mat,
             # Zahlenfindung: Siehe MathTests.py
             if dv_t_flug[i] / DV_per_propellant <= limit:    # Nur hinzufügen, wenn erreichbar
                 t_flug_of_results.append(t_flug_1[i])
-                rank_t_flug.append(1-t_flug_1[i]/(26+t_flug_1[i]) + 0.5*(2-(dv_t_flug[i]/2100) - 0.2*(2600/(dv_t_flug[i]+600))))
+                rank_t_flug.append(2-t_flug_1[i]/75 + 0.5*(2.0 - (dv_t_flug[i] / 2100) - 0.2 * (2600 / (dv_t_flug[i] + 600))))
                 if print_result:            # ToDo:Test
                     print(f"{t_flug_1[i]} | {dv_t_flug[i]:.0f} | {rank_t_flug[-1]:.2f}")
 
@@ -315,9 +315,9 @@ def time_optimize(asteroid1, asteroid1_mas, asteroid1_mat,
                 # → Bewertung aus gewichteter Summe mit entsprechend angepasster Normierung & Gewichtung
                 rank_t_start.append(sum(weights * [abs(t_start_var[i]) / 3, dv_t_start[i] / 2500]))
                 # if t_start_var[i] < 0:
-                #     rank_t_start.append(sum(weights_neg_var * [- t_start_var[i] / 3, dv_t_start[i] / 2500]))
+                #     rank_t_start.append(sum(weights_neg_var * [- t_start_var[i] / 3, dv_t_flug[i] / 2500]))
                 # else:
-                #     rank_t_start.append(sum(weights_pos_var * [t_start_var[i] / 10, dv_t_start[i] / 3000]))
+                #     rank_t_start.append(sum(weights_pos_var * [t_start_var[i] / 10, dv_t_flug[i] / 3000]))
         # Optimum auswählen
         index_min =np.argmin(rank_t_start)
         # Wertepaar für Index des Minimums

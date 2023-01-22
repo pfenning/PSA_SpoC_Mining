@@ -2,8 +2,10 @@ import random
 
 import numpy as np
 from pykep import phasing
+import pykep as pk
 import copy
 import SpoC_Constants as SpoC
+
 
 from SpoC_Constants import dict_asteroids, DV_per_propellant, T_DAUER, T_START, verf, material_most_needed
 
@@ -179,7 +181,7 @@ class Seed:
         if not candidates:
             print(f"Keine Asteroiden mit den Materialien {materials} mehr vorhanden.")
             return []
-        knn = phasing.knn(candidates, T_START.mjd2000 + self.t_arr + self.t_opt, 'orbital', T=t_flug) # ToDo T lässt sich auch anders wählen
+        knn = phasing.knn(candidates, pk.epoch(T_START.mjd2000 + self.t_arr + self.t_opt), 'orbital', T=t_flug) # ToDo T lässt sich auch anders wählen
         _, neighb_idx, _ = knn.find_neighbours(SpoC.get_asteroid(self.asteroid_id),
                                                              query_type='ball', r=radius)
         neighb_idx = list(neighb_idx)
@@ -253,7 +255,10 @@ class Seed:
         for materials in cluster_iteration:
             if len(materials)==1:
                 t_flug = 20
-                radius = 4000
+                radius = 5000   # 4000
+            # elif True:
+            #     t_flug = 10
+            #     radius = 5000
             else:
                 t_flug = 15
                 radius = 3000
@@ -361,6 +366,7 @@ class ExpandBranch(Seed):
     def __str__(self):
         print(self.origin_branch)
         return f"Abbauzeit auf Asteroiden {self.last_t_m:.0f}, \n" \
+               f"Flugzeit:{self.t_arr-self.origin_branch.t_arr-self.last_t_m}, \n" \
                f"Neuer Asteroid: {self.asteroid_id}, Material: {SpoC.get_asteroid_material(self.asteroid_id)}, \n" \
                f"Bestand: {self.bestand}"
 
@@ -469,6 +475,7 @@ class ExpandBranch(Seed):
         :return:
         """
         print(f"Abbauzeit auf Asteroid {self.origin_branch.asteroid_id}:{self.last_t_m:.0f}, \n"
+              f"Flugzeit:{self.t_arr-self.origin_branch.t_arr-self.last_t_m}, \n" 
               f"Neuer Asteroid: {self.asteroid_id}, Material: {SpoC.get_asteroid_material(self.asteroid_id)}, \n"
               f"Bestand: {self.bestand}")
 
@@ -558,7 +565,7 @@ def beam_search(branch_v, beta, analysis="step", fuzzy=True):
 
     return v_done, top_beta
 
-def find_idx_start(data, intervall=0.01, method='mean semimajor', fuzzy=True, k=15):
+def find_idx_start(data, intervall=0.01, method='mean semimajor', fuzzy=True, k=15, alpha=50):
     '''
         Hier wird aus dem Datensatz ein Vektor mit möglichen Startasteroiden gebildet.
         Return:
@@ -585,6 +592,31 @@ def find_idx_start(data, intervall=0.01, method='mean semimajor', fuzzy=True, k=
             start_branches.append(Seed(ID,fuzzy=fuzzy))
     elif method == 'all':
         start_branches = np.reshape([Seed(asteroid_id) for asteroid_id in range(10000)],(int(10000/50),50))
+    elif method == 'alles_clustern':
+        asteroids = [dict_asteroids[line][0] for line in dict_asteroids]
+        ##########################################################################
+        # ITERATION VON CLUSTERN ALLER ASTEROIDEN FÜR VERSCHIEDENE STARTZEITEN
+        ##########################################################################
+        laenge_start_cl = []
+        knn = phasing.knn(asteroids, SpoC.T_START, 'orbital', T=30)  # .mjd2000 + i
+        for line in data:
+            ast_id = int(line[0])
+            print(ast_id)
+            if SpoC.get_asteroid_material(ast_id) != 1 and SpoC.get_asteroid_material(ast_id) != 3:
+                _, neighb_idx, _ = knn.find_neighbours(ast_id, query_type='ball', r=5000)
+                neighb_idx = list(neighb_idx)
+                hilfe = []
+                for mat in neighb_idx:
+                    if SpoC.get_asteroid_material(mat) == 1: hilfe.append(mat)
+                laenge_start_cl.append(len(hilfe))  # [len(neighb_idx), ]
+            else:
+                laenge_start_cl.append(0)  # [len(neighb_idx), ]
+
+        # print(laenge_start_cl)
+        top_starts = np.argpartition(laenge_start_cl, -alpha)[-alpha:]
+        start_branches = []
+        for ID in top_starts:
+            start_branches.append(Seed(ID))
     elif method == 'test':
         import pykep as pk
         data = np.loadtxt("SpoC_Datensatz.txt")
