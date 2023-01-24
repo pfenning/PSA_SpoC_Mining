@@ -520,11 +520,11 @@ def find_idx_start(data, intervall=0.01, method='alles_clustern', alpha=50, fuzz
     #### Auswahl des Start-Materials. Das kann durch Verfügbarkeit bestimmt werden! Optimalerweise max. Material --> Verf-Funktion benutzen
     start_branches = []
     # Erstellen des Vektors der möglichen Start-Asteroiden
-    if method=='mean semimajor':
-        mitte_semimajor = np.mean(data[:,1])
-        grenze = intervall * mitte_semimajor
+    if method=='semimajor':
+        # mitte_semimajor = np.mean(data[:,1])
+        # grenze = intervall * mitte_semimajor
         for line in data:
-            if (line[-1] == 3) and ((mitte_semimajor-grenze) <= line[1] < (mitte_semimajor+grenze)):
+            if data[line,1] < 21000000000:                                #(line[-1] == 3) and ((mitte_semimajor-grenze) <= line[1] < (mitte_semimajor+grenze)):
                 start_branches.append(Seed(int(line[0]), fuzzy=fuzzy))
     elif method == 'examples':
         start_ids = [3622, 5384, 2257, 925]
@@ -538,27 +538,24 @@ def find_idx_start(data, intervall=0.01, method='alles_clustern', alpha=50, fuzz
         # ITERATION VON CLUSTERN ALLER ASTEROIDEN FÜR VERSCHIEDENE STARTZEITEN
         ##########################################################################
         laenge_start_cl = []
-        time_start = ["30190302T000000", "30190322T000000", "30190410T000000", "30190420T000000", "30190502T000000"]
-        for time in time_start:
-            T_START = pk.epoch_from_iso_string(time)
-            knn = phasing.knn(asteroids, T_START, 'orbital', T=30)  # .mjd2000 + i
-            
-            hilfe = []
-            for line in data:
-                ast_id = int(line[0])
+        knn = phasing.knn(asteroids, SpoC.T_START, 'orbital', T=30)  # .mjd2000 + i
+        for line in data:
+            ast_id = int(line[0])
+            print(ast_id)
+            if SpoC.get_asteroid_material(ast_id) != 1 and SpoC.get_asteroid_material(ast_id) != 3:
                 _, neighb_idx, _ = knn.find_neighbours(ast_id,query_type='ball', r=5000)
                 neighb_idx = list(neighb_idx)
-                hilfe.append(len(neighb_idx))
-                # if ast_id>=9999:print(ast_id)
-            laenge_start_cl.append(hilfe)
+                hilfe = []
+                for mat in neighb_idx:
+                    if SpoC.get_asteroid_material(mat) == 1: hilfe.append(mat)
+                laenge_start_cl.append(len(hilfe))     # [len(neighb_idx), ]
+            else: laenge_start_cl.append(0)     # [len(neighb_idx), ]	
 
-        laenge_start_cluster = np.transpose(laenge_start_cl)
-        mittlere_laenge_cluster = [] # Durchschnitt je Asteroid
-        for line in laenge_start_cluster:
-            mittlere_laenge_cluster.append(np.mean(line))
-        top_starts = np.argpartition(mittlere_laenge_cluster, -alpha)[-alpha:]
+        # print(laenge_start_cl)
+        top_starts = np.argpartition(laenge_start_cl, -alpha)[-alpha:]
+        start_branches = []
         for ID in top_starts:
-            start_branches.append(Seed(ID,fuzzy=fuzzy))
+            start_branches.append(Seed(ID))
 
     elif method == 'random':
         start_ids = random.choices(range(10000),k=50)

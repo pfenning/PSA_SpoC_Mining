@@ -15,7 +15,7 @@ MU_TRAPPIST = G * MS  # Mu of the Trappist-1 star
 DV_per_propellant = 10000  # DV per propellant [m/s]
 TIME_TO_MINE_FULLY = 30  # Maximum time to fully mine an asteroid
 
-
+print(T_START.mjd2000)
 
 #################
 # ASTEROIDS:  Creating lists with indices of asteroids
