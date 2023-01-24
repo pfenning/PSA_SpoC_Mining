@@ -173,11 +173,13 @@ class TripInSpace:
         elif index < 0:
             raise ValueError("Negative Werte sind nicht erlaubt")
         bars = ("0", "1", "2")
-        x_pos = np.arange(len(bars))
-        plt.bar(x_pos, self.bestand[index][:3])
-        plt.xticks(x_pos, bars)
-        plt.xlabel("Material")
-        plt.ylabel("Bestand")
+        y_pos = np.arange(len(bars))
+        plt.barh(y_pos, self.bestand[index][:3], color="green")
+        plt.yticks(y_pos, bars)
+        plt.ylabel("Material")
+        plt.xlabel("Bestand")
+        for i, v in enumerate(self.bestand[index][:3]):
+            plt.text(v+3, i+.25, f"{v:.3f}", color="blue", fontweight="bold")
 
     def get_tank(self, index):
         """

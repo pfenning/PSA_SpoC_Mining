@@ -10,6 +10,14 @@ from from_website import SpoC_Kontrolle
 from from_website.submisson_helper import create_submission
 
 
+##################### Hyperparameter für Ausführung #####################
+score_method = ['branch']   # branch and guete, sonstwas=step
+fast = False                # Ob möglichst schnell geflogen werden soll
+knn_type = False            # Ob knn für das Clustern verwendet werden soll (sonst ball)
+
+
+
+##################### Code Läuft #####################
 # Sätzlinge finden :)
 # branch_start = find_idx_start(data, method='examples') # Anhand von festen IDs
 # branch_start = find_idx_start(data,0.001) # Anhand von anderen Methoden
@@ -19,7 +27,6 @@ from from_website.submisson_helper import create_submission
 branch_start = find_idx_start(data, method='all') # Anhand von festen IDs
 # branch_start = find_idx_start(data, method='alles_clustern')
 # branch_start = np.reshape(branch_start, (5,10)) # ToDo: Testen
-
 print("Sätzlinge gepflanzt :D")
 
 # Zeitbegrenzung und beta festlegen
@@ -37,7 +44,6 @@ elif len(beta_input) < 50:
 time_start = time.perf_counter_ns()
 
 # Beam-Search-Tree erstellen
-method = ['branch'] #  and guete
 beendete_Branches = []
 final_guete = 0.0
 for branch_v in branch_start:
@@ -46,7 +52,7 @@ for branch_v in branch_start:
         branch_v = [branch_v]
     # Beam-Search durchführen
     for beta in beta_input:
-        v_done, top_beta = beam_search(branch_v, beta, analysis=method, fuzzy=True)    # analysis='branch'
+        v_done, top_beta = beam_search(branch_v, beta, analysis=score_method, fuzzy=True, fast=fast, knn_type=knn_type)
         if v_done:              # Fertige Lösungen gefunden
             beendete_Branches = np.concatenate((beendete_Branches, v_done), axis=0)
         branch_v = top_beta
@@ -56,7 +62,7 @@ for branch_v in branch_start:
     time_part_finish = time.perf_counter()
     try:
         finish_time = datetime.now()
-        print(f"Dauer der Suche eines Abschnitts:{time_part_finish - time_part_start}")
+        print(f"Dauer der Suche eines Abschnitts:{time_part_finish - time_part_start:.0f}s")
     except NameError:
         print("Zeitmessung konnte nicht durchgeführt werden")
     # Bestes Zwischenergebnis speichern

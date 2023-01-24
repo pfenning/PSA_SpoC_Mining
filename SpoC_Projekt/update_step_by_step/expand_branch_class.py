@@ -100,12 +100,16 @@ class Seed:
             sorted_materials.append(x)
         return sorted_material_types, sorted_materials
 
-    def _get_cluster_case(self, sprit_bei_start, bevorzugen=1.7):
+    def _get_cluster_case(self, sprit_bei_start, bevorzugen=1.7, sprit_save=None):
         """
         Bestimmt den Cluster-Case
         :param: sprit_bei_start: Füllstand des Tanks beim Start zum neuen Asteroiden
+        :param: Wahl der Grenzen fürs Tanken
         :return: Array von Material-Typ-Arrays für Clusterbildung
         """
+
+        if sprit_save is None:
+            sprit_save = [0.2, 0.4]
         # Materialtypen nach Bestand sortieren (ohne Sprit)
         sorted_material_types, sorted_materials = self._sort_material_types()
         # Fallunterscheidung
@@ -114,9 +118,9 @@ class Seed:
         elif self.t_arr > T_DAUER-100 and sprit_bei_start > 0.4: # Vorletzter Asteroid
             cluster_iteration = [[sorted_material_types[0], sorted_material_types[1]], [sorted_material_types[2]], [3]]
         else:
-            if sprit_bei_start < 0.2:       # Tanken fast leer
+            if sprit_bei_start < sprit_save[0]:       # Tanken fast leer
                 cluster_iteration = [[3]]
-            elif sprit_bei_start < 0.4:     # Tank halbvoll
+            elif sprit_bei_start < sprit_save[1]:     # Tank halbvoll
                 if bevorzugen * sorted_materials[0] < sorted_materials[1] \
                         and bevorzugen * sorted_materials[1] < sorted_materials[2]:
                     # geringste Verfügbarkeit, mittlere, häufigstes oder Sprit
@@ -232,7 +236,7 @@ class Seed:
         else:
             return False
 
-    def get_next_possible_steps(self):
+    def get_next_possible_steps(self, fast=False, knn_type = False):
         """
         Bestimmt die Menge von Asteroiden, die für Expand-Schritt verwendet werden sollen.
         - Cluster gewinnen
@@ -247,26 +251,38 @@ class Seed:
             raise StopIteration
         # Prüfen, ob Material des aktuellen Asteroiden wichtig ist
         needed = self._current_material_is_needed()
+        # Modus für Entwicklung neuer Blatt-Knoten
+        if fast:
+            cluster_case = [0.25, 0.5]
+            time_divider = 34
+        else:
+            cluster_case = [0.2, 0.4]
+            time_divider = 45
         # Speicher für mögliche Schritte
         possible_steps = []
         masses = []
         # Sprit bei Start approximieren/nach oben abschätzen
         sprit_bei_start = self._calc_sprit_bei_start()
         # Cluster-Fall bestimmen
-        cluster_iteration = self._get_cluster_case(sprit_bei_start)
+        cluster_iteration = self._get_cluster_case(sprit_bei_start, sprit_save=cluster_case)
         # Durch Fälle iterieren, bis possible_steps nicht leer & Massen > 0.5, oder Cluster_Iteration fertig
         for materials in cluster_iteration:
-            if len(materials)==1:
-                t_flug = 20
-                radius = 5000   # 4000
-            # elif True:
-            #     t_flug = 10
-            #     radius = 5000
+            if fast:
+                if len(materials) == 1:
+                    t_flug = 20
+                    radius = 5000   # Wird gar nicht benötigt
+                else:
+                    t_flug = 10
+                    radius = 5000   # Wird gar nicht benötigt
             else:
-                t_flug = 15
-                radius = 3000
+                if len(materials)==1:
+                    t_flug = 20
+                    radius = 5000
+                else:
+                    t_flug = 15
+                    radius = 3000
             # Cluster bilden für die Materialien aus materials
-            neighbour_ids = self._get_cluster_by_material(materials, t_flug=t_flug, radius=radius)
+            neighbour_ids = self._get_cluster_by_material(materials, t_flug=t_flug, radius=radius, knn_type=knn_type)
             # Iteration durch Nachbar. Hinzufügen zu Menge, wenn erreichbar
             for asteroid_2_id in neighbour_ids:
                 # Prüfen, dass Clusterbildung korrekt verlaufen ist
@@ -279,7 +295,8 @@ class Seed:
                                                                        t_arr=self.t_arr,
                                                                        t_opt=self.t_opt,
                                                                        limit=sprit_bei_start,
-                                                                       needed=needed)
+                                                                       needed=needed,
+                                                                       time_divider=time_divider)
                 # Bewertung nur durchführen, wenn Asteroid auch erreichbar
                 if (dv_min_ / DV_per_propellant) < sprit_bei_start:
                     if self.fuzzy:
@@ -506,18 +523,21 @@ class ExpandBranch(Seed):
 ######################################################
 # Funktionen zur Ausführung von Beam-Search und Start
 ######################################################
-def beam_search(branch_v, beta, analysis="step", fuzzy=True):
+def beam_search(branch_v, beta, analysis="step", fuzzy=True, fast=False, knn_type = False):
     """
     Übergeben wird ein Vektor, der die beta-Besten Branches beinhaltet aus dem vorherigen Iterationsschritt.
     Führt ausgehend davon die neuen möglichen Schritte aus und gibt davon die beta besten zurück.
 
-    :param branch_v: Vektor mit bisherigen Branches
+    :param knn_type:    Ob Cluster mit knn gebildet werden (ansonsten Ball)
+    :param fast:        Ob möglichst schnell geflogen werden soll
+    :param fuzzy:       Ob Fuzzy als Bewertungsmethode verwendet wird
+    :param branch_v:    Vektor mit bisherigen Branches
     :param beta:
-    :param analysis: Gibt die Art der Score-Bewertung an:
-                step: nur den Score des aktuellen steps
-                branch: Mittelwert des entstandenen Pfades
-    :param method: gibt die Methode an, mit welcher die Branches ausgewertet & -gewählt  werden
-        default == Fuzzy
+    :param analysis:    Gibt die Art der Score-Bewertung an:
+                            step: nur den Score des aktuellen steps
+                            branch: Mittelwert des entstandenen Pfades
+    :param method:      gibt die Methode an, mit welcher die Branches ausgewertet & -gewählt  werden
+                            default == Fuzzy
     :return: v_done: Beendete Vektorpfade
              v_continue: Branches, die weitergeführt werden können
     """
@@ -528,7 +548,7 @@ def beam_search(branch_v, beta, analysis="step", fuzzy=True):
         branch_expand_ = []
         # score_ = []
         try:
-            next_possible_steps = branch.get_next_possible_steps()
+            next_possible_steps = branch.get_next_possible_steps(fast, knn_type)
         except StopIteration:
             v_done.append(branch)
         else:

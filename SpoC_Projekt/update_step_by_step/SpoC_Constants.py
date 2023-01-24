@@ -211,7 +211,8 @@ def clustering(knn, asteroids_kp, asteroid_1_idx, radius=4000):
 #       - Reicht Auflösung? Sonst: nach gefundenem Minimum nochmal einen halben Schritt in jede Richtung machen
 def time_optimize(asteroid1, asteroid1_mas, asteroid1_mat,
                   asteroid2, t_arr, t_opt, limit=1.0, print_result=False,
-                  needed=False):
+                  needed=False,
+                  time_divider = 45):
     """
     Zeitoptimierung von Delta V mit 2 Levels. Erst Flugzeit, dann Startzeit
 
@@ -222,15 +223,16 @@ def time_optimize(asteroid1, asteroid1_mas, asteroid1_mat,
 
     Übergabe: Asteroid 1 und 2, optimaler Startpunkt, optimale Abbauzeit auf aktuellem Asteroiden
     Rückgabe: optimaler Startpunkt, optimale Flugzeit, optimiertes DV
-    :param needed: Wichtigkeit des Materials
-    :param limit: Maximal erlaubter Tank
-    :param asteroid1_mas: Masse von Asteroid 1
-    :param asteroid1_mat: Material von Asteroid 1
-    :param asteroid1: Startasteroid
-    :param asteroid2: Landeasteroid
-    :param t_arr: Ankunftstag auf Asteroid 1
-    :param t_opt: Abbauzeit, um aktuellen Asteroid vollständig abzubauen
-    :param print_result: Ergebnisse von get_dv für das 2. Level der Optimierung ausgeben
+    :param asteroid1_mas:   Masse von Asteroid 1
+    :param asteroid1_mat:   Material von Asteroid 1
+    :param asteroid1:       Startasteroid
+    :param asteroid2:       Landeasteroid
+    :param t_arr:           Ankunftstag auf Asteroid 1
+    :param t_opt:           Abbauzeit, um aktuellen Asteroid vollständig abzubauen
+    :param limit:           maximal erlaubter Tank
+    :param print_result:    Ergebnisse von get_dv für das 2. Level der Optimierung ausgeben
+    :param needed:          Wichtigkeit des Materials
+    :param time_divider:    wie start t_flug gewichtet wird (größer = weicher)
     :return: gewählten Starttag, gewählte Flugzeit, sicher ergebenes DV
     """
     dv_t_flug = []
@@ -262,7 +264,7 @@ def time_optimize(asteroid1, asteroid1_mas, asteroid1_mat,
             # Zahlenfindung: Siehe MathTests.py
             if dv_t_flug[i] / DV_per_propellant <= limit:    # Nur hinzufügen, wenn erreichbar
                 t_flug_of_results.append(t_flug_1[i])
-                rank_t_flug.append(2-t_flug_1[i]/45 + 0.5*(2.0 - (dv_t_flug[i] / 2100) - 0.2 * (2700 / (dv_t_flug[i] + 600))))
+                rank_t_flug.append(2-t_flug_1[i]/time_divider + 0.5*(2.0 - (dv_t_flug[i] / 2100) - 0.2 * (2700 / (dv_t_flug[i] + 600))))
                 if print_result:            # ToDo:Test
                     print(f"{t_flug_1[i]} | {dv_t_flug[i]:.0f} | {rank_t_flug[-1]:.2f}")
 
