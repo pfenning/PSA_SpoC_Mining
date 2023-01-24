@@ -11,22 +11,22 @@ from from_website.submisson_helper import create_submission
 
 
 # Sätzlinge finden :)
-branch_start = find_idx_start(data, method='examples') # Anhand von festen IDs
+# branch_start = find_idx_start(data, method='examples') # Anhand von festen IDs
 # branch_start = find_idx_start(data,0.001) # Anhand von anderen Methoden
 # branch_start = find_idx_start(data, method='random',k=50) # Anhand von festen IDs
 # branch_start = np.reshape(branch_start, (10,5)) # ToDo: Testen
 # branch_start = find_idx_start(data, method='test') # Anhand von festen IDs
-# branch_start = find_idx_start(data, method='all') # Anhand von festen IDs
+branch_start = find_idx_start(data, method='all') # Anhand von festen IDs
 # branch_start = find_idx_start(data, method='alles_clustern')
 # branch_start = np.reshape(branch_start, (5,10)) # ToDo: Testen
 
 print("Sätzlinge gepflanzt :D")
 
 # Zeitbegrenzung und beta festlegen
-# beta_input = [400, 400, 300, 300, 200, 200, 100]
+beta_input = [400, 400, 300, 300, 200, 200, 100]
 # beta_input = [100]
 # beta_input = [100, 90, 70, 50, 50]
-beta_input = [50, 30, 30, 20]
+# beta_input = [50, 30, 30, 20]
 if isinstance(beta_input, int):
     beta_input = [beta_input]*50
 elif len(beta_input) < 50:
@@ -66,7 +66,12 @@ for branch_v in branch_start:
         final_guete = final_branch.get_guetemass()
         print("Aktueller Bestwert:")
         final_branch.print_summary()
-
+        # Lösung speichern
+        ERG_a, ERG_t_m, ERG_t_arr = final_branch.get_result()
+        x = SpoC_Kontrolle.convert_to_chromosome(ERG_t_arr + ERG_t_m + ERG_a)
+        create_submission("spoc-mining", "mine-the-belt", x,
+                          "TUDa_GoldRush_submission_file_" + str(final_branch.get_start_asteroid()) + ".json",
+                          "TUDa_GoldRush", "submission_description")
 
 # Beste beendete Pfade ausgeben
 # print("============ beendete Branches: ============")

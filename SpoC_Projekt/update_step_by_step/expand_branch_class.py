@@ -167,7 +167,7 @@ class Seed:
 
         return cluster_iteration
 
-    def _get_cluster_by_material(self, materials, radius=3000, t_flug=15):
+    def _get_cluster_by_material(self, materials, t_flug=15, knn_type=False, radius=3000, k=50):
         """
         Erstellt Cluster für aktuellen Asteroiden aus allen Asteroiden, die übergebene Materialien besitzen
         :param materials: int oder list of ints - Liste von Materialien, die geclustert werden sollen
@@ -182,8 +182,11 @@ class Seed:
             print(f"Keine Asteroiden mit den Materialien {materials} mehr vorhanden.")
             return []
         knn = phasing.knn(candidates, pk.epoch(T_START.mjd2000 + self.t_arr + self.t_opt), 'orbital', T=t_flug) # ToDo T lässt sich auch anders wählen
-        _, neighb_idx, _ = knn.find_neighbours(SpoC.get_asteroid(self.asteroid_id),
-                                                             query_type='ball', r=radius)
+        if knn_type:
+            _, neighb_idx, _ = knn.find_neighbours(SpoC.get_asteroid(self.asteroid_id), query_type='knn', k=k)
+        else:
+            _, neighb_idx, _ = knn.find_neighbours(SpoC.get_asteroid(self.asteroid_id), query_type='ball', r=radius)
+
         neighb_idx = list(neighb_idx)
 
         # Prüfen, dass Cluster wie gewollt:
@@ -239,7 +242,7 @@ class Seed:
         """
         # Prüfen, ob noch ein Schritt notwendig
         if T_DAUER-45 < self.t_arr:
-            print("Letzter Asteroid")
+            # print("Letzter Asteroid")
             # self.visited[-1]['t_m'] = Branch.T_DAUER-self.visited[-1]['t_arr']
             raise StopIteration
         # Prüfen, ob Material des aktuellen Asteroiden wichtig ist
@@ -263,7 +266,7 @@ class Seed:
                 t_flug = 15
                 radius = 3000
             # Cluster bilden für die Materialien aus materials
-            neighbour_ids = self._get_cluster_by_material(materials, radius, t_flug)
+            neighbour_ids = self._get_cluster_by_material(materials, t_flug=t_flug, radius=radius)
             # Iteration durch Nachbar. Hinzufügen zu Menge, wenn erreichbar
             for asteroid_2_id in neighbour_ids:
                 # Prüfen, dass Clusterbildung korrekt verlaufen ist
@@ -304,19 +307,19 @@ class Seed:
             if len(possible_steps) != 0:
                 if max(masses) > 0.5:
                     break
-                else:
-                    print(f"Für Materialien {materials} wurden nicht ausreichend Lösungen gefunden. Es wird weitergesucht.")
+                # else:
+                    # print(f"Für Materialien {materials} wurden nicht ausreichend Lösungen gefunden. Es wird weitergesucht.")
         return possible_steps
 
 
 
 
-# ToDo: Nachdem entschieden wurde, dass ein Branch-Objekt weitergeführt wird, muss das t_m des letzten angepasst werden
+# Nachdem entschieden wurde, dass ein Branch-Objekt weitergeführt wird, muss das t_m des letzten angepasst werden
 #   PROBLEM: Das t_m kann für verschiedene Ausführungen unterschiedlich sein!!!
 #   => Es muss im aktuellen Branch das t_m vom letzten Asteroiden gespeichert werden
-#   => Erstellen des finalen Branches: t_m des letzten Asteroiden wird nach dessen Ankunftszeit gewählt.
+#   → Erstellen des finalen Branches: t_m des letzten Asteroiden wird nach dessen Ankunftszeit gewählt.
 #       Keine Optimierung notwendig
-# ToDo: Wird der Bestand, da als Referenz übergeben, auch bei den anderen Verändert? Wäre schlecht -> Deepcopy
+# Wird der Bestand, da als Referenz übergeben, auch bei den anderen Verändert? Wäre schlecht -> Deepcopy
 class ExpandBranch(Seed):
     def __init__(self, origin_branch, last_t_m, dv, asteroid_id, t_arr, step_score, fuzzy=True):
         """
@@ -549,7 +552,7 @@ def beam_search(branch_v, beta, analysis="step", fuzzy=True):
         branch_expand = np.concatenate((branch_expand, branch_expand_), axis=0)
         # score = np.concatenate((score, score_), axis=0)
 
-    print("branch_expand length: ", len(branch_expand))
+    # print("branch_expand length: ", len(branch_expand))
 
     # Beste Branches auswählen
     top_beta = []
@@ -561,7 +564,7 @@ def beam_search(branch_v, beta, analysis="step", fuzzy=True):
     else:
         top_beta = branch_expand
 
-    print("beam search done, top-beta length: ", len(top_beta))
+    # print("beam search done, top-beta length: ", len(top_beta))
 
     return v_done, top_beta
 

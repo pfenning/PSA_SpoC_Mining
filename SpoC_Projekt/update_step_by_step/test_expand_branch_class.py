@@ -1,6 +1,6 @@
 import numpy as np
 import unittest
-from expand_branch_class import Seed, ExpandBranch, find_idx_start
+from expand_branch_class import Seed, ExpandBranch, find_idx_start, calc_candidate_ids
 from SpoC_Constants import T_DAUER, dict_asteroids, data, DV_per_propellant, get_asteroid_material,TIME_TO_MINE_FULLY
 
 
@@ -55,7 +55,39 @@ class TestBranchClass(unittest.TestCase):
         pass
 
     def test_calc_candidate_ids(self):
-        pass
+        branch = []
+        branch.append(Seed(0))
+        my_fantasy_trip = [
+            [60, 3000, 1, 200, 0.0],
+            [60, 3000, 2, T_DAUER - 41, 0.0]
+        ]
+        for last_t_m, dv, ID, t_arr, score in my_fantasy_trip:
+            branch.append(ExpandBranch(branch[-1], last_t_m, dv, ID, t_arr, score))
+        # Einzelnes Material
+        materials = [3]
+        candidate_ids = calc_candidate_ids(branch[-1], materials)
+        self._test_candidates(candidate_ids, materials)
+        # Zwei Materialien
+        materials = [1, 2]
+        candidate_ids = calc_candidate_ids(branch[-1], materials)
+        self._test_candidates(candidate_ids, materials)
+        # Drei
+        materials = range(3)
+        candidate_ids = calc_candidate_ids(branch[-1], materials)
+        self._test_candidates(candidate_ids, materials)
+        # Alles
+        materials = range(4)
+        candidate_ids = calc_candidate_ids(branch[-1], materials)
+        self._test_candidates(candidate_ids, materials)
+
+    def _test_candidates(self, candidate_ids, material):
+        for asteroid_id in [0, 1, 2]:
+            self.assertNotIn(0, candidate_ids)
+        for asteroid_id in range(3,10000):
+            if get_asteroid_material(asteroid_id) in material:
+                self.assertIn(asteroid_id, candidate_ids)
+            else:
+                self.assertNotIn(asteroid_id, candidate_ids)
 
     def test_get_cluster_by_material(self):
         branch = Seed(asteroid_id=0)

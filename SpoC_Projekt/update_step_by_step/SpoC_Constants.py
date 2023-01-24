@@ -262,7 +262,7 @@ def time_optimize(asteroid1, asteroid1_mas, asteroid1_mat,
             # Zahlenfindung: Siehe MathTests.py
             if dv_t_flug[i] / DV_per_propellant <= limit:    # Nur hinzufügen, wenn erreichbar
                 t_flug_of_results.append(t_flug_1[i])
-                rank_t_flug.append(2-t_flug_1[i]/75 + 0.5*(2.0 - (dv_t_flug[i] / 2100) - 0.2 * (2600 / (dv_t_flug[i] + 600))))
+                rank_t_flug.append(2-t_flug_1[i]/45 + 0.5*(2.0 - (dv_t_flug[i] / 2100) - 0.2 * (2700 / (dv_t_flug[i] + 600))))
                 if print_result:            # ToDo:Test
                     print(f"{t_flug_1[i]} | {dv_t_flug[i]:.0f} | {rank_t_flug[-1]:.2f}")
 
