@@ -100,18 +100,22 @@ class Seed:
             sorted_materials.append(x)
         return sorted_material_types, sorted_materials
 
-    def _get_cluster_case(self, sprit_bei_start, bevorzugen=1.7, sprit_save=None):
+    def _get_cluster_case(self, bestand_bei_start=None, bevorzugen=1.7, sprit_save=None):
         """
         Bestimmt den Cluster-Case
-        :param: sprit_bei_start: Füllstand des Tanks beim Start zum neuen Asteroiden
-        :param: Wahl der Grenzen fürs Tanken
+        :param bestand_bei_start:   (minimaler) Bestand bei Start
+        :param sprit_save:          Wahl der Grenzen fürs Tanken
         :return: Array von Material-Typ-Arrays für Clusterbildung
         """
-
         if sprit_save is None:
             sprit_save = [0.2, 0.4]
+        if bestand_bei_start is None:
+            bestand_bei_start = self.bestand
+
         # Materialtypen nach Bestand sortieren (ohne Sprit)
-        sorted_material_types, sorted_materials = self._sort_material_types()
+        sorted_material_types, sorted_materials = self._sort_material_types(vector=bestand_bei_start[:3])
+        sprit_bei_start = bestand_bei_start[3]
+
         # Fallunterscheidung
         if self.t_arr > T_DAUER-45:   # letzer Asteroid
             cluster_iteration = [[sorted_material_types[0]], [sorted_material_types[1], sorted_material_types[2], 3]]
@@ -183,31 +187,15 @@ class Seed:
         candidates = [SpoC.get_asteroid(asteroid_id) for asteroid_id in candidates_id]
 
         if not candidates:
-            print(f"Keine Asteroiden mit den Materialien {materials} mehr vorhanden.")
+            # print(f"Keine Asteroiden mit den Materialien {materials} mehr vorhanden.")
             return []
-        knn = phasing.knn(candidates, pk.epoch(T_START.mjd2000 + self.t_arr + self.t_opt), 'orbital', T=t_flug) # ToDo T lässt sich auch anders wählen
+        knn = phasing.knn(candidates, pk.epoch(T_START.mjd2000 + self.t_arr + self.t_opt), 'orbital', T=t_flug)
         if knn_type:
             _, neighb_idx, _ = knn.find_neighbours(SpoC.get_asteroid(self.asteroid_id), query_type='knn', k=k)
         else:
             _, neighb_idx, _ = knn.find_neighbours(SpoC.get_asteroid(self.asteroid_id), query_type='ball', r=radius)
 
-        neighb_idx = list(neighb_idx)
-
-        # Prüfen, dass Cluster wie gewollt:
-        neighb_id = [candidates_id[index] for index in neighb_idx if candidates_id[index] != self.asteroid_id]
-
-        # Testverfahren ToDo auskommentieren
-        # print(f"Cluster wurde für die Materialien {materials} gebildet.")
-        assert self._control_cluster_materials(neighb_id, materials), \
-            f"Expected: {materials}, got {np.unique([SpoC.get_asteroid_material(asteroid_id) for asteroid_id in neighb_id])}"
-
-        return neighb_id
-
-    def _control_cluster_materials(self, neighb_id, materials):
-        for asteroid_id in neighb_id:
-            if SpoC.get_asteroid_material(asteroid_id) not in materials:
-                return False
-        return True
+        return [candidates_id[index] for index in list(neighb_idx) if candidates_id[index] != self.asteroid_id]
 
     def _calc_sprit_bei_start(self):
         """
@@ -224,17 +212,13 @@ class Seed:
             return self.bestand[-1]
 
     def _current_material_is_needed(self):
-        # return False
         current_material = SpoC.get_asteroid_material(self.asteroid_id)
         # Sprit Asteroid
         if current_material == 3:
             return False # Wird in Time-Optimize gelöst
         # Material Asteroid
         rar_material = self._sort_material_types(verf)[0][0]
-        if current_material == rar_material or (1.5*self.bestand[current_material] < max(self.bestand[:3])):
-            return True
-        else:
-            return False
+        return current_material == rar_material or (1.5*self.bestand[current_material] < max(self.bestand[:3]))
 
     def get_next_possible_steps(self, fast=False, knn_type = False):
         """
@@ -262,9 +246,14 @@ class Seed:
         possible_steps = []
         masses = []
         # Sprit bei Start approximieren/nach oben abschätzen
-        sprit_bei_start = self._calc_sprit_bei_start()
+        # sprit_bei_start = self._calc_sprit_bei_start()  # ToDo Ausweiten auf gesamten Bestand
+        bestand_bei_start = self.bestand[:]
+        SpoC.abbau(bestand_bei_start,  # Kopie der Liste Bestand
+                   SpoC.get_asteroid_mass(self.asteroid_id),
+                   SpoC.get_asteroid_material(self.asteroid_id),
+                   0.7 * self.t_opt)
         # Cluster-Fall bestimmen
-        cluster_iteration = self._get_cluster_case(sprit_bei_start, sprit_save=cluster_case)
+        cluster_iteration = self._get_cluster_case(bestand_bei_start, sprit_save=cluster_case)
         # Durch Fälle iterieren, bis possible_steps nicht leer & Massen > 0.5, oder Cluster_Iteration fertig
         for materials in cluster_iteration:
             if fast:
@@ -285,25 +274,22 @@ class Seed:
             neighbour_ids = self._get_cluster_by_material(materials, t_flug=t_flug, radius=radius, knn_type=knn_type)
             # Iteration durch Nachbar. Hinzufügen zu Menge, wenn erreichbar
             for asteroid_2_id in neighbour_ids:
-                # Prüfen, dass Clusterbildung korrekt verlaufen ist
-                assert SpoC.get_asteroid_material(asteroid_2_id) in materials, \
-                    f"Asteroid 2 besitzt ein Material, das nicht gesucht wird"
                 t_m_opt_, t_flug_min_dv_, dv_min_ = SpoC.time_optimize(SpoC.get_asteroid(self.asteroid_id),
                                                                        SpoC.get_asteroid_mass(self.asteroid_id),
                                                                        SpoC.get_asteroid_material(self.asteroid_id),
                                                                        SpoC.get_asteroid(asteroid_2_id),
                                                                        t_arr=self.t_arr,
                                                                        t_opt=self.t_opt,
-                                                                       limit=sprit_bei_start,
+                                                                       limit=bestand_bei_start[3],
                                                                        needed=needed,
                                                                        time_divider=time_divider)
                 # Bewertung nur durchführen, wenn Asteroid auch erreichbar
-                if (dv_min_ / DV_per_propellant) < sprit_bei_start:
+                if (dv_min_ / DV_per_propellant) < bestand_bei_start[3]:
                     if self.fuzzy:
                         # Bewertung des Asteroids und des Wechsels
                         score = SpoC.my_system.calculate_score(  # ToDo: Über Normierung des delta_v sprechen
                             # Tank nach Flug → dv muss normiert werden
-                            t_n=(sprit_bei_start - (dv_min_/DV_per_propellant)),
+                            t_n=(bestand_bei_start[3] - (dv_min_/DV_per_propellant)),
                             delta_v=(dv_min_/3000),  # Diese Normierung in Ordnung? - Dachte ganz sinnvoll
                             bes=SpoC.norm_bestand(self.bestand, SpoC.get_asteroid_material(asteroid_2_id)), # , Branch.norm_material
                             verf=SpoC.verf[SpoC.get_asteroid_material(asteroid_2_id)],
@@ -605,8 +591,8 @@ def find_idx_start(data, intervall=0.01, method='mean semimajor', fuzzy=True, k=
             if (line[-1] == 3) and ((mitte_semimajor-grenze) <= line[1] < (mitte_semimajor+grenze)):
                 start_branches.append(Seed(int(line[0]), fuzzy=fuzzy))
     elif method == 'examples':
-        start_ids = [1446] # [1446, 3622, 5384, 2257, 925]
-        # 3622 -> 2.38, 5384 -> 4.23, 2257 -> 4.4, 1446 -> 7.99
+        start_ids = [2447] # [1446, 3622, 5384, 2257, 925, 2447]
+        # 3622 -> 2.38, 5384 -> 4.23, 2257 -> 4.4, 1446 -> 7.99, 2447 -> 8.37
         for ID in start_ids:
             start_branches.append(Seed(ID))
     elif method == 'random':
@@ -622,9 +608,7 @@ def find_idx_start(data, intervall=0.01, method='mean semimajor', fuzzy=True, k=
         ##########################################################################
         laenge_start_cl = []
         knn = phasing.knn(asteroids, SpoC.T_START, 'orbital', T=30)  # .mjd2000 + i
-        for line in data:
-            ast_id = int(line[0])
-            print(ast_id)
+        for ast_id in dict_asteroids.keys():
             if SpoC.get_asteroid_material(ast_id) != 1 and SpoC.get_asteroid_material(ast_id) != 3:
                 _, neighb_idx, _ = knn.find_neighbours(ast_id, query_type='ball', r=5000)
                 neighb_idx = list(neighb_idx)
@@ -640,122 +624,6 @@ def find_idx_start(data, intervall=0.01, method='mean semimajor', fuzzy=True, k=
         start_branches = []
         for ID in top_starts:
             start_branches.append(Seed(ID))
-    elif method == 'test':
-        import pykep as pk
-        data = np.loadtxt("SpoC_Datensatz.txt")
-
-        T_START = pk.epoch_from_iso_string("30190302T000000")  # Start and end epochs
-        T_END = pk.epoch_from_iso_string("30240302T000000")
-        T_DAUER = 1827
-        G = 6.67430e-11  # Cavendish constant (m^3/s^2/kg)
-        SM = 1.989e30  # Sun_mass (kg)
-        MS = 8.98266512e-2 * SM  # Mass of the Trappist-1 star
-        MU_TRAPPIST = G * MS  # Mu of the Trappist-1 star
-        DV_per_propellant = 10000  # DV per propellant [m/s]
-        TIME_TO_MINE_FULLY = 30  # Maximum time to fully mine an asteroid
-        t_opt = 0.0
-
-        asteroids_kp = []
-        for line in data:
-            p = pk.planet.keplerian(
-                T_START,
-                (
-                    line[1],
-                    line[2],
-                    line[3],
-                    line[4],
-                    line[5],
-                    line[6],
-                ),
-                MU_TRAPPIST,
-                G * line[7],  # mass in planet is not used in UDP, instead separate array below
-                1,  # these variable are not relevant for this problem
-                1.1,  # these variable are not relevant for this problem
-                "Asteroid " + str(int(line[0])),
-            )
-            asteroids_kp.append(p)
-
-        # entire_ids = asteroids_kp[:,0]
-
-        '''
-        Vorgabe des ersten und zweiten Asteroiden!!
-        Insbesondere der zweite Asteroid ist von Bedeutung
-        ==> Rückwirkenden Branch erstellen!! 
-        '''
-
-        # 1) den ZWEITEN Asteroiden finden, aus minimaler Verfügbarkeit und maximaler Masse
-        ast_2_idx_v = []
-        min_mat_mass = []
-        min_mat = find_min_material(data)
-        for i in range(0, len(data)):
-            if data[i, -1] == min_mat:
-                min_mat_mass.append(data[i, -2])
-                ast_2_idx_v.append(data[i, 0])
-        second_asteroid = np.argpartition(min_mat_mass, -1)[-1:]  # Vektor mit Index
-        asteroid_2_idx = int(ast_2_idx_v[second_asteroid[0]])
-        asteroid_2_masse = min_mat_mass[second_asteroid[0]]
-        print(asteroid_2_idx, asteroid_2_masse)
-        # entire_ids.pop(asteroid_2_idx)
-
-        # 2) Cluster um zweiten Asteroiden bilden, ERSTEN Asteroiden auswählen mit minimalem Abstand!!
-        knn = phasing.knn(asteroids_kp, t_opt, 'orbital',
-                          T=15)  # wie wähle ich t_arr und t_opt?  # visited[-1]['t_arr'] + t_opt
-        neighb_ind = SpoC.clustering(knn, asteroids_kp, asteroid_2_idx)
-        # Den zweiten Ast.-Idx rausschmeißen
-        if asteroid_2_idx in neighb_ind: neighb_ind.pop(neighb_ind.index(asteroid_2_idx))
-
-        # print(neighb_ind) # die neighb_dis ist immer "None" !!!!! DAS KÖNNTE AUSWAHL VERBESSERN
-
-        possible_steps = []
-        for mat in neighb_ind:
-            # print(mat)
-            # print(data[mat,-1])
-            if data[mat, -1] == 3: possible_steps.append(mat)
-
-        # print(possible_steps)
-
-        # 3) FALSCH HERUM BRANCH LAUFEN LASSEN
-        infos_poss_steps = []
-        DVs = []
-        for ast_1 in possible_steps:
-            asteroid_1_kp = asteroids_kp[ast_1]
-            asteroid_1_mas = data[ast_1, -2]
-            asteroid_1_mat = data[ast_1, -1]
-            asteroid_2_kp = asteroids_kp[asteroid_2_idx]
-            t_m_opt_, t_flug_min_dv_, dv_min_ = SpoC.time_optimize(asteroid_1_kp,
-                                                                  asteroid_1_mas,
-                                                                  asteroid_1_mat,
-                                                                  asteroid_2_kp,
-                                                                  t_arr=0.0,
-                                                                  t_opt=t_opt,
-                                                                  limit=1.0)
-            infos_poss_steps.append([t_m_opt_, t_flug_min_dv_, dv_min_])
-            DVs.append(dv_min_)
-
-        idx_min_dv = DVs.index(min(DVs))
-        asteroid_1_idx = possible_steps[idx_min_dv]
-
-        t_m_opt_, t_flug_min_dv_, dv_min_ = infos_poss_steps[idx_min_dv][0], infos_poss_steps[idx_min_dv][1], \
-        infos_poss_steps[idx_min_dv][2]
-
-        t_m = t_m_opt_
-        step = {'id': asteroid_2_idx,
-                't_m': 0.0,
-                't_arr': t_m_opt_ + t_flug_min_dv_,
-                'score last step': 0.0,  # score??
-                'branch score yet': 0.0}
-        dv = dv_min_
-
-        # 4) Branch erstellen
-        asteroid1 = Seed(asteroid_1_idx,fuzzy=fuzzy)
-        start_branches.append(
-            ExpandBranch(asteroid1,
-                         asteroid_id=asteroid_2_idx,
-                         last_t_m=0.0, dv=dv_min_,
-                         t_arr=t_m_opt_ + t_flug_min_dv_,
-                         step_score=0.0,fuzzy=fuzzy))
-        print(start_branches[0])
-
 
     return start_branches
 

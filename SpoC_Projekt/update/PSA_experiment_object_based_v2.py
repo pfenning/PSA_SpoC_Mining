@@ -9,7 +9,7 @@ from from_website import SpoC_Kontrolle as SpoC
 from from_website.submisson_helper import create_submission
 
 
-data = np.loadtxt("SpoC_Datensatz.txt")
+data = np.loadtxt("candidates.txt")
 
 T_DAUER = 1827
 minutes = 15

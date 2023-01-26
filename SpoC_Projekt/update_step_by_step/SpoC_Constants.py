@@ -22,7 +22,7 @@ TIME_TO_MINE_FULLY = 30  # Maximum time to fully mine an asteroid
 #################
 
 # Loading data as keplerian elements (planets) in an "array"
-data = np.loadtxt("SpoC_Datensatz.txt")
+data = np.loadtxt("candidates.txt")
 dict_asteroids ={int(line[0]):  # ID
     [pk.planet.keplerian(       # Keplerian-Object
         T_START,

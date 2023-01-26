@@ -32,22 +32,22 @@ class TestBranchClass(unittest.TestCase):
         self._test_iteration(expected_iteration=[[1], [0, 2, 3]],
                              bestand=[1, 0, 2, 0.3],
                              t_arr=T_DAUER - 40,
-                             sprit_bei_start=0.1)
+                             bestand_bei_start=[1, 0, 2, 0.3])
         # Sprit fast leer
         self._test_iteration(expected_iteration=[[3]],
-                             bestand=[1, 1, 1, 0.3],
+                             bestand=[1, 1, 1, 0.15],
                              t_arr=200,
-                             sprit_bei_start=0.1)
+                             bestand_bei_start=[1, 1, 1, 0.15])
         # ein Rohstoff wenig, Rest viel
         self._test_iteration(expected_iteration=[[1], [0, 2], [3]],
                              bestand=[3, 0.5, 3, 0.5],
                              t_arr=200,
-                             sprit_bei_start=0.5)
-    def _test_iteration(self, expected_iteration, bestand, t_arr, sprit_bei_start):
+                             bestand_bei_start=[3, 0.5, 3, 0.5])
+    def _test_iteration(self, expected_iteration, bestand, t_arr, bestand_bei_start):
         branch = Seed(asteroid_id=0)
-        branch.bestand = bestand
+        # branch.bestand = bestand
         branch.t_arr = t_arr
-        cluster_iteration = branch._get_cluster_case(sprit_bei_start)
+        cluster_iteration = branch._get_cluster_case(bestand_bei_start)
         for expected, got in zip(expected_iteration, cluster_iteration):
             self.assertEqual(expected, got)
 
@@ -79,7 +79,6 @@ class TestBranchClass(unittest.TestCase):
         materials = range(4)
         candidate_ids = calc_candidate_ids(branch[-1], materials)
         self._test_candidates(candidate_ids, materials)
-
     def _test_candidates(self, candidate_ids, material):
         for asteroid_id in [0, 1, 2]:
             self.assertNotIn(0, candidate_ids)
