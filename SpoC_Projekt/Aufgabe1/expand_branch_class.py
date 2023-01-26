@@ -1,12 +1,10 @@
 import random
-
 import numpy as np
 from pykep import phasing
 import pykep as pk
 import copy
+
 import SpoC_Constants as SpoC
-
-
 from SpoC_Constants import dict_asteroids, DV_per_propellant, T_DAUER, T_START, verf, material_most_needed
 
 ##############################################

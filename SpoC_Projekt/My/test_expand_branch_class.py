@@ -1,7 +1,7 @@
 import numpy as np
 import unittest
-from expand_branch_class import Seed, ExpandBranch, find_idx_start, calc_candidate_ids
-from SpoC_Constants import T_DAUER, dict_asteroids, data, get_asteroid_material,TIME_TO_MINE_FULLY
+from PSA_SpoC_Mining.SpoC_Projekt.expand_branch_class import Seed, ExpandBranch, find_idx_start, calc_candidate_ids
+from PSA_SpoC_Mining.SpoC_Projekt.SpoC_Constants import T_DAUER, dict_asteroids, data, get_asteroid_material,TIME_TO_MINE_FULLY
 
 
 class TestBranchClass(unittest.TestCase):

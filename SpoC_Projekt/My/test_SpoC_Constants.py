@@ -1,5 +1,5 @@
-from SpoC_Constants import dict_asteroids, verf, TIME_TO_MINE_FULLY
-import SpoC_Constants as SpoC
+from PSA_SpoC_Mining.SpoC_Projekt.SpoC_Constants import dict_asteroids, verf, TIME_TO_MINE_FULLY
+from PSA_SpoC_Mining.SpoC_Projekt import SpoC_Constants as SpoC
 import unittest
 from pykep import phasing
 import time

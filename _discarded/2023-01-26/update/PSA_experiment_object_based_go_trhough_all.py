@@ -12,7 +12,7 @@ from from_website.submisson_helper import create_submission
 
 
 
-data = np.loadtxt("candidates.txt")
+data = np.loadtxt("Asteroidengürtel.txt")
 
 T_DAUER = 1827
 minutes = 15

@@ -42,7 +42,7 @@ TIME_TO_MINE_FULLY = 30                         # Maximum time to fully mine an 
 """
 
 # Loading data as keplerian elements (planets) in an "array"
-data = np.loadtxt("C:/Users/ingap/OneDrive/Desktop/Uni/WiSe_22-23/PSA/PSA_SpoC_Mining/SpoC_Projekt/data/candidates.txt")
+data = np.loadtxt("C:/Users/ingap/OneDrive/Desktop/Uni/WiSe_22-23/PSA/PSA_SpoC_Mining/SpoC_Projekt/data/Asteroidengürtel.txt")
 asteroids_original = []
 for line in data:
     p = pk.planet.keplerian(

@@ -27,7 +27,7 @@ DV_per_propellant = 10000
 TIME_TO_MINE_FULLY = 30
 
 # Loading the asteroid data
-data = np.loadtxt("./data/spoc/mining/candidates.txt")
+data = np.loadtxt("./data/spoc/mining/Asteroidengürtel.txt")
 asteroids = []
 for line in data:
     p = pk.planet.keplerian(

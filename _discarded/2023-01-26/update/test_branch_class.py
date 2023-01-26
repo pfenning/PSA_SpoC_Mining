@@ -30,7 +30,7 @@ class TestBranchClass(unittest.TestCase):
     dict_asteroids = dict()  # "Beispiel Dictionary für neue Objekte"
 
     # Loading data as keplerian elements (planets) in an "array"
-    data = np.loadtxt("candidates.txt")
+    data = np.loadtxt("Asteroidengürtel.txt")
     for line in data:
         p = pk.planet.keplerian(
             T_START,
