@@ -1,0 +1,7 @@
+Benötigte Libaries für find_best_solution_PSA_anytime.py:
+numpy
+pykep
+skfuzzy
+matplotlib
+copy
+random
