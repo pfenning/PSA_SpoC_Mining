@@ -185,7 +185,6 @@ class Seed:
         candidates = [SpoC.get_asteroid(asteroid_id) for asteroid_id in candidates_id]
 
         if not candidates:
-            # print(f"Keine Asteroiden mit den Materialien {materials} mehr vorhanden.")
             return []
         knn = phasing.knn(candidates, pk.epoch(T_START.mjd2000 + self.t_arr + self.t_opt), 'orbital', T=t_flug)
         if knn_type:
@@ -230,8 +229,6 @@ class Seed:
         """
         # Prüfen, ob noch ein Schritt notwendig
         if T_DAUER-45 < self.t_arr:
-            # print("Letzter Asteroid")
-            # self.visited[-1]['t_m'] = Branch.T_DAUER-self.visited[-1]['t_arr']
             raise StopIteration
         # Prüfen, ob Material des aktuellen Asteroiden wichtig ist
         needed = self._current_material_is_needed()
@@ -245,8 +242,7 @@ class Seed:
         # Speicher für mögliche Schritte
         possible_steps = []
         masses = []
-        # Sprit bei Start approximieren/nach oben abschätzen
-        # sprit_bei_start = self._calc_sprit_bei_start()  # ToDo Ausweiten auf gesamten Bestand
+        # Bestand bei Start approximieren/nach oben abschätzen
         bestand_bei_start = self.bestand[:]
         SpoC.abbau(bestand_bei_start,  # Kopie der Liste Bestand
                    SpoC.get_asteroid_mass(self.asteroid_id),
@@ -310,8 +306,6 @@ class Seed:
             if len(possible_steps) != 0:
                 if max(masses) > 0.5:
                     break
-                # else:
-                    # print(f"Für Materialien {materials} wurden nicht ausreichend Lösungen gefunden. Es wird weitergesucht.")
         return possible_steps
 
 
@@ -335,7 +329,6 @@ class ExpandBranch(Seed):
         :return: Objekt, dass Schritt zu Ziel-Asteroiden beschreibt
         """
         super().__init__(asteroid_id, fuzzy)
-        # super(Seed).__init__(asteroid_id)
         # Ursprungspfad
         self.origin_branch = origin_branch
         # Abbauzeit auf VORHERIGEM Asteroiden (muss, da Abzweigungen vom letzten Pfad sich in t_m unterscheiden können
@@ -413,15 +406,6 @@ class ExpandBranch(Seed):
         assert self.get_step_count()>0, "Step-Count wird falsch bestimmt"
         return (self.origin_branch.get_step_count() * self.origin_branch.get_branch_score() + self.step_score) \
             /self.get_step_count()
-
-    # def print_last_step(self):
-    #     print(f"=================== Neuer Schritt =================== \n"
-    #           f"Abbauzeit auf letztem Assteroiden:{self.last_t_m:.0f} Tage, \n"
-    #           f"Neuer Asteroid:\n"
-    #           f"ID {self.asteroid_id}, "
-    #           f"Ankunftstag: {self.t_arr:.0f}, ",
-    #           f"Material:{SpoC.get_asteroid_material(self.asteroid_id)}", "\n",
-    #           f"Bestand bei Ankunft am neuen Asteroiden:", self.bestand)
 
     def get_guetemass(self):
         """
@@ -556,7 +540,6 @@ def beam_search(branch_v, beta, analysis="step", fuzzy=True, fast=False, knn_typ
                     score.append(branch_expand_[-1].step_score)
 
         branch_expand = np.concatenate((branch_expand, branch_expand_), axis=0)
-        # score = np.concatenate((score, score_), axis=0)
 
     # print("branch_expand length: ", len(branch_expand))
 
@@ -569,8 +552,6 @@ def beam_search(branch_v, beta, analysis="step", fuzzy=True, fast=False, knn_typ
             top_beta.append(branch_expand[line])
     else:
         top_beta = branch_expand
-
-    # print("beam search done, top-beta length: ", len(top_beta))
 
     return v_done, top_beta
 
@@ -615,11 +596,10 @@ def find_idx_start(data, intervall=0.01, method='mean semimajor', fuzzy=True, k=
                 hilfe = []
                 for mat in neighb_idx:
                     if SpoC.get_asteroid_material(mat) == 1: hilfe.append(mat)
-                laenge_start_cl.append(len(hilfe))  # [len(neighb_idx), ]
+                laenge_start_cl.append(len(hilfe))
             else:
-                laenge_start_cl.append(0)  # [len(neighb_idx), ]
+                laenge_start_cl.append(0)
 
-        # print(laenge_start_cl)
         top_starts = np.argpartition(laenge_start_cl, -alpha)[-alpha:]
         start_branches = []
         for ID in top_starts:
