@@ -283,7 +283,7 @@ class Seed:
                 if (dv_min_ / DV_per_propellant) < bestand_bei_start[3]:
                     if self.fuzzy:
                         # Bewertung des Asteroids und des Wechsels
-                        score = SpoC.my_system.calculate_score(  # ToDo: Über Normierung des delta_v sprechen
+                        score = SpoC.my_system.calculate_score(
                             # Tank nach Flug → dv muss normiert werden
                             t_n=(bestand_bei_start[3] - (dv_min_/DV_per_propellant)),
                             delta_v=(dv_min_/3000),  # Diese Normierung in Ordnung? - Dachte ganz sinnvoll
@@ -306,6 +306,8 @@ class Seed:
             if len(possible_steps) != 0:
                 if max(masses) > 0.5:
                     break
+                # else:
+                    # print(f"Für Materialien {materials} wurden nicht ausreichend Lösungen gefunden. Es wird weitergesucht.")
         return possible_steps
 
 
@@ -530,8 +532,6 @@ def beam_search(branch_v, beta, analysis="step", fuzzy=True, fast=False, knn_typ
                                                    asteroid_id=step['asteroid_2_id'],
                                                    t_arr=step['t_arr'],
                                                    step_score=step['step_score'], fuzzy=fuzzy))
-                # ToDo: Methodenauswahl für Score-Berechnung:
-                #  hier soll übergeben werden, welche Methode ausgewählt wird
                 if analysis == 'branch':
                     score.append(branch_expand_[-1].get_branch_score())
                 elif analysis == 'branch and guete':

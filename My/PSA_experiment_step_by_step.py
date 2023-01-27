@@ -17,6 +17,7 @@ knn_type = True            # Ob knn für das Clustern verwendet werden soll (son
 
 ##################### Code Läuft #####################
 # Sätzlinge finden :)
+# branch_start = find_idx_start(data, method='examples')
 branch_start = find_idx_start(data, method='all') # Anhand von festen IDs
 print("Sätzlinge gepflanzt :D")
 
@@ -37,7 +38,9 @@ time_start = time.perf_counter()
 # Beam-Search-Tree erstellen
 beendete_Branches = []
 final_guete = 0.0
+asteroid_counter = 0
 for branch_v in branch_start:
+    asteroid_counter += len(branch_v)
     time_part_start = time.perf_counter()
     if isinstance(branch_v, Seed):
         branch_v = [branch_v]
@@ -52,6 +55,7 @@ for branch_v in branch_start:
     # Zwischenzeit ausgeben:
     time_part_finish = time.perf_counter()
     print(f"Dauer der Suche eines Abschnitts:{time_part_finish - time_part_start:.0f}s")
+    print(f"Betrachtet bis Asteroid{asteroid_counter}")
     # Bestes Zwischenergebnis speichern & Submission erstellen
     if 0 < len(beendete_Branches):
         best_branch_in_part = beendete_Branches[np.argmin([branch.get_guetemass() for branch in beendete_Branches])]
