@@ -1,8 +1,6 @@
 import numpy as np
 import pykep as pk
 
-from Moduls.fuzzy_system import FuzzySystem
-
 #########################
 # Static Class Constants
 #########################
@@ -43,33 +41,6 @@ dict_asteroids ={int(line[0]):  # ID
         int(line[-1])]          # Material
     for line in data}
 
-
-# for i in range(10):
-#     print(dict_asteroids[i][1], dict_asteroids[i][2])
-# for state in zip(dict_asteroids.keys(),dict_asteroids.values()):
-#     print(state)
-
-# for line in data:
-#     p = pk.planet.keplerian(
-#         T_START,
-#         (
-#             line[1],
-#             line[2],
-#             line[3],
-#             line[4],
-#             line[5],
-#             line[6],
-#         ),
-#         MU_TRAPPIST,
-#         G * line[7],  # mass in planet is not used in UDP, instead separate array below
-#         1,  # these variable are not relevant for this problem
-#         1.1,  # these variable are not relevant for this problem
-#         "Asteroid " + str(int(line[0])),
-#     )
-#     asteroids_kp.append(p)
-#     dict_asteroids[int(line[0])] = [p, line[-2], int(line[-1])]  # Key = ID, Liste mit [Kaplerian, Masse, Material]
-
-
 def verfuegbarkeit():
     """
     Berechnet die ursprüngliche Verfügbarkeit der Materialien
@@ -95,10 +66,6 @@ def verfuegbarkeit():
 # GÜTE
 #########
 verf, material_most_needed = verfuegbarkeit()
-# print(f"Verfügbarkeit der Materialien:{verf}")
-# print(f"Bestmögliches Gütemass:{norm_material}")
-my_system = FuzzySystem(verf.min(), verf.max(), resolution=0.01)
-
 
 def get_t_opt(asteroid_id, prop_needed=None):
     """
@@ -154,8 +121,6 @@ def norm_bestand(bestand, material):
         return 0
     else:
         return bestand[material]/max(bestand[:3])
-    # else:
-    #     return bestand[material]/norm_material
 
 
 def get_dv(asteroid1, asteroid2, t_start, t_flug, print_result=False):
@@ -206,9 +171,6 @@ def clustering(knn, asteroids_kp, asteroid_1_idx, radius=4000):
     #     pass
     return neighb_inds
 
-
-# ToDo: Zeitraum der Flugzeit neu definieren (z.B. auf 5-46 in 4er Schritten)
-#       - Reicht Auflösung? Sonst: nach gefundenem Minimum nochmal einen halben Schritt in jede Richtung machen
 def time_optimize(asteroid1, asteroid1_mas, asteroid1_mat,
                   asteroid2, t_arr, t_opt, limit=1.0, print_result=False,
                   needed=False,

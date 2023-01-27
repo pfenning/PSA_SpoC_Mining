@@ -11,250 +11,155 @@ import numpy as np
 from TripInSpace import TripInSpace
 
 ########### Trip initialisieren ############
-t_arr_test = np.array([0.0,
-                  20.0,
-                  46.83879022985213,
-                  88.97969529198664,
-                  135.96216293541772,
-                  183.36653604474407,
-                  222.05218625679345,
-                  262.0417348142814,
-                  319.2459196093006,
-                  375.1631426027095,
-                  411.6589977831119,
-                  457.71575317095886,
-                  503.7349322072007,
-                  550.4107526093931,
-                  602.1719144645192,
-                  642.898416252558,
-                  682.5402316054478,
-                  736.3735100926535,
-                  794.2870672119819,
-                  829.4727001158566,
-                  867.2736257453322,
-                  906.2610971023935,
-                  949.1593914279853,
-                  995.7466989057391,
-                  1034.5112702151794,
-                  1082.3776115899673,
-                  1120.7888066945977,
-                  1166.2079509635387,
-                  1202.2134728516376,
-                  1246.9106749139876,
-                  1281.2105989454244,
-                  1327.9463000443225,
-                  1384.8638116378565,
-                  1424.2086983114316,
-                  1466.9193933851811,
-                  1513.634430731889,
-                  1562.0019197417091,
-                  1599.42787011835,
-                  1643.400902507891,
-                  1671.608969842855,
-                  1689.1883153381993,
-                  1740.4703860934164,
-                  1787.1834386435573])
-t_m_test = np.array([0.0,
-                  6.8387902298521315,
-                  26.140905062134514,
-                  26.982467643431075,
-                  27.40437310932633,
-                  24.685650212049367,
-                  19.989548557487986,
-                  31.204184795019184,
-                  27.917222993408913,
-                  22.49585518040235,
-                  18.056755387846984,
-                  28.01917903624183,
-                  26.675820402192304,
-                  29.761161855126097,
-                  28.726501788038814,
-                  17.6418153528898,
-                  29.83327848720574,
-                  29.913557119328452,
-                  27.185632903874662,
-                  17.800925629475664,
-                  22.987471357061327,
-                  22.89829432559175,
-                  28.587307477753836,
-                  22.76457130944022,
-                  21.866341374787808,
-                  26.41119510463037,
-                  29.419144268940922,
-                  18.00552188809892,
-                  26.697202062350033,
-                  14.299924031436893,
-                  28.73570109889804,
-                  28.917511593534144,
-                  23.344886673575143,
-                  18.710695073749605,
-                  28.715037346708055,
-                  26.367489009820087,
-                  15.425950376640884,
-                  21.973032389540933,
-                  4.208067334963956,
-                  5.579345495344229,
-                  27.28207075521709,
-                  26.713052550140944,
-                  39.81656135644266])
-a_test = [2257.0,
-                  2578.0,
-                  4719.0,
-                  3979.0,
-                  3606.0,
-                  1545.0,
-                  4784.0,
-                  3764.0,
-                  8866.0,
-                  5629.0,
-                  5827.0,
-                  780.0,
-                  350.0,
-                  5500.0,
-                  1044.0,
-                  8734.0,
-                  3021.0,
-                  3687.0,
-                  5351.0,
-                  4771.0,
-                  9117.0,
-                  2661.0,
-                  6781.0,
-                  8810.0,
-                  4142.0,
-                  2172.0,
-                  5434.0,
-                  6065.0,
-                  2522.0,
-                  6782.0,
-                  6264.0,
-                  6416.0,
-                  145.0,
-                  1876.0,
-                  3022.0,
-                  2694.0,
-                  3659.0,
-                  8988.0,
-                  7115.0,
-                  7016.0,
-                  831.0,
-                  6018.0,
-                  5037.0]
-a_int = [int(a_now) for a_now in a_test]
+# with open("Solution.txt","r") as tf:
+#     solution = np.array(tf.read()) # np.loadtxt("Solution.txt")
+# solution = np.loadtxt("Solution.txt", delimiter=",")
+solution = np.array([0.0, 14.0, 43.05195942972621, 108.44064918789744, 187.72271994311453, 231.58011877338353, 274.29667681758394, 319.0527790883107, 356.48929928069276, 404.82867806311134, 448.0875378535731, 491.1281545876904, 536.8528491725237, 584.17787433059, 638.9214997056258, 697.8197940312176, 749.1426301032599, 778.9435557327355, 835.8978491411494, 877.3022222504758, 915.6380291442449, 951.142865329752, 996.6296072220414, 1041.7845276563035, 1086.3694478305792, 1138.5436615300548, 1180.6041018730295, 1207.9301177581258, 1244.8659200020704, 1288.3865100316102, 1363.5724720762103, 1425.802499753223, 1468.5155523033638, 1522.8169987110996, 1571.4378508464004, 1614.537136194919, 1684.89286632459, 1736.7659544714788, 1783.874577529575, 0.0, 9.051959429726208, 37.388689758171225, 51.28207075521709, 29.857398830269005, 24.716558044200415, 24.75610227072673, 23.436520192382098, 24.339378782418564, 27.258859790461788, 27.040616734117293, 29.7246945848333, 29.325025158066317, 26.74362537503583, 30.89829432559175, 33.32283607204228, 17.800925629475664, 28.954293408413893, 27.40437310932633, 28.335806893769146, 19.50483618550705, 29.48674189228935, 23.15492043426198, 16.58492017427583, 28.17421369947553, 28.06044034297483, 21.326015885096343, 24.93580224394458, 21.520590029539893, 47.18596204460001, 34.23002767701266, 26.713052550140944, 28.301446407735835, 28.620852135300712, 23.0992853485186, 42.355730129670874, 31.873088146888993, 19.108623058096036, 43.125422470425065, 2447.0, 592.0, 6842.0, 831.0, 3965.0, 5051.0, 1552.0, 5694.0, 1202.0, 4671.0, 2378.0, 1409.0, 5268.0, 9509.0, 2661.0, 6781.0, 4771.0, 3167.0, 3606.0, 3709.0, 5120.0, 4934.0, 5231.0, 1139.0, 644.0, 1917.0, 9810.0, 2919.0, 480.0, 2023.0, 7916.0, 6018.0, 4862.0, 63.0, 6936.0, 4069.0, 9524.0, 8292.0, 9008.0, ])
+idx_split1 = int(len(solution)/3)
+idx_split2 = 2*idx_split1
+t_arr_test = solution[:idx_split1]
+t_m_test = solution[idx_split1:idx_split2]
+a_test = [int(a_now) for a_now in solution[idx_split2:]]
 
-
-trip = TripInSpace(t_arr_test, t_m_test, a_int)
+trip = TripInSpace(t_arr_test, t_m_test, a_test)
 
 ######### GUI ######################
 
 root = tk.Tk()
 root.title("Image Viewer")
+root.configure(bg="white")
+schritt_wert = 0
 
-def update_figures(event, start, stop):
-    stop = int(stop)
-    start = int(start)
+def update_figures(event, schritt):
+    schritt = int(schritt)
+    ax0.clear()
     ax1.clear()
     ax2.clear()
-    trip.plot_traj_orbits(ax1, start, stop)
-    trip.plot_transfer(ax2, start)
+    ax3.clear()
+    trip.plot_traj_orbits(ax0, schritt, 'up to step')
+    trip.plot_traj_orbits(ax1, schritt, 'last_step_count', steps_shown=3)
+    trip.plot_traj_orbits(ax2, schritt, 'next')
+    trip.plot_bestand(ax3,schritt)
+    canvas0.draw()
     canvas1.draw()
     canvas2.draw()
+    canvas3.draw()
 
-figure1 = Figure(figsize=(5, 4), dpi=100)
+figure0 = Figure(figsize=(4, 3), dpi=100)
+ax0 = figure0.add_subplot(111, projection = '3d')
+canvas0 = FigureCanvasTkAgg(figure0, master=root)
+canvas0.draw()
+canvas0.get_tk_widget().grid(row=0, column=0,pady=15)
+
+figure1 = Figure(figsize=(4, 3), dpi=100)
 ax1 = figure1.add_subplot(111, projection = '3d')
-#plot_traj_orbits(asteroid_abfolge, abflug_zeit, anreise_zeit, verweil_zeit, ax1, 0, 0)
 canvas1 = FigureCanvasTkAgg(figure1, master=root)
 canvas1.draw()
-canvas1.get_tk_widget().grid(row=0, column=0)
+canvas1.get_tk_widget().grid(row=0, column=1,pady=15,columnspan=3)
 
-figure2 = Figure(figsize=(5, 4), dpi=100)
+figure2 = Figure(figsize=(4, 3), dpi=100)
 ax2 = figure2.add_subplot(111,projection = '3d')
-#plot_transfer(asteroid_abfolge, abflug_zeit, anreise_zeit, ax2, 0)
 canvas2 = FigureCanvasTkAgg(figure2, master=root)
 canvas2.draw()
-canvas2.get_tk_widget().grid(row=0, column=1)
+canvas2.get_tk_widget().grid(row=0, column=4,pady=15,columnspan=3)
 
-
-
-# #TEST Create a second frame for the second row
-# second_row_frame = Frame(root)
-# second_row_frame.grid(row=1, column=0, sticky='w')
-
-# # Create two labels in column 0 and 1
-# label3 = Label(second_row_frame, text="Column 1, row 2")
-# label3.grid(row=0, column=0)
-
-# label4 = Label(second_row_frame, text="Column 2, row 2")
-# label4.grid(row=0, column=1)
-
-# text1 = tk.Label(root, text="Current Asteroid")
-# text1.grid(row=1, column=1, sticky='w')
-
-
-
-# Create four progress bars
-progress1 = ttk.Progressbar(root, orient="horizontal", length=200, mode="determinate")
-progress1.grid(row=2, column=0, sticky='w')
-progress1.configure(value=20)
-progress1_labels = tk.Label(root, text= "Material 0:")
-progress1_labels.grid(row=1, column=0, sticky='w')
-
-progress2 = ttk.Progressbar(root, orient="horizontal", length=200, mode="determinate")
-progress2.grid(row=4, column=0, sticky='w')
-progress2.configure(value=25)
-progress2_labels = tk.Label(root, text= "Material 1:")
-progress2_labels.grid(row=3, column=0, sticky='w')
-
-progress3 = ttk.Progressbar(root, orient="horizontal", length=200, mode="determinate")
-progress3.grid(row=6, column=0, sticky='w')
-progress3.configure(value=30)
-progress3_labels = tk.Label(root, text= "Material 2:")
-progress3_labels.grid(row=5, column=0, sticky='w')
-
-progress4 = ttk.Progressbar(root, orient="horizontal", length=200, mode="determinate")
-progress4.grid(row=8, column=0, sticky='w')
-progress4.configure(value=35)
-progress4_labels = tk.Label(root, text= "Material 3:")
-progress4_labels.grid(row=7, column=0, sticky='w')
+figure3 = Figure(figsize=(4, 3), dpi=100)
+ax3 = figure3.add_subplot(111)
+canvas3 = FigureCanvasTkAgg(figure3, master=root)
+canvas3.draw()
+canvas3.get_tk_widget().grid(row=2, column=0,pady=15,rowspan=8)
 
 # Create two labels to display text
-text1 = tk.Label(root, text="Current Asteroid")
-text1.grid(row=1, column=1, sticky='w')
-text2 = tk.Label(root, text="Asteroid 50")
-text2.grid(row=2, column=1, sticky='w')
-text3 = tk.Label(root, text="Time to mine")
-text3.grid(row=3, column=1, sticky='w')
-text4 = tk.Label(root, text="13 days")
-text4.grid(row=4, column=1, sticky='w')
-text5 = tk.Label(root, text="Next Asteroid")
-text5.grid(row=5, column=1, sticky='w')
-text6 = tk.Label(root, text="Asteroid 152")
-text6.grid(row=6, column=1, sticky='w')
-text7 = tk.Label(root, text="Time of flight")
-text7.grid(row=7, column=1, sticky='w')
-text7 = tk.Label(root, text="7 days")
-text7.grid(row=8, column=1, sticky='w')
+Font_head = ("Cambria", 18, "bold")
+Font_middle = ("Cambria", 13, "bold")
+Font_small = ("Cambria", 10)
 
-# text_var = tk.StringVar()
-# text_box = tk.Entry(root, textvariable=text_var)
-# text_box.grid(row=9, column=1, sticky='w')
-# text_box.bind('<Return>', lambda event: update_figures(event,text_var.get()))
+text2 = tk.Label(root, text="Aktueller Asteroid")
+text2.grid(row=3, column=4,sticky='e')
+text2.configure(font = Font_middle, background = "white" )
+text3 = tk.Label(root, text="  -  ", relief="groove" , bd=2)
+text3.grid(row=3, column=5)
+text3.configure(font = Font_small, background = "white" ,width=4,height=1)
+text4 = tk.Label(root, text="Material")
+text4.grid(row=4, column=4,sticky='e')
+text4.configure(font = Font_small, background = "white" )
+text5 = tk.Label(root, text="  -  ", relief="groove" , bd=2)
+text5.grid(row=4, column=5)
+text5.configure(font = Font_small, background = "white" ,width=4,height=1)
 
-text_var1 = tk.StringVar()
-text_box1 = tk.Entry(root, textvariable=text_var1)
-text_box1.insert(0,"Start")
-text_box1.grid(row=9, column=1, sticky = 'w')
+text6 = tk.Label(root, text="Nächster Asteroid")
+text6.grid(row=5, column=4,sticky='e')
+text6.configure(font = Font_middle, background = "white" )
+text7 = tk.Label(root, text="-", relief="groove" , bd=2)
+text7.grid(row=5, column=5)
+text7.configure(font = Font_small, background = "white" ,width=4,height=1)
+text8 = tk.Label(root, text="Material")
+text8.grid(row=6, column=4,sticky='e')
+text8.configure(font = Font_small, background = "white" )
+text9 = tk.Label(root, text="-", relief="groove" , bd=2)
+text9.grid(row=6, column=5)
+text9.configure(font = Font_small, background = "white",width=4,height=1 )
+text10 = tk.Label(root, text="Time of Flight")
+text10.grid(row=7, column=4,sticky='e')
+text10.configure(font = Font_small, background = "white" )
+text11 = tk.Label(root, text="-", relief="groove" , bd=2)
+text11.grid(row=7, column=5)
+text11.configure(font = Font_small, background = "white",width=4,height=1 )
 
-text_var2 = tk.StringVar()
-text_box2 = tk.Entry(root, textvariable=text_var2)
-text_box2.insert(0,"Stop")
-text_box2.grid(row=10, column=1, sticky = 'w')
+score_1 = tk.Label(root, text="Die aktuelle Güte ist")
+score_1.grid(row=3, column=1,pady = 5,columnspan=3,sticky="nsew")
+score_1.configure(font = Font_head, background = "white" )
+score_2 = tk.Label(root, text="  -  ", relief="groove" , bd=2)
+score_2.grid(row=4, column=2,pady=15,sticky="nsew")
+score_2.configure(font = Font_middle, background = "green",width=5,height=2 )
 
-text_box1.bind('<Return>', lambda event: update_figures(event, text_var1.get(), text_var2.get()))
-text_box2.bind('<Return>', lambda event: update_figures(event, text_var1.get(), text_var2.get()))
+# Create two buttons in row 1 that occupy the same column span
+text1 = tk.Label(root, text="Wählen sie den Schritt")
+text1.grid(row=6, column=1, pady=5,columnspan=3,sticky="nsew")
+text1.configure(font = Font_head, background = "white" )
 
+button1 = Button(root, text="<--", command=lambda: update_gui(1))
+button1.grid(row=7, column=1,sticky="nsew", padx=5, pady=5)
+button2 = Button(root, text="-->", command=lambda: update_gui(2))
+button2.grid(row=7, column=3,sticky="nsew", padx=5, pady=5)
+
+button_text = tk.Label(root, text= schritt_wert, relief="groove" , bd=5)
+button_text.grid(row=7, column=2)
+button_text.configure(font = Font_small, background = "white",width=15,height=2 )
+
+def update_values(event,schritt):
+    schritt = int(schritt)
+    current_ast = str(a_test[schritt])
+    text3.config(text=current_ast)
+    text5.config(text=f"{trip.get_material(schritt)}")
+    if schritt+1 < len(a_test):
+        next_ast = str(a_test[schritt+1])
+        text7.config(text=next_ast)
+        text9.config(text=f"{trip.get_material(schritt+1)}")
+        text11.config(text=f"{trip.get_tof(schritt+1):.1f}")
+    else:
+        text7.config(text=" - ")
+        text9.config(text=" - ")
+        text11.config(text=" - ")
+    score_2.config(text = f"{trip.get_score(schritt):.3}")
+
+def update_gui(button_num):
+    global schritt_wert 
+    if button_num == 1:
+        if schritt_wert >1: # and schritt_wert<len(a_test)
+            schritt_wert = schritt_wert-1
+        else:  
+            schritt_wert = 0
+    elif button_num == 2:
+        if schritt_wert<len(a_test)-1:  # schritt_wert >=0 and
+            schritt_wert = schritt_wert+1
+            button_text.config(text = schritt_wert)
+            update_figures(None,schritt_wert)
+            update_values(None,schritt_wert)
+        else:  
+            schritt_wert = len(a_test)-1
+    button_text.config(text=schritt_wert)
+    update_figures(None, schritt_wert)
+    update_values(None, schritt_wert)
 
 root.mainloop()
-
-
-#idea: usar columnspan com mais colunas, mas falar q as 2 images ocupam mais espaco
