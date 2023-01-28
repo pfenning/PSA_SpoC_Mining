@@ -55,7 +55,7 @@ laenge_start_cl = []
 knn = phasing.knn(asteroids, T_START, 'orbital', T=30)  # .mjd2000 + i
 for line in data:
     ast_id = int(line[0])
-    print(ast_id)
+    # print(ast_id)
     if SpoC.get_asteroid_material(ast_id) != 1 and SpoC.get_asteroid_material(ast_id) != 3:
         _, neighb_idx, _ = knn.find_neighbours(ast_id,query_type='ball', r=5000)
         neighb_idx = list(neighb_idx)
@@ -64,8 +64,6 @@ for line in data:
             if SpoC.get_asteroid_material(mat) == 1: hilfe.append(mat)
         laenge_start_cl.append(len(hilfe))     # [len(neighb_idx), ]
     else: laenge_start_cl.append(0)     # [len(neighb_idx), ]
-
-    if ast_id >2:break
 
 print(laenge_start_cl)
 # top_starts = np.argpartition(laenge_start_cl, -alpha)[-alpha:]
@@ -85,29 +83,29 @@ print(laenge_start_cl)
 #     start_branches.append(Seed(ID))
 
 
-
+# 1) Kleinste Ecc, 2) Größte Ecc, 3) Mittlere Ecc
 
 
 
 #####################################
 # PLOT DER BESTEN STARTASTEROIDEN
 #####################################
-# x=[]
-# y=[]
-# z=[]
-# for position in top_ast:
-#     # if dict_asteroids[position][-1] == 1:
-#     #     x.append(np.array(dict_asteroids[position][0].eph(T_START.mjd2000+60)[0])[0])
-#     #     y.append(np.array(dict_asteroids[position][0].eph(T_START.mjd2000+60)[0])[1])
-#     #     z.append(np.array(dict_asteroids[position][0].eph(T_START.mjd2000+60)[0])[2])
-#     x.append(np.array(asteroids[position].eph(T_START.mjd2000)[0])[0])
-#     y.append(np.array(asteroids[position].eph(T_START.mjd2000)[0])[1])
-#     z.append(np.array(asteroids[position].eph(T_START.mjd2000)[0])[2])
-# # Creating figure
-# fig = plt.figure(figsize = (10, 7))
-# ax = plt.axes(projection ="3d")
-# # Creating plot
-# ax.scatter3D(x, y, z, color = "red")
-# plt.title("simple 3D scatter plot")
-# # show plot
-# plt.show()
+x=[]
+y=[]
+z=[]
+for position in asteroids:
+    # if dict_asteroids[position][-1] == 1:
+    #     x.append(np.array(dict_asteroids[position][0].eph(T_START.mjd2000+60)[0])[0])
+    #     y.append(np.array(dict_asteroids[position][0].eph(T_START.mjd2000+60)[0])[1])
+    #     z.append(np.array(dict_asteroids[position][0].eph(T_START.mjd2000+60)[0])[2])
+    x.append(np.array(position.eph(T_START.mjd2000)[0])[0])
+    y.append(np.array(position.eph(T_START.mjd2000)[0])[1])
+    z.append(np.array(position.eph(T_START.mjd2000)[0])[2])
+# Creating figure
+fig = plt.figure(figsize = (10, 7))
+ax = plt.axes(projection ="3d")
+# Creating plot
+ax.scatter3D(x, y, z)
+plt.title("simple 3D scatter plot")
+# show plot
+plt.show()
