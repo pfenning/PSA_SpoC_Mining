@@ -54,7 +54,7 @@ for branch_v in branch_start:
             for ele in solution:
                 print_solution += f"{ele}, "
             print_solution += "]"
-            # print(print_solution)
+            print(print_solution)
             # # ToDo Auskommentieren
             # print("Aktueller Bestwert:")
             # final_branch.print_summary()
