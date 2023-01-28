@@ -9,7 +9,7 @@ from from_website.submisson_helper import create_submission
 
 
 ##################### Hyperparameter für Ausführung #####################
-score_method = ['step']   # branch, branch and guete, sonstwas=step
+score_method = ['branch']   # branch, branch and guete, sonstwas=step
 fast = False                # Ob möglichst schnell geflogen werden soll
 knn_type = False            # Ob knn für das Clustern verwendet werden soll (sonst ball)
 

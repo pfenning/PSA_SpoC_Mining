@@ -44,32 +44,6 @@ dict_asteroids ={int(line[0]):  # ID
     for line in data}
 
 
-# for i in range(10):
-#     print(dict_asteroids[i][1], dict_asteroids[i][2])
-# for state in zip(dict_asteroids.keys(),dict_asteroids.values()):
-#     print(state)
-
-# for line in data:
-#     p = pk.planet.keplerian(
-#         T_START,
-#         (
-#             line[1],
-#             line[2],
-#             line[3],
-#             line[4],
-#             line[5],
-#             line[6],
-#         ),
-#         MU_TRAPPIST,
-#         G * line[7],  # mass in planet is not used in UDP, instead separate array below
-#         1,  # these variable are not relevant for this problem
-#         1.1,  # these variable are not relevant for this problem
-#         "Asteroid " + str(int(line[0])),
-#     )
-#     asteroids_kp.append(p)
-#     dict_asteroids[int(line[0])] = [p, line[-2], int(line[-1])]  # Key = ID, Liste mit [Kaplerian, Masse, Material]
-
-
 def verfuegbarkeit():
     """
     Berechnet die ursprüngliche Verfügbarkeit der Materialien
@@ -154,8 +128,6 @@ def norm_bestand(bestand, material):
         return 0
     else:
         return bestand[material]/max(bestand[:3])
-    # else:
-    #     return bestand[material]/norm_material
 
 
 def get_dv(asteroid1, asteroid2, t_start, t_flug, print_result=False):
@@ -200,10 +172,6 @@ def clustering(knn, asteroids_kp, asteroid_1_idx, radius=4000):
     """
     neighb, neighb_inds, neighb_dis = knn.find_neighbours(asteroids_kp[asteroid_1_idx], query_type='ball', r=radius)
     neighb_inds = list(neighb_inds)
-    # try:
-    #     neighb_inds.remove(asteroid_1_idx)
-    # except ValueError:
-    #     pass
     return neighb_inds
 
 
@@ -242,7 +210,7 @@ def time_optimize(asteroid1, asteroid1_mas, asteroid1_mat,
     ###################################################
     # Variation der Flugzeit, Startpunkt fest
     ###################################################
-    if print_result:  # ToDo: Test    print_result
+    if print_result:
         print("==== Auswahl der Flugzeit ====")
         print(" T |  DV  | Score")
     # Mit der Suche wird am Tag begonnen, an dem der Start-Asteroid vollständig abgebaut ist.
@@ -258,14 +226,14 @@ def time_optimize(asteroid1, asteroid1_mas, asteroid1_mat,
         t_flug_of_results = []
         rank_t_flug = []
         weights = np.array([1.0, -0.765])
-        if print_result: dv_of_results = []  #ToDo: Test
+        if print_result: dv_of_results = []
         for i in range(len(t_flug_1)):
             # "Normierung" für ähnliche Skalierung
             # Zahlenfindung: Siehe MathTests.py
             if dv_t_flug[i] / DV_per_propellant <= limit:    # Nur hinzufügen, wenn erreichbar
                 t_flug_of_results.append(t_flug_1[i])
                 rank_t_flug.append(2-t_flug_1[i]/time_divider + 0.5*(2.0 - (dv_t_flug[i] / 2100) - 0.2 * (2700 / (dv_t_flug[i] + 600))))
-                if print_result:            # ToDo:Test
+                if print_result:
                     print(f"{t_flug_1[i]} | {dv_t_flug[i]:.0f} | {rank_t_flug[-1]:.2f}")
 
         t_flug_min_dv = t_flug_of_results[np.argmax(rank_t_flug)]
@@ -326,7 +294,7 @@ def time_optimize(asteroid1, asteroid1_mas, asteroid1_mat,
         t_m_min_dv = t_opt + t_start_var_of_results[index_min]
         dv_min = dv_of_results[index_min]
 
-        if print_result:                    # ToDo: Test
+        if print_result:
             print("==== Auswahl des Starttags ====")
             print(f"Optimale Abbauzeit:{t_opt:.1f}, Needed:{needed}")
             print(" Start |  DV  | Score")

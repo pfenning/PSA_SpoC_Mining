@@ -309,8 +309,6 @@ class Seed:
         return possible_steps
 
 
-
-
 # Nachdem entschieden wurde, dass ein Branch-Objekt weitergeführt wird, muss das t_m des letzten angepasst werden
 #   PROBLEM: Das t_m kann für verschiedene Ausführungen unterschiedlich sein!!!
 #   => Es muss im aktuellen Branch das t_m vom letzten Asteroiden gespeichert werden
@@ -361,7 +359,6 @@ class ExpandBranch(Seed):
         else:
             return -(tof + self.t_opt + 80*dv)/SpoC.get_asteroid_mass(self.asteroid_id)
 
-
     def __str__(self):
         print(self.origin_branch)
         return f"Abbauzeit auf Asteroiden {self.last_t_m:.0f}, \n" \
@@ -403,7 +400,7 @@ class ExpandBranch(Seed):
         Gibt den Branch-Score, also den Mittelwert der Step-Scores, für den erweiterten Branch zurück
         :return: Branch-Score des erweiterten Branches
         """
-        assert self.get_step_count()>0, "Step-Count wird falsch bestimmt"
+        # assert self.get_step_count()>0, "Step-Count wird falsch bestimmt"
         return (self.origin_branch.get_step_count() * self.origin_branch.get_branch_score() + self.step_score) \
             /self.get_step_count()
 
@@ -560,7 +557,7 @@ def find_idx_start(data, intervall=0.01, method='mean semimajor', fuzzy=True, k=
         Hier wird aus dem Datensatz ein Vektor mit möglichen Startasteroiden gebildet.
         Return:
             Ein Vektor der möglichen Start-Asteroiden als Branch-Objekte
-                start_branches:     Vektor mit branches der Start-Asteroiden
+                start_branches: Vektor mit branches der Start-Asteroiden
     '''
     #### Auswahl des Start-Materials. Das kann durch Verfügbarkeit bestimmt werden! Optimalerweise max. Material --> Verf-Funktion benutzen
     start_branches = []
@@ -606,22 +603,3 @@ def find_idx_start(data, intervall=0.01, method='mean semimajor', fuzzy=True, k=
             start_branches.append(Seed(ID))
 
     return start_branches
-
-def find_min_material(data):
-    """
-    Berechnet die ursprüngliche Verfügbarkeit der Materialien
-    """
-    material = data[:,-1]
-    mass = data[:,-2]
-    verf = [0, 0, 0, 0]
-    for i in range(0,len(material)):
-        if material[i] == 0:
-            verf[0] += mass[i]
-        elif material[i] == 1:
-            verf[1] += mass[i]
-        elif material[i] == 2:
-            verf[2] += mass[i]
-        elif material[i] == 3:
-            verf[3] += mass[i]
-    min_mat = np.argmin(verf)
-    return min_mat

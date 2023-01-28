@@ -126,7 +126,6 @@ def norm_bestand(bestand, material):
     else:
         return bestand[material]/max(bestand[:3])
 
-
 def get_dv(asteroid1, asteroid2, t_start, t_flug, print_result=False):
     """
     Berechnung des approximierten Delta V mithilfe des Lambert-Problems
@@ -156,7 +155,6 @@ def get_dv(asteroid1, asteroid2, t_start, t_flug, print_result=False):
         print("Starttag:", f"{t_start:.0f}", "Flugzeit:", f"{t_flug:.0f}", " => Delta V =", f"{DV:.0f}")
 
     return DV
-
 
 def clustering(knn, asteroids_kp, asteroid_1_idx, radius=4000):
     """
@@ -208,9 +206,6 @@ def time_optimize(asteroid1, asteroid1_mas, asteroid1_mat,
     ###################################################
     # Variation der Flugzeit, Startpunkt fest
     ###################################################
-    if print_result:  # ToDo: Test    print_result
-        print("==== Auswahl der Flugzeit ====")
-        print(" T |  DV  | Score")
     # Mit der Suche wird am Tag begonnen, an dem der Start-Asteroid vollständig abgebaut ist.
     t_flug_1 = range(2,30,2)
 
@@ -223,21 +218,14 @@ def time_optimize(asteroid1, asteroid1_mas, asteroid1_mat,
     else:                       # Ansonsten Gewichtung
         t_flug_of_results = []
         rank_t_flug = []
-        weights = np.array([1.0, -0.765])
-        if print_result: dv_of_results = []  #ToDo: Test
         for i in range(len(t_flug_1)):
             # "Normierung" für ähnliche Skalierung
             # Zahlenfindung: Siehe MathTests.py
             if dv_t_flug[i] / DV_per_propellant <= limit:    # Nur hinzufügen, wenn erreichbar
                 t_flug_of_results.append(t_flug_1[i])
                 rank_t_flug.append(2-t_flug_1[i]/time_divider + 0.5*(2.0 - (dv_t_flug[i] / 2100) - 0.2 * (2700 / (dv_t_flug[i] + 600))))
-                if print_result:            # ToDo:Test
-                    print(f"{t_flug_1[i]} | {dv_t_flug[i]:.0f} | {rank_t_flug[-1]:.2f}")
 
         t_flug_min_dv = t_flug_of_results[np.argmax(rank_t_flug)]
-
-        if print_result:                    #ToDo: Test    print_result
-            print(f"Gewählte Flugzeit:{t_flug_min_dv}")
 
 
     ###################################################
@@ -287,18 +275,10 @@ def time_optimize(asteroid1, asteroid1_mas, asteroid1_mat,
                 # else:
                 #     rank_t_start.append(sum(weights_pos_var * [t_start_var[i] / 10, dv_t_flug[i] / 3000]))
         # Optimum auswählen
-        index_min =np.argmin(rank_t_start)
+        index_min = np.argmin(rank_t_start)
         # Wertepaar für Index des Minimums
         t_m_min_dv = t_opt + t_start_var_of_results[index_min]
         dv_min = dv_of_results[index_min]
-
-        if print_result:                    # ToDo: Test
-            print("==== Auswahl des Starttags ====")
-            print(f"Optimale Abbauzeit:{t_opt:.1f}, Needed:{needed}")
-            print(" Start |  DV  | Score")
-            for index, rank in enumerate(rank_t_start):
-                print(f"{t_start_var_of_results[index]:1f} | {dv_of_results[index]:.0f} | {rank:.2f}")
-            print(f"Gewählte Veränderung für Startpunkt:{t_start_var_of_results[index_min]}")
 
     return t_m_min_dv, t_flug_min_dv, dv_min
 
@@ -333,11 +313,3 @@ def get_abbau_menge(material_bestand, mass, material, t_m):
         material_bestand += np.minimum(mass, (t_m / TIME_TO_MINE_FULLY))
 
     return material_bestand
-
-
-def sort_vector(vec_1, vec_2):
-
-    vec_1_neu = vec_1
-    vec_2_neu = vec_2
-
-    return vec_1_neu, vec_2_neu
