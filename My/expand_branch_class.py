@@ -115,7 +115,9 @@ class Seed:
         sprit_bei_start = bestand_bei_start[3]
 
         # Fallunterscheidung
-        if self.t_arr > T_DAUER-45:   # letzer Asteroid
+        if self.t_arr == 0.0:
+            cluster_iteration = [[material_most_needed], [sorted_material_types], [3]]
+        elif self.t_arr > T_DAUER-45:   # letzer Asteroid
             cluster_iteration = [[sorted_material_types[0]], [sorted_material_types[1], sorted_material_types[2], 3]]
         elif self.t_arr > T_DAUER-100 and sprit_bei_start > 0.4: # Vorletzter Asteroid
             cluster_iteration = [[sorted_material_types[0], sorted_material_types[1]], [sorted_material_types[2]], [3]]
@@ -493,7 +495,7 @@ class ExpandBranch(Seed):
 ######################################################
 # Funktionen zur Ausführung von Beam-Search und Start
 ######################################################
-def beam_search(branch_v, beta, analysis="step", fuzzy=True, fast=False, knn_type = False):
+def beam_search(branch_v, beta, analysis="step", fuzzy=True, fast=False, knn_type = False, both=False):
     """
     Übergeben wird ein Vektor, der die beta-Besten Branches beinhaltet aus dem vorherigen Iterationsschritt.
     Führt ausgehend davon die neuen möglichen Schritte aus und gibt davon die beta besten zurück.
@@ -519,6 +521,9 @@ def beam_search(branch_v, beta, analysis="step", fuzzy=True, fast=False, knn_typ
         # score_ = []
         try:
             next_possible_steps = branch.get_next_possible_steps(fast, knn_type)
+            if both:
+                next_possible_steps = np.concatenate(
+                    (next_possible_steps,branch.get_next_possible_steps(not fast, knn_type)))
         except StopIteration:
             v_done.append(branch)
         else:
@@ -555,7 +560,7 @@ def beam_search(branch_v, beta, analysis="step", fuzzy=True, fast=False, knn_typ
 
     return v_done, top_beta
 
-def find_idx_start(data, intervall=0.01, method='mean semimajor', fuzzy=True, k=15, alpha=50):
+def find_idx_start(data, intervall=0.01, method='mean semimajor', fuzzy=True, k=15, alpha=50, start=0):
     '''
         Hier wird aus dem Datensatz ein Vektor mit möglichen Startasteroiden gebildet.
         Return:
@@ -581,7 +586,8 @@ def find_idx_start(data, intervall=0.01, method='mean semimajor', fuzzy=True, k=
         for ID in start_ids:
             start_branches.append(Seed(ID,fuzzy=fuzzy))
     elif method == 'all':
-        start_branches = np.reshape([Seed(asteroid_id) for asteroid_id in range(10000)],(int(10000/50),50))
+        start = int(start/50)*50
+        start_branches = np.reshape([Seed(asteroid_id) for asteroid_id in range(start,10000)],(int((10000-start)/50),50))
     elif method == 'alles_clustern':
         asteroids = [dict_asteroids[line][0] for line in dict_asteroids]
         ##########################################################################
