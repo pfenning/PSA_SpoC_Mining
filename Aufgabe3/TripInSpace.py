@@ -239,6 +239,9 @@ class TripInSpace:
         else:
             return self.t_arr[index] - self.t_arr[index-1] - self.t_m[index-1]
 
+    def get_mass(self, index):
+        return get_asteroid_mass(self.a[index])
+
     def pretty(self):
         """
         Tabelle mit allen relevanten Werten für Trip im Stil von udp.pretty

@@ -41,14 +41,7 @@ def tree_search(branch_start, settings, lck, final_guete):
             if best_branch_in_part.get_guetemass() < final_guete.value:
                 final_guete.value = best_branch_in_part.get_guetemass()
                 ERG_a, ERG_t_m, ERG_t_arr = best_branch_in_part.get_result()
-                # with lck:   # Critical Section writing in Solutions
-                # solution = np.concatenate([ERG_t_arr, ERG_t_m, ERG_a])
-                # # Solution.txt erstellen
-                # with open("Solution.txt", "w") as output:
-                #     output.write("[")
-                #     for ele in solution:
-                #         output.write(f"{ele}, ")
-                #     output.write("]")
+                print(ERG_t_arr + ERG_t_m + ERG_a)
                 # Submission-File
                 x = SpoC_Kontrolle.convert_to_chromosome(ERG_t_arr + ERG_t_m + ERG_a)
                 create_submission("spoc-mining", "mine-the-belt", x,
