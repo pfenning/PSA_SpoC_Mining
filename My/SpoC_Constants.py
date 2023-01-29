@@ -1,4 +1,5 @@
 import numpy as np
+# import numpy.ma as ma
 import pykep as pk
 
 from Moduls.fuzzy_system import FuzzySystem
@@ -228,32 +229,42 @@ def time_optimize(asteroid1, asteroid1_mas, asteroid1_mat,
     t_start_var = np.concatenate([t_start_var, np.arange(0, 60 - t_opt, 4)], axis=0)
     t_flug_map, t_start_var_map = np.meshgrid(t_flug_v, t_start_var, indexing='ij')
     dv_map = np.zeros((len(t_flug_v), len(t_start_var)))
-    score = np.zeros_like(dv_map)
+    costs = np.zeros_like(dv_map)
+    count = 0
     for i, t_flug in enumerate(t_flug_v):
         for j, t_var in enumerate(t_start_var):
             # Sprit berechnen
             dv_map[i][j] = get_dv(asteroid1, asteroid2, t_start+t_var, t_flug)
             # Score berechnen
-            if limit < dv_map[i][j]:
-                score[i][j] = t_flug/ time_divider \
-                              + (dv_map[i][j] / 2100)\
-                              + abs(t_start_var[j]) / 10
+            if dv_map[i][j]/DV_per_propellant < limit:
+                count += 1
+                costs[i][j] = 0.3 * t_flug / 22 \
+                              + 0.2 * 10000/2100 * dv_map[i][j]/(10000 - dv_map[i][j]) \
+                              + 0.3 * abs(t_start_var[j])/7
+                if 100 < costs[i][j]:
+                    costs[i][j] = 99
+                # costs[i][j] = t_flug / 17 \
+                #               + (dv_map[i][j] / 2100) \
+                #               + abs(t_start_var[j]) / 10
                                 # + 0.1 * (2700 / (dv_map[i][j]+ 600)) \
                                 # sum(np.array([0.09, 0.91]) * [abs(t_start_var[j]) / 3, dv_map[i][j] / 2500])
             else:
-                score[i][j] = 100 # Muss nur größer sein als alle realistischen Ergebnisse von darüber
+                costs[i][j] = 100 # Muss nur größer sein als alle realistischen Ergebnisse von darüber
     # Minimum auswählen
     t_flug_min_dv = []
     t_m_min_dv = []
     dv_min = []
-    if dv_map.min()/DV_per_propellant > limit:  # Wenn bereits am Limit: Minimum nehmen
-        # i, j = np.unravel_index(np.argmin(dv_map), dv_map.shape)
-        index_pairs = [np.unravel_index(i, dv_map.shape)
-                       for i in np.argpartition(dv_map.flatten(), alpha)[:alpha]]
-    else:
-        # i, j = np.unravel_index(np.argmin(score), score.shape)
-        index_pairs = [np.unravel_index(i, score.shape)
-                       for i in np.argpartition(score.flatten(), alpha)[:alpha]]
+    if count < alpha:
+        alpha = int(count)
+    index_pairs = [np.unravel_index(i, costs.shape) for i in np.argpartition(costs.flatten(), alpha)[:alpha]]
+    # if limit < dv_map.min()/DV_per_propellant:  # Wenn bereits am Limit: Minimum nehmen
+    #     # i, j = np.unravel_index(np.argmin(dv_map), dv_map.shape)
+    #     index_pairs = [np.unravel_index(i, dv_map.shape)
+    #                    for i in np.argpartition(dv_map.flatten(), alpha)[:alpha]]
+    # else:
+    #     # i, j = np.unravel_index(np.argmin(costs), costs.shape)
+    #     index_pairs = [np.unravel_index(i, costs.shape)
+    #                    for i in np.argpartition(costs.flatten(), alpha)[:alpha]]
     for i,j in index_pairs:
         t_flug_min_dv.append(t_flug_v[i])
         t_m_min_dv.append(t_opt + t_start_var[j])
@@ -265,7 +276,7 @@ def time_optimize(asteroid1, asteroid1_mas, asteroid1_mat,
         print(" delta Start | Flugzeit |  DV  | Score")
         for i, t_flug in enumerate(t_flug_v):
             for j, t_var in enumerate(t_start_var):
-                print(f"{t_var:0f} | {t_flug:0f} | {dv_map[i][j]:.0f} | {score[i][j]:.2f}")
+                print(f"{t_var:0f} | {t_flug:0f} | {dv_map[i][j]:.0f} | {costs[i][j]:.2f}")
         print(f"Gewähltes Ergebnise: ")
         for t_m, t_flug, dv in zip(t_m_min_dv, t_flug_min_dv, dv_min):
             print(f"{t_m-t_opt:.0f}, {t_flug:.0f}, {dv:.0f}")
