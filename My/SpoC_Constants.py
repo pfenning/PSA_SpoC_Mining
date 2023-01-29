@@ -186,7 +186,7 @@ def time_optimize(asteroid1, asteroid1_mas, asteroid1_mat,
                   asteroid2, t_arr, t_opt, limit=1.0, print_result=False,
                   needed=False,
                   time_divider = 20,
-                  alpha=4):
+                  alpha=1):
     """
     Zeitoptimierung von Delta V mit 2 Levels. Erst Flugzeit, dann Startzeit
 
@@ -266,7 +266,9 @@ def time_optimize(asteroid1, asteroid1_mas, asteroid1_mat,
         for i, t_flug in enumerate(t_flug_v):
             for j, t_var in enumerate(t_start_var):
                 print(f"{t_var:0f} | {t_flug:0f} | {dv_map[i][j]:.0f} | {score[i][j]:.2f}")
-        print(f"Gewähltes Ergebnis: {t_m_min_dv-t_opt:.0f}, {t_flug_min_dv:.0f}, {dv_min:.0f}")
+        print(f"Gewähltes Ergebnise: ")
+        for t_m, t_flug, dv in zip(t_m_min_dv, t_flug_min_dv, dv_min):
+            print(f"{t_m-t_opt:.0f}, {t_flug:.0f}, {dv:.0f}")
 
     return t_m_min_dv, t_flug_min_dv, dv_min
 
