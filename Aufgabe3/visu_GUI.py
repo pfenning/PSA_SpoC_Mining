@@ -1,4 +1,3 @@
-
 import matplotlib
 matplotlib.use("TkAgg")
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -67,7 +66,7 @@ figure3 = Figure(figsize=(4, 3), dpi=100)
 ax3 = figure3.add_subplot(111)
 canvas3 = FigureCanvasTkAgg(figure3, master=root)
 canvas3.draw()
-canvas3.get_tk_widget().grid(row=2, column=0,pady=15,rowspan=8)
+canvas3.get_tk_widget().grid(row=2, column=0,pady=15,rowspan=9)
 
 # Create two labels to display text
 Font_head = ("Cambria", 18, "bold")
@@ -86,45 +85,58 @@ text4.configure(font = Font_small, background = "white" )
 text5 = tk.Label(root, text="  -  ", relief="groove" , bd=2)
 text5.grid(row=4, column=5)
 text5.configure(font = Font_small, background = "white" ,width=4,height=1)
+text12 = tk.Label(root, text="Abgebaute Material")
+text12.grid(row=5, column=4,sticky='e')
+text12.configure(font = Font_small, background = "white" )
+text13 = tk.Label(root, text="  -  ", relief="groove" , bd=2)
+text13.grid(row=5, column=5)
+text13.configure(font = Font_small, background = "white" ,width=4,height=1)
+text14 = tk.Label(root, text="Hinterlassene Material")
+text14.grid(row=6, column=4,sticky='e')
+text14.configure(font = Font_small, background = "white" )
+text15 = tk.Label(root, text="  -  ", relief="groove" , bd=2)
+text15.grid(row=6, column=5)
+text15.configure(font = Font_small, background = "white" ,width=4,height=1)
+
 
 text6 = tk.Label(root, text="Nächster Asteroid")
-text6.grid(row=5, column=4,sticky='e')
+text6.grid(row=8, column=4,sticky='e')
 text6.configure(font = Font_middle, background = "white" )
 text7 = tk.Label(root, text="-", relief="groove" , bd=2)
-text7.grid(row=5, column=5)
+text7.grid(row=8, column=5)
 text7.configure(font = Font_small, background = "white" ,width=4,height=1)
 text8 = tk.Label(root, text="Material")
-text8.grid(row=6, column=4,sticky='e')
+text8.grid(row=9, column=4,sticky='e')
 text8.configure(font = Font_small, background = "white" )
 text9 = tk.Label(root, text="-", relief="groove" , bd=2)
-text9.grid(row=6, column=5)
+text9.grid(row=9, column=5)
 text9.configure(font = Font_small, background = "white",width=4,height=1 )
 text10 = tk.Label(root, text="Time of Flight")
-text10.grid(row=7, column=4,sticky='e')
+text10.grid(row=10, column=4,sticky='e')
 text10.configure(font = Font_small, background = "white" )
 text11 = tk.Label(root, text="-", relief="groove" , bd=2)
-text11.grid(row=7, column=5)
+text11.grid(row=10, column=5)
 text11.configure(font = Font_small, background = "white",width=4,height=1 )
 
 score_1 = tk.Label(root, text="Die aktuelle Güte ist")
 score_1.grid(row=3, column=1,pady = 5,columnspan=3,sticky="nsew")
 score_1.configure(font = Font_head, background = "white" )
 score_2 = tk.Label(root, text="  -  ", relief="groove" , bd=2)
-score_2.grid(row=4, column=2,pady=15,sticky="nsew")
+score_2.grid(row=4, column=2,pady=15,sticky="nsew",rowspan=3)
 score_2.configure(font = Font_middle, background = "green",width=5,height=2 )
 
 # Create two buttons in row 1 that occupy the same column span
-text1 = tk.Label(root, text="Wählen sie den Schritt")
-text1.grid(row=6, column=1, pady=5,columnspan=3,sticky="nsew")
+text1 = tk.Label(root, text="Wählen Sie den Schritt")
+text1.grid(row=8, column=1, pady=5,columnspan=3,sticky="nsew")
 text1.configure(font = Font_head, background = "white" )
 
 button1 = Button(root, text="<--", command=lambda: update_gui(1))
-button1.grid(row=7, column=1,sticky="nsew", padx=5, pady=5)
+button1.grid(row=9, column=1,sticky="nsew", padx=5, pady=5,rowspan=2)
 button2 = Button(root, text="-->", command=lambda: update_gui(2))
-button2.grid(row=7, column=3,sticky="nsew", padx=5, pady=5)
+button2.grid(row=9, column=3,sticky="nsew", padx=5, pady=5,rowspan=2)
 
 button_text = tk.Label(root, text= schritt_wert, relief="groove" , bd=5)
-button_text.grid(row=7, column=2)
+button_text.grid(row=9, column=2,rowspan=2)
 button_text.configure(font = Font_small, background = "white",width=15,height=2 )
 
 def update_values(event,schritt):
@@ -132,6 +144,9 @@ def update_values(event,schritt):
     current_ast = str(a_test[schritt])
     text3.config(text=current_ast)
     text5.config(text=f"{trip.get_material(schritt)}")
+    text13.config(text=f"{trip.get_mined_material(schritt):.1f}")
+    text15.config(text=f"{trip.get_missed_material(schritt):.1f}")
+ 
     if schritt+1 < len(a_test):
         next_ast = str(a_test[schritt+1])
         text7.config(text=next_ast)
@@ -141,6 +156,9 @@ def update_values(event,schritt):
         text7.config(text=" - ")
         text9.config(text=" - ")
         text11.config(text=" - ")
+        text13.config(text=" - ")
+        text15.config(text=" - ")
+
     score_2.config(text = f"{trip.get_score(schritt):.3}")
 
 def update_gui(button_num):
@@ -161,5 +179,8 @@ def update_gui(button_num):
     button_text.config(text=schritt_wert)
     update_figures(None, schritt_wert)
     update_values(None, schritt_wert)
+
+update_figures(None, 0)
+update_values(None, 0)
 
 root.mainloop()

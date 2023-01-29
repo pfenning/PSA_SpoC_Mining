@@ -1,5 +1,6 @@
 import copy
 import matplotlib.pyplot as plt
+from matplotlib.lines import Line2D
 import numpy as np
 from pykep.orbit_plots import plot_planet, plot_lambert
 from pykep import AU, DAY2SEC
@@ -76,6 +77,10 @@ class TripInSpace:
         ax1.set_xlim(-0.3, 0.3)
         ax1.set_ylim(-0.3, 0.3)
         ax1.set_zlim(-0.03, 0.03)
+        # create custom artists
+        trajectory_line = Line2D([0], [0], color='b', lw=2)
+        mining_line = Line2D([0], [0], color='k', lw=2)
+        orbit_line = Line2D([0], [0], color='r', lw=2)
 
         # Start und Stop definieren
         planet = True   # Ob Planeten und Orbits geplottet werden sollen
@@ -87,6 +92,7 @@ class TripInSpace:
             planet = True
             mining = False
             ax1.set_title('Nächste Trajektorie')
+            ax1.legend([trajectory_line,orbit_line], ['Trajektorie','Orbit'],loc='upper right',fontsize=7)
             if step < len(self.a)-1:
                 start_ = step + 1
                 stop = start_
@@ -102,10 +108,13 @@ class TripInSpace:
             start_ = 1
             stop = step
             ax1.set_title(f'Alle Trajektorien')
+            ax1.legend([trajectory_line, mining_line], ['Trajektorie', 'Abbau'],loc='upper right',fontsize=7)
+
         else:   # "last steps_shown"
             planet = True
             mining = True
-            ax1.set_title('Letzten drei Trajektorien')
+            ax1.set_title('Die letzten drei Trajektorien')
+            ax1.legend([trajectory_line,orbit_line,mining_line], ['Trajektorie','Orbit','Abbau'],loc='upper right',fontsize=7)
             if step <= steps_shown:
                 start_ = 1
                 stop = step
@@ -144,23 +153,23 @@ class TripInSpace:
         :param index: gefragter Asteroid (0 => Startasteroid)
         :return:
         """
-        color_mat = ["gold","orange","silver","green"]
+        color_mat = ["gold","silver","orange","salmon"]
         if not isinstance(index, int):
             raise ValueError("Negative Werte sind nicht erlaubt")
         if (len(self.a)-1) < index:
             index = len(self.a) - 1
         elif index < 0:
             raise ValueError("Negative Werte sind nicht erlaubt")
-        bars = ("Gold", "Nickel", "Platin", "Sprit")
+        bars = ("Gold", "Platin", "Nickel", "Sprit")
         x_pos = np.arange(len(bars))
         ax1.barh(x_pos, self.bestand[index], color=color_mat)
         ax1.set_title('Bestand der Materialien')
-        # plt.yticks(x_pos, bars)
-        # plt.ylabel("Material")
-        # plt.xlabel("Bestand")
         for i, v in enumerate(self.bestand[index]):
             v = round(v,2)
-            ax1.annotate(str(v), (v, i), xytext=(-30, 0), textcoords='offset points', va='center')
+            if i == 3 and v>0:
+                ax1.annotate(str(v), (v, i), xytext=(1, 0), textcoords='offset points', va='center')
+            elif v>0:
+                ax1.annotate(str(v), (v, i), xytext=(-30, 0), textcoords='offset points', va='center')
 
     def get_tank(self, index):
         """
@@ -192,19 +201,20 @@ class TripInSpace:
         :param index: Index von aktuellem Asteroid
         :return: Menge des abgebauten Materials
         """
-        # ToDo Matthias aktualisieren
-        return get_abbau_menge(self.bestand[index][self.get_material(index)],
-                               get_asteroid_mass(self.a[index]),
-                               self.get_material(index),
-                               self.t_m[index]) \
-            - self.bestand[index][self.get_material(index)]
+        if index == 0:
+            return 0.0
+        elif self.get_material(index) != 3:
+            return self.bestand[index][self.get_material(index)] - self.bestand[index-1][self.get_material(index)]
+        else:
+            return self.bestand[index][self.get_material(index)] - self.bestand[index-1][self.get_material(index)] + self.dv[index]/DV_per_propellant
+
     def get_missed_material(self,index):
         """
         Menge des liegengelassenen Materials auf aktuellem Asteroid
         :param index: Index von aktuellem Asteroid
         :return: Menge des liegengelassenen Materials
         """
-        return get_asteroid_mass(self.a[index])-self.get_mined_material(index)
+        return abs(get_asteroid_mass(self.a[index])-self.get_mined_material(index))
 
     def get_all_missed_materials_yet(self, index):
         """
