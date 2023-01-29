@@ -192,10 +192,12 @@ class TripInSpace:
         :param index: Index von aktuellem Asteroid
         :return: Menge des abgebauten Materials
         """
-        return get_abbau_menge(self.bestand[index],
+        # ToDo Matthias aktualisieren
+        return get_abbau_menge(self.bestand[index][self.get_material(index)],
                                get_asteroid_mass(self.a[index]),
                                self.get_material(index),
-                               self.t_m[index])
+                               self.t_m[index]) \
+            - self.bestand[index][self.get_material(index)]
     def get_missed_material(self,index):
         """
         Menge des liegengelassenen Materials auf aktuellem Asteroid

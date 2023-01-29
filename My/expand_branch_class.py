@@ -281,28 +281,30 @@ class Seed:
                                                                        limit=bestand_bei_start[3],
                                                                        needed=needed,
                                                                        time_divider=time_divider)
-                # Bewertung nur durchführen, wenn Asteroid auch erreichbar
-                if (dv_min_ / DV_per_propellant) < bestand_bei_start[3]:
-                    if self.fuzzy:
-                        # Bewertung des Asteroids und des Wechsels
-                        score = SpoC.my_system.calculate_score(  # ToDo: Über Normierung des delta_v sprechen
-                            # Tank nach Flug → dv muss normiert werden
-                            t_n=(bestand_bei_start[3] - (dv_min_/DV_per_propellant)),
-                            delta_v=(dv_min_/3000),  # Diese Normierung in Ordnung? - Dachte ganz sinnvoll
-                            bes=SpoC.norm_bestand(self.bestand, SpoC.get_asteroid_material(asteroid_2_id)), # , Branch.norm_material
-                            verf=SpoC.verf[SpoC.get_asteroid_material(asteroid_2_id)],
-                            mas=SpoC.get_asteroid_mass(asteroid_2_id))
-                    else:
-                        score = 0.0
-                    # Alle Daten für Schritt speichern
-                    possible_steps.append(
-                        {'last_t_m': t_m_opt_,
-                         'dv': dv_min_,
-                         'asteroid_2_id': asteroid_2_id,
-                         't_arr': self.t_arr + t_m_opt_ + t_flug_min_dv_,
-                         'step_score': score}
-                    )
-                    masses.append(SpoC.get_asteroid_mass(asteroid_2_id))
+                # Durch Zeitlösungen iterieren:
+                for t_m, t_flug, dv in zip(t_m_opt_, t_flug_min_dv_, dv_min_):
+                    # Bewertung nur durchführen, wenn Asteroid auch erreichbar
+                    if (dv / DV_per_propellant) < bestand_bei_start[3]:
+                        if self.fuzzy:
+                            # Bewertung des Asteroids und des Wechsels
+                            score = SpoC.my_system.calculate_score(  # ToDo: Über Normierung des delta_v sprechen
+                                # Tank nach Flug → dv muss normiert werden
+                                t_n=(bestand_bei_start[3] - (dv/DV_per_propellant)),
+                                delta_v=(dv/3000),  # Diese Normierung in Ordnung? - Dachte ganz sinnvoll
+                                bes=SpoC.norm_bestand(self.bestand, SpoC.get_asteroid_material(asteroid_2_id)), # , Branch.norm_material
+                                verf=SpoC.verf[SpoC.get_asteroid_material(asteroid_2_id)],
+                                mas=SpoC.get_asteroid_mass(asteroid_2_id))
+                        else:
+                            score = 0.0
+                        # Alle Daten für Schritt speichern
+                        possible_steps.append(
+                            {'last_t_m': t_m,
+                             'dv': dv,
+                             'asteroid_2_id': asteroid_2_id,
+                             't_arr': self.t_arr + t_m + t_flug,
+                             'step_score': score}
+                        )
+                        masses.append(SpoC.get_asteroid_mass(asteroid_2_id))
             # Wenn possible_steps nicht mehr leer & Masse der möglichen Zielasteroiden größer 0.5
             # → Mögliche Schritte gefunden, kann weiter gehen
             if len(possible_steps) != 0:

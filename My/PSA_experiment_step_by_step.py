@@ -10,9 +10,9 @@ from from_website.submisson_helper import create_submission
 
 ##################### Hyperparameter für Ausführung #####################
 score_method = ['step']    # branch, branch and guete, sonstwas=step
-fast = True                # Ob möglichst schnell geflogen werden soll
-knn_type = False            # Ob knn für das Clustern verwendet werden soll (sonst ball)
-both = True                # Sowohl fast wie auch nicht fast wird ausgeführt
+fast = False                # Ob möglichst schnell geflogen werden soll
+knn_type = True            # Ob knn für das Clustern verwendet werden soll (sonst ball)
+both = False                # Sowohl fast wie auch nicht fast wird ausgeführt
 
 
 
@@ -20,6 +20,7 @@ both = True                # Sowohl fast wie auch nicht fast wird ausgeführt
 # Sätzlinge finden :)
 # branch_start = find_idx_start(data, method='examples')
 branch_start = find_idx_start(data, method='alles_clustern')
+branch_start = np.reshape(branch_start, (10,5))
 # branch_start = find_idx_start(data, method='all', start=0) # Anhand von festen IDs
 print("Sätzlinge gepflanzt :D")
 
@@ -27,7 +28,7 @@ print("Sätzlinge gepflanzt :D")
 # beta_input = [400, 400, 300, 300, 200, 200, 100]
 # beta_input = [100]
 beta_input = [100, 90, 70, 50, 50]
-# beta_input = [50, 30, 30, 20]
+# beta_input = [50, 40, 40, 30, 30, 20]
 if isinstance(beta_input, int):
     beta_input = [beta_input]*50
 elif len(beta_input) < 50:
