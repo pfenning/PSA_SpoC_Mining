@@ -596,12 +596,12 @@ def find_idx_start(data, intervall=0.01, method='mean semimajor', fuzzy=True, k=
         laenge_start_cl = []
         knn = phasing.knn(asteroids, SpoC.T_START, 'orbital', T=30)  # .mjd2000 + i
         for ast_id in dict_asteroids.keys():
-            if SpoC.get_asteroid_material(ast_id) != 1 and SpoC.get_asteroid_material(ast_id) != 3:
+            if SpoC.get_asteroid_material(ast_id) != material_most_needed and SpoC.get_asteroid_material(ast_id) != 3:
                 _, neighb_idx, _ = knn.find_neighbours(ast_id, query_type='ball', r=5000)
                 neighb_idx = list(neighb_idx)
                 hilfe = []
                 for mat in neighb_idx:
-                    if SpoC.get_asteroid_material(mat) == 1: hilfe.append(mat)
+                    if SpoC.get_asteroid_material(mat) == material_most_needed: hilfe.append(mat)
                 laenge_start_cl.append(len(hilfe))
             else:
                 laenge_start_cl.append(0)
