@@ -1,8 +1,6 @@
 import numpy as np
 import time
 
-import pandas as pd
-from multiprocessing import freeze_support
 
 from SpoC_Constants import data
 from expand_branch_class import find_idx_start
@@ -17,7 +15,6 @@ if __name__ == '__main__':
     score_method = ['branch']  # branch, branch and guete, sonstwas=step
     fast = False  # Ob möglichst schnell geflogen werden soll
     knn_type = True  # Ob knn für das Clustern verwendet werden soll (sonst ball)
-    both = False  # Sowohl fast wie auch nicht fast wird ausgeführt
 
     ##################### Code Läuft #####################
     # Sätzlinge finden :)

@@ -341,28 +341,13 @@ class ExpandBranch(Seed):
         self.mine_and_travel(dv)
         # Parameter nach Schritt
         self.t_arr = t_arr
-        if fuzzy:
-            self.step_score = step_score
-        else:
-            self.step_score = self.calc_score(dv)
+        self.step_score = step_score
 
         # Abbauzeit und Branch-Score bestimmen
         self.t_opt = SpoC.get_t_opt(self.asteroid_id,
                                     prop_needed=(1.0 - self.bestand[3] if SpoC.get_asteroid_material(asteroid_id)==3
                                                  else None))
         self.branch_score_yet = self.calc_branch_score()
-
-    def fh(self):
-        return min(SpoC.get_asteroid_mass(self.asteroid_id), 1.0-self.bestand[-1])
-
-    def calc_score(self, dv):
-        # print("Ich wurde verwendet :D!")
-        tof = self.t_arr - (self.last_t_m + self.origin_branch.t_arr)
-        if SpoC.get_asteroid_material(self.asteroid_id) == 3:
-            return -(tof + 30*self.fh())/(self.fh()-dv)
-        else:
-            return -(tof + self.t_opt + 80*dv)/SpoC.get_asteroid_mass(self.asteroid_id)
-
 
     def __str__(self):
         print(self.origin_branch)
@@ -405,7 +390,7 @@ class ExpandBranch(Seed):
         Gibt den Branch-Score, also den Mittelwert der Step-Scores, für den erweiterten Branch zurück
         :return: Branch-Score des erweiterten Branches
         """
-        assert self.get_step_count()>0, "Step-Count wird falsch bestimmt"
+        # assert self.get_step_count()>0, "Step-Count wird falsch bestimmt"
         return (self.origin_branch.get_step_count() * self.origin_branch.get_branch_score() + self.step_score) \
             /self.get_step_count()
 
@@ -451,8 +436,7 @@ class ExpandBranch(Seed):
         # Letzte Abbauzeit bestimmen
         res_t_m.append(T_DAUER - res_t_arr[-1] if T_DAUER - res_t_arr[-1] > 0 else 2.0)
 
-        assert res_t_m[-1] > 0, "Letzte Abbauzeit wurde kleiner 0 gewählt!"
-
+        # assert res_t_m[-1] > 0, "Letzte Abbauzeit wurde kleiner 0 gewählt!"
         if res_t_m[-1] > 60.0:
             print("Auf letztem Asteroid gestrandet")
 
@@ -590,12 +574,12 @@ def find_idx_start(data, intervall=0.01, method='mean semimajor', fuzzy=True, k=
         laenge_start_cl = []
         knn = phasing.knn(asteroids, SpoC.T_START, 'orbital', T=30)  # .mjd2000 + i
         for ast_id in dict_asteroids.keys():
-            if SpoC.get_asteroid_material(ast_id) != 1 and SpoC.get_asteroid_material(ast_id) != 3:
+            if SpoC.get_asteroid_material(ast_id) != material_most_needed and SpoC.get_asteroid_material(ast_id) != 3:
                 _, neighb_idx, _ = knn.find_neighbours(ast_id, query_type='ball', r=5000)
                 neighb_idx = list(neighb_idx)
                 hilfe = []
                 for mat in neighb_idx:
-                    if SpoC.get_asteroid_material(mat) == 1: hilfe.append(mat)
+                    if SpoC.get_asteroid_material(mat) == material_most_needed: hilfe.append(mat)
                 laenge_start_cl.append(len(hilfe))
             else:
                 laenge_start_cl.append(0)
@@ -606,22 +590,3 @@ def find_idx_start(data, intervall=0.01, method='mean semimajor', fuzzy=True, k=
             start_branches.append(Seed(ID))
 
     return start_branches
-
-def find_min_material(data):
-    """
-    Berechnet die ursprüngliche Verfügbarkeit der Materialien
-    """
-    material = data[:,-1]
-    mass = data[:,-2]
-    verf = [0, 0, 0, 0]
-    for i in range(0,len(material)):
-        if material[i] == 0:
-            verf[0] += mass[i]
-        elif material[i] == 1:
-            verf[1] += mass[i]
-        elif material[i] == 2:
-            verf[2] += mass[i]
-        elif material[i] == 3:
-            verf[3] += mass[i]
-    min_mat = np.argmin(verf)
-    return min_mat

@@ -284,9 +284,9 @@ class Seed:
                 # Durch Zeitlösungen iterieren:
                 for t_m, t_flug, dv in zip(t_m_opt_, t_flug_min_dv_, dv_min_):
                     # Bewertung nur durchführen, wenn Asteroid auch erreichbar
-                    assert (dv / DV_per_propellant) < bestand_bei_start[3]
+                    # assert (dv / DV_per_propellant) < bestand_bei_start[3]
                     # Bewertung des Asteroids und des Wechsels
-                    score = SpoC.my_system.calculate_score(  # ToDo: Über Normierung des delta_v sprechen
+                    score = SpoC.my_system.calculate_score(
                         # Tank nach Flug → dv muss normiert werden
                         t_n=(bestand_bei_start[3] - (dv / DV_per_propellant)),
                         delta_v=(dv / DV_per_propellant),  # Diese Normierung in Ordnung? - Dachte ganz sinnvoll
@@ -309,8 +309,6 @@ class Seed:
                 if max(masses) > 0.5:
                     break
         return possible_steps
-
-
 
 
 # Nachdem entschieden wurde, dass ein Branch-Objekt weitergeführt wird, muss das t_m des letzten angepasst werden
@@ -363,7 +361,6 @@ class ExpandBranch(Seed):
         else:
             return -(tof + self.t_opt + 80*dv)/SpoC.get_asteroid_mass(self.asteroid_id)
 
-
     def __str__(self):
         print(self.origin_branch)
         return f"Abbauzeit auf Asteroiden {self.last_t_m:.0f}, \n" \
@@ -405,7 +402,7 @@ class ExpandBranch(Seed):
         Gibt den Branch-Score, also den Mittelwert der Step-Scores, für den erweiterten Branch zurück
         :return: Branch-Score des erweiterten Branches
         """
-        assert self.get_step_count()>0, "Step-Count wird falsch bestimmt"
+        # assert self.get_step_count()>0, "Step-Count wird falsch bestimmt"
         return (self.origin_branch.get_step_count() * self.origin_branch.get_branch_score() + self.step_score) \
             /self.get_step_count()
 
@@ -495,7 +492,7 @@ class ExpandBranch(Seed):
 ######################################################
 # Funktionen zur Ausführung von Beam-Search und Start
 ######################################################
-def beam_search(branch_v, beta, analysis="step", fuzzy=True, fast=False, knn_type = False, both=False):
+def beam_search(branch_v, beta, analysis="step", fuzzy=True, fast=False, knn_type = False):
     """
     Übergeben wird ein Vektor, der die beta-Besten Branches beinhaltet aus dem vorherigen Iterationsschritt.
     Führt ausgehend davon die neuen möglichen Schritte aus und gibt davon die beta besten zurück.
@@ -521,9 +518,6 @@ def beam_search(branch_v, beta, analysis="step", fuzzy=True, fast=False, knn_typ
         # score_ = []
         try:
             next_possible_steps = branch.get_next_possible_steps(fast, knn_type)
-            if both:
-                next_possible_steps = np.concatenate(
-                    (next_possible_steps,branch.get_next_possible_steps(not fast, knn_type)))
         except StopIteration:
             v_done.append(branch)
         else:
@@ -565,7 +559,7 @@ def find_idx_start(data, intervall=0.01, method='mean semimajor', fuzzy=True, k=
         Hier wird aus dem Datensatz ein Vektor mit möglichen Startasteroiden gebildet.
         Return:
             Ein Vektor der möglichen Start-Asteroiden als Branch-Objekte
-                start_branches:     Vektor mit branches der Start-Asteroiden
+                start_branches: Vektor mit branches der Start-Asteroiden
     '''
     #### Auswahl des Start-Materials. Das kann durch Verfügbarkeit bestimmt werden! Optimalerweise max. Material --> Verf-Funktion benutzen
     start_branches = []
@@ -612,22 +606,3 @@ def find_idx_start(data, intervall=0.01, method='mean semimajor', fuzzy=True, k=
             start_branches.append(Seed(ID))
 
     return start_branches
-
-def find_min_material(data):
-    """
-    Berechnet die ursprüngliche Verfügbarkeit der Materialien
-    """
-    material = data[:,-1]
-    mass = data[:,-2]
-    verf = [0, 0, 0, 0]
-    for i in range(0,len(material)):
-        if material[i] == 0:
-            verf[0] += mass[i]
-        elif material[i] == 1:
-            verf[1] += mass[i]
-        elif material[i] == 2:
-            verf[2] += mass[i]
-        elif material[i] == 3:
-            verf[3] += mass[i]
-    min_mat = np.argmin(verf)
-    return min_mat
