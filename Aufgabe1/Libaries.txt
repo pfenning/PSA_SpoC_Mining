@@ -5,3 +5,5 @@ skfuzzy
 matplotlib
 copy
 random
+multiprocessing
+os

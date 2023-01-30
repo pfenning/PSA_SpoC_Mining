@@ -1,7 +1,5 @@
 import numpy as np
-import time
 
-from SpoC_Constants import data
 from expand_branch_class import beam_search, Seed
 
 def tree_search(branch_start, settings, final_guete):

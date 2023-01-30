@@ -1,7 +1,6 @@
 import numpy as np
 import time
 
-from SpoC_Constants import data
 from expand_branch_class import beam_search, Seed
 
 from from_website import SpoC_Kontrolle
