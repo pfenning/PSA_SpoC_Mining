@@ -8,7 +8,7 @@ from tree_search_func import tree_search
 
 if __name__ == '__main__':
     ##################### Hyperparameter für Ausführung #####################
-    score_method = ['step']   # branch, branch and guete, sonstwas=step
+    score_method = ['step']     # branch, branch and guete, sonstwas=step
     fast = False                # Ob möglichst schnell geflogen werden soll
     knn_type = False            # Ob knn für das Cluster verwendet werden soll (sonst ball)
 
@@ -16,8 +16,8 @@ if __name__ == '__main__':
 
     ##################### Code Läuft #####################
     # Sätzlinge finden :)
-    branch_start = find_idx_start(data, method='alles_clustern')
-    branch_start = np.reshape(branch_start, (5,10))
+    branch_start = find_idx_start(data, method='alles_clustern', alpha=100)
+    branch_start = np.reshape(branch_start, (10,10))
 
     # Zeitbegrenzung und beta festlegen
     # beta_input = [400, 400, 300, 300, 200, 200, 100]
