@@ -63,7 +63,7 @@ class TestFunctions(unittest.TestCase):
 
     def test_verfuegbarkeit(self):
         verf, norm_material = SpoC.verfuegbarkeit()
-        # Für den späteren Einsatz: (mass=Branch.dict_asteroids[-2], material=Branch.dict_asteroids[-1])
+        # Für den späteren Einsatz: (mass_v=Branch.dict_asteroids[-2], material=Branch.dict_asteroids[-1])
         print(f"Verfügbarkeit: {verf}")
         print(f"Maximales Gütemaß:{norm_material}")
         for expect, got in zip(verf, [0.42020501, 0.02968144, 0.45186633, 0.09824722]):

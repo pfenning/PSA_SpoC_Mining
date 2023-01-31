@@ -38,21 +38,21 @@ def verfuegbarkeit(data):
     verf_norm = verf/gesamt
     return np.array(verf_norm), 0.1*min(verf[:3])
 #
-# def verfuegbarkeit2(mass, material):
+# def verfuegbarkeit2(mass_v, material):
 #     """
 #     Berechnet die ursprüngliche Verfügbarkeit der Materialien
 #     """
-#     gesamt = np.sum(mass)
+#     gesamt = np.sum(mass_v)
 #     verf = [0, 0, 0, 0]
 #     for i in range(0,len(material)):
 #         if material[i] == 0:
-#             verf[0] += mass[i]
+#             verf[0] += mass_v[i]
 #         elif material[i] == 1:
-#             verf[1] += mass[i]
+#             verf[1] += mass_v[i]
 #         elif material[i] == 2:
-#             verf[2] += mass[i]
+#             verf[2] += mass_v[i]
 #         elif material[i] == 3:
-#             verf[3] += mass[i]
+#             verf[3] += mass_v[i]
 #     verf_norm = verf/gesamt
 #     return np.array(verf_norm)
 

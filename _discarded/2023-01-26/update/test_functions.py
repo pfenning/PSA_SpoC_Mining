@@ -43,7 +43,7 @@ class TestFunctions(unittest.TestCase):
                 line[6],
             ),
             MU_TRAPPIST,
-            G * line[7],  # mass in planet is not used in UDP, instead separate array below
+            G * line[7],  # mass_v in planet is not used in UDP, instead separate array below
             1,  # these variable are not relevant for this problem
             1.1,  # these variable are not relevant for this problem
             "Asteroid " + str(int(line[0])),
@@ -70,7 +70,7 @@ class TestFunctions(unittest.TestCase):
 
     def test_verfuegbarkeit(self):
         verf, norm_material = psa.verfuegbarkeit(data=TestFunctions.data)
-        # Für den späteren Einsatz: (mass=Branch.dict_asteroids[-2], material=Branch.dict_asteroids[-1])
+        # Für den späteren Einsatz: (mass_v=Branch.dict_asteroids[-2], material=Branch.dict_asteroids[-1])
         print(f"Verfügbarkeit: {verf}")
         print(f"Maximales Gütemaß:{norm_material}")
         for expect, got in zip(verf, [0.42020501, 0.02968144, 0.45186633, 0.09824722]):

@@ -36,7 +36,7 @@ dict_asteroids ={int(line[0]):  # ID
             line[6]
         ),
         MU_TRAPPIST,
-        G * line[7],    # mass in planet is not used in UDP, instead separate array below
+        G * line[7],    # mass_v in planet is not used in UDP, instead separate array below
         1,              # these variable are not relevant for this problem
         1.1,            # these variable are not relevant for this problem
         "Asteroid " + str(int(line[0]))),
