@@ -180,7 +180,7 @@ def clustering(knn, asteroids_kp, asteroid_1_idx, radius=4000):
 def time_optimize(asteroid1, asteroid1_mas, asteroid1_mat,
                   asteroid2, t_arr, t_opt, limit=1.0, print_result=False,
                   needed=False,
-                  time_divider = 20,
+                  time_divider = 22,
                   alpha=1):
     """
     Zeitoptimierung von Delta V mit 2 Levels. Erst Flugzeit, dann Startzeit
@@ -232,7 +232,7 @@ def time_optimize(asteroid1, asteroid1_mas, asteroid1_mat,
             # Score berechnen
             if dv_map[i][j]/DV_per_propellant < limit:
                 count += 1
-                costs[i][j] = 0.3 * t_flug / 22 \
+                costs[i][j] = 0.3 * t_flug / time_divider \
                               + 0.2 * 10000/2100 * dv_map[i][j]/(10000 - dv_map[i][j]) \
                               + 0.3 * abs(t_start_var[j])/7
                 if 100 < costs[i][j]:

@@ -13,18 +13,18 @@ if __name__ == '__main__':
     # freeze_support()
     ##################### Hyperparameter für Ausführung #####################
     score_method = ['branch']  # branch, branch and guete, sonstwas=step
-    fast = False  # Ob möglichst schnell geflogen werden soll
+    fast = True  # Ob möglichst schnell geflogen werden soll
     knn_type = True  # Ob knn für das Clustern verwendet werden soll (sonst ball)
 
     ##################### Code Läuft #####################
     # Sätzlinge finden :)
     # branch_start_all = find_idx_start(data, method='examples')
-    branch_start_all = find_idx_start(data, method='alles_clustern', alpha=300)
+    branch_start_all = find_idx_start(data, method='alles_clustern', alpha=200)
     # branch_start_all = np.reshape(branch_start_all, (5, 10))    # ToDo Zurück ändern
     # branch_start_all = find_idx_start(data, method='all', start=0) # Anhand von festen IDs
     # branch_start_all = find_idx_start(data, method='all', start=0)  # Anhand von festen IDs
     # branch_start_all = np.reshape(branch_start_all, (20, 500))    # ToDo Testen
-    branch_start_all = np.reshape(branch_start_all, (15, 20))
+    branch_start_all = np.reshape(branch_start_all, (20, 10))
     print("Sätzlinge gepflanzt :D")
 
     # Zeitbegrenzung und beta festlegen
@@ -35,8 +35,8 @@ if __name__ == '__main__':
     # beta_input = [100, 90, 70, 50, 50]
     # beta_input = [35, 30, 30, 25, 25, 20]
     # beta_input = [50, 40, 40, 30, 30, 20]
-    beta_input = [15, 25 , 30, 40, 40, 30, 30, 20, 10]
-    # beta_input = [70, 60, 60, 50, 50, 40, 40, 40]
+    # beta_input = [15, 25 , 30, 40, 40, 30, 30, 20, 10]
+    beta_input = [70, 60, 60, 50, 50, 40, 40, 40]
     if isinstance(beta_input, int):
         beta_input = [beta_input] * 50
     elif len(beta_input) < 50:

@@ -230,17 +230,17 @@ class Seed:
         :return: Liste von Dictionaries mit der Form {'last_t_m', 'dv', 'asteroid_2_id', 't_arr', 'step_score'}
         """
         # Prüfen, ob noch ein Schritt notwendig
-        if T_DAUER-45 < self.t_arr:
+        if T_DAUER-30 < self.t_arr:
             raise StopIteration
         # Prüfen, ob Material des aktuellen Asteroiden wichtig ist
         needed = self._current_material_is_needed()
         # Modus für Entwicklung neuer Blatt-Knoten
         if fast:
             cluster_case = [0.25, 0.5]
-            time_divider = 34
+            time_divider = 15
         else:
             cluster_case = [0.2, 0.4]
-            time_divider = 45
+            time_divider = 22
         # Speicher für mögliche Schritte
         possible_steps = []
         masses = []
@@ -256,10 +256,10 @@ class Seed:
         for materials in cluster_iteration:
             if fast:
                 if len(materials) == 1:
-                    t_flug = 20
+                    t_flug = 15
                     radius = 5000   # Wird gar nicht benötigt
                 else:
-                    t_flug = 10
+                    t_flug = 8
                     radius = 5000   # Wird gar nicht benötigt
             else:
                 if len(materials)==1:

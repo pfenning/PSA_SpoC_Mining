@@ -6,7 +6,11 @@ from expand_branch_class import find_idx_start
 from funs_multiproc import mp_settings
 from tree_search_func import tree_search
 
+import time
+import datetime
+
 if __name__ == '__main__':
+    start_time = time.perf_counter()
     ##################### Hyperparameter für Ausführung #####################
     score_method = ['step']   # branch, branch and guete, sonstwas=step
     fast = False                # Ob möglichst schnell geflogen werden soll
@@ -34,6 +38,7 @@ if __name__ == '__main__':
     # Multiprocessing
     mp_settings(branch_start, tree_search, [beta_input, score_method, fast, knn_type])
 
+    print(f"Dauer:{datetime.timedelta(seconds=time.perf_counter()-start_time)}")
 
     # if 0 == len(beendete_Branches):
     #     print("Es wurden keine möglichen Routen für die gegebenen Einstellungen gefunden")
